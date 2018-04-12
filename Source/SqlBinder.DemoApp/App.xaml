@@ -1,0 +1,15 @@
+﻿<Application x:Class="SqlBinder.DemoApp.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:SqlBinder.DemoApp"
+             StartupUri="MainWindow.xaml"
+			 Startup="App_OnStartup"
+             Exit="App_OnExit">
+    <Application.Resources>
+		<!-- The only fix for the annoying Error 4 whenever using ComboBoxItems (or ListBoxItems) -->
+	    <Style TargetType="ComboBoxItem">
+		    <Setter Property="HorizontalContentAlignment" Value="Left" />
+		    <Setter Property="VerticalContentAlignment" Value="Center" />
+	    </Style>
+	</Application.Resources>
+</Application>

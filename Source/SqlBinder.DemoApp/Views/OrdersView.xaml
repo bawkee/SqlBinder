@@ -1,0 +1,202 @@
+﻿<UserControl x:Class="SqlBinder.DemoApp.Views.OrdersView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:viewModels="clr-namespace:SqlBinder.DemoApp.ViewModels"
+             xmlns:controls="clr-namespace:SqlBinder.DemoApp.Controls"
+             xmlns:decorators="clr-namespace:SqlBinder.DemoApp.Decorators"
+             xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
+             xmlns:behaviors="clr-namespace:SqlBinder.DemoApp.Behaviors"
+             xmlns:converters="clr-namespace:SqlBinder.DemoApp.Converters"
+             mc:Ignorable="d" 
+             d:DesignHeight="450"              
+             d:DataContext="{d:DesignInstance viewModels:OrdersViewModel}"
+             Loaded="OrdersView_OnLoaded">
+	<UserControl.Resources>
+		<ResourceDictionary>
+			<ResourceDictionary.MergedDictionaries>
+				<ResourceDictionary Source="../Styles/DataGrid.xaml" />
+			</ResourceDictionary.MergedDictionaries>
+
+			<converters:ComboBoxNullItemConverter x:Key="comboBoxNullItemConverter" />
+
+			<CollectionViewSource x:Key="countries" Source="{Binding Path=ShippingCountries}" />
+			<CollectionViewSource x:Key="cities" Source="{Binding Path=ShippingCities}" />
+		</ResourceDictionary>
+	</UserControl.Resources>
+
+	<DockPanel>
+		<StackPanel Orientation="Horizontal" DockPanel.Dock="Top">
+			<TabControl Width="400" Height="310" Margin="0,0,5,5" >
+				<TabControl.Items>
+					<TabItem Header="Customers">
+						<TabItem.Style>
+							<Style TargetType="TabItem">
+								<Setter Property="FontWeight" Value="Bold" />
+								<Style.Triggers>
+									<DataTrigger Binding="{Binding SelectedCustomerIds.Count}" Value="0">
+										<Setter Property="FontWeight" Value="Regular" />
+									</DataTrigger>
+								</Style.Triggers>
+							</Style>
+						</TabItem.Style>
+						<controls:CheckList WatermarkText="Filter by customers..." FontWeight="Regular"
+						                    IdMemberPath="CustomerId" DisplayMemberPath="ContactName" 
+						                    ItemsSource="{Binding Customers}" SelectedIds="{Binding SelectedCustomerIds}" />
+					</TabItem>
+					<TabItem Header="Products">
+						<TabItem.Style>
+							<Style TargetType="TabItem">
+								<Setter Property="FontWeight" Value="Bold" />
+								<Style.Triggers>
+									<DataTrigger Binding="{Binding SelectedProductIds.Count}" Value="0">
+										<Setter Property="FontWeight" Value="Regular" />
+									</DataTrigger>
+								</Style.Triggers>
+							</Style>
+						</TabItem.Style>
+						<controls:CheckList WatermarkText="Filter by products..." FontWeight="Regular"
+						                    IdMemberPath="ProductId" DisplayMemberPath="ProductName" 
+						                    ItemsSource="{Binding Products}" SelectedIds="{Binding SelectedProductIds}" />
+					</TabItem>
+					<TabItem Header="Employees">
+						<TabItem.Style>
+							<Style TargetType="TabItem">
+								<Setter Property="FontWeight" Value="Bold" />
+								<Style.Triggers>
+									<DataTrigger Binding="{Binding SelectedEmployeeIds.Count}" Value="0">
+										<Setter Property="FontWeight" Value="Regular" />
+									</DataTrigger>
+								</Style.Triggers>
+							</Style>
+						</TabItem.Style>
+						<controls:CheckList WatermarkText="Filter by employees..." FontWeight="Regular"
+						                    IdMemberPath="EmployeeId" DisplayMemberPath="FullName" 
+						                    ItemsSource="{Binding Employees}" SelectedIds="{Binding SelectedEmployeeIds}" />
+					</TabItem>
+					<TabItem Header="Shippers">
+						<TabItem.Style>
+							<Style TargetType="TabItem">
+								<Setter Property="FontWeight" Value="Bold" />
+								<Style.Triggers>
+									<DataTrigger Binding="{Binding SelectedShipperIds.Count}" Value="0">
+										<Setter Property="FontWeight" Value="Regular" />
+									</DataTrigger>
+								</Style.Triggers>
+							</Style>
+						</TabItem.Style>
+						<controls:CheckList WatermarkText="Filter by shippers..." FontWeight="Regular"
+						                    IdMemberPath="ShipperId" DisplayMemberPath="CompanyName" 
+						                    ItemsSource="{Binding Shippers}" SelectedIds="{Binding SelectedShipperIds}" />
+					</TabItem>
+				</TabControl.Items>
+			</TabControl>
+
+			<StackPanel>
+				<StackPanel.Resources>
+					<Style TargetType="DatePicker">
+						<Setter Property="Width" Value="150" />
+						<Setter Property="SelectedDateFormat" Value="Long" />
+					</Style>
+				</StackPanel.Resources>
+
+				<Label Margin="0,2,0,0">Order Date (from-to):</Label>
+				<Grid>
+					<Grid.ColumnDefinitions>
+						<ColumnDefinition />
+						<ColumnDefinition Width="Auto" />
+						<ColumnDefinition />
+					</Grid.ColumnDefinitions>
+					<DatePicker Grid.Column="0" SelectedDate="{Binding FromOrderDate}" />
+					<TextBlock Grid.Column="1" Text="-" Margin="4,0" />
+					<DatePicker Grid.Column="2" SelectedDate="{Binding ToOrderDate}" />
+				</Grid>
+
+				<Label Margin="0,2,0,0">Required Date (from-to):</Label>
+				<Grid>
+					<Grid.ColumnDefinitions>
+						<ColumnDefinition />
+						<ColumnDefinition Width="Auto" />
+						<ColumnDefinition />
+					</Grid.ColumnDefinitions>
+					<DatePicker Grid.Column="0" SelectedDate="{Binding FromRequiredDate}" />
+					<TextBlock Grid.Column="1" Text="-" Margin="4,0" />
+					<DatePicker Grid.Column="2" SelectedDate="{Binding ToRequiredDate}" />
+				</Grid>
+
+				<Label Margin="0,2,0,0">Shipped Date (from-to):</Label>
+				<Grid>
+					<Grid.ColumnDefinitions>
+						<ColumnDefinition />
+						<ColumnDefinition Width="Auto" />
+						<ColumnDefinition />
+					</Grid.ColumnDefinitions>
+					<DatePicker Grid.Column="0" SelectedDate="{Binding FromShippedDate}" />
+					<TextBlock Grid.Column="1" Text="-" Margin="4,0" />
+					<DatePicker Grid.Column="2" SelectedDate="{Binding ToShippedDate}" />
+				</Grid>
+
+				<Label Margin="0,2,0,0">Freight Total (from-to):</Label>
+				<Grid>
+					<Grid.ColumnDefinitions>
+						<ColumnDefinition />
+						<ColumnDefinition Width="Auto" />
+						<ColumnDefinition />
+					</Grid.ColumnDefinitions>
+
+					<TextBox Grid.Column="0" Text="{Binding FromFreight, TargetNullValue='', UpdateSourceTrigger=PropertyChanged}" decorators:SelectAllDecorator.AutoSelectAll="True">
+						<i:Interaction.Behaviors>
+							<behaviors:TextBoxInputBehavior IsNumeric="True" />
+						</i:Interaction.Behaviors>
+					</TextBox>
+					<TextBlock Grid.Column="1" Text="-" Margin="4,0" />
+					<TextBox Grid.Column="2" Text="{Binding ToFreight, TargetNullValue='', UpdateSourceTrigger=PropertyChanged}" decorators:SelectAllDecorator.AutoSelectAll="True">
+						<i:Interaction.Behaviors>
+							<behaviors:TextBoxInputBehavior IsNumeric="True" />
+						</i:Interaction.Behaviors>
+					</TextBox>
+				</Grid>
+
+				<Label Margin="0,2,0,0">Shipping Country:</Label>
+				<ComboBox SelectedValue="{Binding SelectedShippingCountry, Mode=TwoWay, Converter={StaticResource comboBoxNullItemConverter}}" >
+					<ComboBox.ItemsSource>
+						<CompositeCollection>
+							<ComboBoxItem Content="(Any Country)" />
+							<CollectionContainer Collection="{Binding Source={StaticResource countries}}" />
+						</CompositeCollection>
+					</ComboBox.ItemsSource>
+				</ComboBox>
+
+				<Label Margin="0,2,0,0">Shipping City:</Label>
+				<ComboBox SelectedValue="{Binding SelectedShippingCity, Mode=TwoWay, Converter={StaticResource comboBoxNullItemConverter}}" >
+					<ComboBox.ItemsSource>
+						<CompositeCollection>
+							<ComboBoxItem Content="(Any City)" />
+							<CollectionContainer Collection="{Binding Source={StaticResource cities}}" />
+						</CompositeCollection>
+					</ComboBox.ItemsSource>
+				</ComboBox>
+
+			</StackPanel>
+		</StackPanel>
+
+		<DataGrid Style="{StaticResource classicDataGrid}" IsReadOnly="True" ItemsSource="{Binding Orders}">
+			<DataGrid.Columns>
+				<DataGridTextColumn Header="ID" Binding="{Binding OrderId}" />
+				<DataGridTextColumn Header="Customer" Binding="{Binding CustomerName}" />
+				<DataGridTextColumn Header="Employee" Binding="{Binding EmployeeName}" />
+				<DataGridTextColumn Header="Order Date" Binding="{Binding OrderDate}" />
+				<DataGridTextColumn Header="Required Date" Binding="{Binding RequiredDate}" />
+				<DataGridTextColumn Header="Shipped Date" Binding="{Binding ShippedDate}" />
+				<DataGridTextColumn Header="Ship Via" Binding="{Binding ShippedVia}" />
+				<DataGridTextColumn Header="Freight" Binding="{Binding Freight, StringFormat=C}" />
+				<DataGridTextColumn Header="Ship Name" Binding="{Binding ShipName}" />
+				<DataGridTextColumn Header="Ship Address" Binding="{Binding ShipAddress}" />
+				<DataGridTextColumn Header="Ship City" Binding="{Binding ShipCity}" />
+				<DataGridTextColumn Header="Ship Region" Binding="{Binding ShipRegion}" />
+				<DataGridTextColumn Header="Ship Country" Binding="{Binding ShipCountry}" />
+			</DataGrid.Columns>
+		</DataGrid>
+	</DockPanel>
+</UserControl>

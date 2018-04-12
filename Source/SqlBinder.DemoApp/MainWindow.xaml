@@ -1,0 +1,91 @@
+﻿<Window x:Class="SqlBinder.DemoApp.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:viewModels="clr-namespace:SqlBinder.DemoApp.ViewModels"
+        xmlns:views="clr-namespace:SqlBinder.DemoApp.Views"
+        mc:Ignorable="d"
+        Title="MainWindow" 
+        Height="750" Width="1260" 
+        Background="{x:Static SystemColors.ControlBrush}"
+        SnapsToDevicePixels="True"
+        UseLayoutRounding="True">
+	
+	<Window.DataContext>
+		<viewModels:MainViewModel />
+	</Window.DataContext>
+	
+	<Window.Resources>
+		<ResourceDictionary>
+			<ResourceDictionary.MergedDictionaries>
+				<ResourceDictionary Source="Styles/FlatButton.xaml" />
+			</ResourceDictionary.MergedDictionaries>
+		</ResourceDictionary>
+	</Window.Resources>
+
+	<DockPanel>
+		<DockPanel.Resources>
+			<SolidColorBrush Color="#FFCA5117"  x:Key="debugWindowColor" />
+		</DockPanel.Resources>
+		<Border DockPanel.Dock="Bottom" BorderThickness="1" BorderBrush="{StaticResource debugWindowColor}" Margin="4">
+			<DockPanel>
+				<Border DockPanel.Dock="Top" Background="{StaticResource debugWindowColor}">
+					<DockPanel>
+						<Button Style="{StaticResource flatButton}" Background="Orange" Width="16" Height="16" DockPanel.Dock="Right" Margin="2,0" Command="{Binding TraceLogToggle.ToggleCommand}">
+							<Grid Width="12" Height="12">
+								<Path Width="10" Height="5" Stretch="Fill" Stroke="White" Fill="White">
+									<Path.Style>
+										<Style TargetType="Path">
+											<Setter Property="Data" Value="F1 M0,0 L1,-1 L2,0 Z" />
+											<Style.Triggers>
+												<DataTrigger Binding="{Binding TraceLogToggle.IsVisible}" Value="True">
+													<Setter Property="Data" Value="F1 M0,0 L1,1 L2,0 Z" />
+												</DataTrigger>
+											</Style.Triggers>
+										</Style>
+									</Path.Style>
+								</Path>
+							</Grid>
+						</Button>
+						<TextBlock Padding="10,2,2,2" Foreground="White">Debug Log</TextBlock>
+					</DockPanel>
+				</Border>
+				<TextBox Text="{Binding TraceLogString, Mode=OneWay}" FontFamily="Consolas" FontSize="8pt" IsReadOnly="True" Height="200" 
+				         BorderThickness="0" VerticalScrollBarVisibility="Visible" TextChanged="txtLog_OnTextChanged" 
+				         IsVisibleChanged="txtLog_OnIsVisibleChanged" Visibility="{Binding TraceLogToggle.Visibility}" />
+			</DockPanel>
+		</Border>
+
+		<Grid>
+			<TabControl TabStripPlacement="Left" ItemsSource="{Binding DemoItems}" Margin="4">
+				<TabControl.Resources>
+					<DataTemplate DataType="{x:Type viewModels:CategorySalesViewModel}">
+						<views:CategorySalesView />
+					</DataTemplate>
+					<DataTemplate DataType="{x:Type viewModels:ProductsViewModel}">
+						<views:ProductsView />
+					</DataTemplate>
+					<DataTemplate DataType="{x:Type viewModels:OrdersViewModel}">
+						<views:OrdersView />
+					</DataTemplate>
+				</TabControl.Resources>
+
+				<TabControl.ItemTemplate>
+					<DataTemplate>
+						<DataTemplate.Resources>
+							<Style TargetType="TextBlock">
+								<Setter Property="MinWidth" Value="280" />
+								<Setter Property="Padding" Value="5"></Setter>
+							</Style>
+						</DataTemplate.Resources>
+						<TextBlock Text="{Binding DemoTitle}" MinWidth="200" />
+					</DataTemplate>
+				</TabControl.ItemTemplate>
+
+			</TabControl>
+
+			<Image Source="Resources/northwindLogoBw.png" VerticalAlignment="Bottom" HorizontalAlignment="Left" Width="200" Opacity="0.5" />
+		</Grid>
+	</DockPanel>
+</Window>
