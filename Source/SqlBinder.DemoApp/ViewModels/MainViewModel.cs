@@ -31,6 +31,7 @@ namespace SqlBinder.DemoApp.ViewModels
 
 		public ObservableCollection<DemoViewModel> DemoItems => new ObservableCollection<DemoViewModel>
 		{
+			new InfoViewModel(),
 			new ProductsViewModel(),
 			new OrdersViewModel(),
 			new CategorySalesViewModel()

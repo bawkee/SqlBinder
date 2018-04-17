@@ -1,0 +1,63 @@
+﻿<UserControl x:Class="SqlBinder.DemoApp.Views.InfoView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:SqlBinder.DemoApp.Views"
+             xmlns:viewModels="clr-namespace:SqlBinder.DemoApp.ViewModels"
+             mc:Ignorable="d"                                        
+             d:DataContext="{d:DesignInstance viewModels:OrdersViewModel}"
+             d:DesignHeight="450" d:DesignWidth="800"
+             >
+
+	<UserControl.Resources>
+		<Style TargetType="TextBlock">
+			<Setter Property="FontSize" Value="12pt" />
+			<Setter Property="TextWrapping" Value="Wrap" />
+			<Setter Property="Margin" Value="0,8,0,8" />
+		</Style>
+
+		<Style TargetType="TextBlock" x:Key="h1">
+			<Setter Property="FontSize" Value="18pt" />
+			<Setter Property="FontWeight" Value="Bold"/>
+			<Setter Property="Margin" Value="0,20,5,10"></Setter>
+		</Style>
+		<Style TargetType="StackPanel" x:Key="ul">
+			<Setter Property="Margin" Value="15,0,0,0" />
+		</Style>
+
+		<ControlTemplate x:Key="bullet" TargetType="{x:Type ContentControl}">
+			<BulletDecorator>
+				<BulletDecorator.Bullet>
+					<Ellipse Width="6" Height="6" Fill="Black"  />
+				</BulletDecorator.Bullet>
+				<ContentPresenter Margin="10,-5,0,0" />
+			</BulletDecorator>
+		</ControlTemplate>
+	</UserControl.Resources>
+
+	<StackPanel Margin="10,5,10,5">
+		<TextBlock Style="{StaticResource h1}">SqlBinder Demo</TextBlock>
+		<TextBlock>
+			Welcome! This is a demo application for SqlBinder, a C# SQL templating/formatting library. You can find this demo and the library on <Hyperlink>CodeProject</Hyperlink>
+			or <Hyperlink>GitHub</Hyperlink>. <LineBreak />
+			This demo is a WPF application purely due to convenience of presenting core features of SqlBinder library. It is by no means limited to desktop applications.
+		</TextBlock>
+		
+		<TextBlock>
+			Important notes: <LineBreak/>
+			<StackPanel Style="{StaticResource ul}">
+				<ContentControl Template="{StaticResource bullet}">
+					<TextBlock>All the dates in the example database range between 1994 and 1997. It's an older database but it checks out. I think most data is concetrated 
+						between '95 and '96.</TextBlock>
+				</ContentControl>
+				<ContentControl Template="{StaticResource bullet}">
+					<TextBlock>I recommend using the debug log at the bottom of the window - in there you can track SQL templates and parse results as SqlBinder is being used.
+						Data is reloaded every time a demo tab page is opened or a filter field changed.</TextBlock>
+				</ContentControl>
+			</StackPanel>
+		</TextBlock>
+	</StackPanel>
+	
+
+</UserControl>

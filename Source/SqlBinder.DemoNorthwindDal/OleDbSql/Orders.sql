@@ -14,4 +14,4 @@ FROM Orders O
 {Freight [freight]} 
 {ShipCity [shipCity]} 
 {ShipCountry [shipCountry]}
-{OrderID IN (SELECT OrderID FROM $[Order Details]$ WHERE {ProductID [productIds]})}}
+{OrderID IN (SELECT OrderID FROM OrderDetails WHERE {ProductID [productIds]})}}

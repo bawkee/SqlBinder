@@ -1,17 +1,8 @@
 ﻿SELECT 
 	Categories.CategoryID, 
 	Categories.CategoryName, 
-	SUM(CCUR(OD.UnitPrice * OD.Quantity * (1 - OD.Discount) / 100) * 100) AS TotalSales, 
-	COUNT(*) AS Cnt
-FROM 
-	Categories, 
-	Orders, 
-	$[Order Details]$ OD, 
-	Products
-WHERE
-{{Orders.ShippedDate [shippingDates]}
-{Categories.CategoryID [categoryIds]} AND}
-Products.ProductID = OD.ProductID AND
-OD.OrderID = Orders.OrderID AND
-Categories.CategoryID = Products.CategoryID
-GROUP BY Categories.CategoryID, Categories.CategoryName
+	(SELECT SUM(CCUR(UnitPrice * Quantity * (1 - Discount) / 100) * 100) FROM OrderDetails 
+		WHERE ProductID IN (SELECT ProductID FROM Products WHERE Products.CategoryID = Categories.CategoryID)
+		  {AND OrderID IN (SELECT OrderID FROM Orders WHERE {Orders.ShippedDate [shippingDates]})}) AS TotalSales
+FROM Categories
+{WHERE {Categories.CategoryID [categoryIds]}}

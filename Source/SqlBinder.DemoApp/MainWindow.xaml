@@ -60,6 +60,9 @@
 		<Grid>
 			<TabControl TabStripPlacement="Left" ItemsSource="{Binding DemoItems}" Margin="4">
 				<TabControl.Resources>
+					<DataTemplate DataType="{x:Type viewModels:InfoViewModel}">
+						<views:InfoView />
+					</DataTemplate>
 					<DataTemplate DataType="{x:Type viewModels:CategorySalesViewModel}">
 						<views:CategorySalesView />
 					</DataTemplate>

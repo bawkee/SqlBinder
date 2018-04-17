@@ -67,6 +67,7 @@
     <Compile Include="GuiExtensions\DelayedExecution.cs" />
     <Compile Include="GuiExtensions\WaitCursor.cs" />
     <Compile Include="ViewModels\CategorySalesViewModel.cs" />
+    <Compile Include="ViewModels\InfoViewModel.cs" />
     <Compile Include="ViewModels\ToggleVisibilityViewModel.cs" />
     <Compile Include="ViewModels\MainViewModel.cs" />
     <Compile Include="ViewModels\OrdersViewModel.cs" />
@@ -74,6 +75,9 @@
     <Compile Include="ViewModels\ViewModel.cs" />
     <Compile Include="Views\CategorySalesView.xaml.cs">
       <DependentUpon>CategorySalesView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\InfoView.xaml.cs">
+      <DependentUpon>InfoView.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\OrdersView.xaml.cs">
       <DependentUpon>OrdersView.xaml</DependentUpon>
@@ -113,6 +117,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Views\CategorySalesView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\InfoView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
