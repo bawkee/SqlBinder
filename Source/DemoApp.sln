@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SqlBinder", "SqlBinder\SqlB
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SqlBinder.DemoNorthwindDal", "SqlBinder.DemoNorthwindDal\SqlBinder.DemoNorthwindDal.csproj", "{A73A0050-E450-4F77-9ED2-8C2BFD5B8467}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SqlBinder.UnitTesting", "SqlBinder.UnitTesting\SqlBinder.UnitTesting.csproj", "{5CCA235C-671C-4025-A7E4-757EFB8786FC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,26 +29,15 @@ Global
 		{A73A0050-E450-4F77-9ED2-8C2BFD5B8467}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A73A0050-E450-4F77-9ED2-8C2BFD5B8467}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A73A0050-E450-4F77-9ED2-8C2BFD5B8467}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5CCA235C-671C-4025-A7E4-757EFB8786FC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5CCA235C-671C-4025-A7E4-757EFB8786FC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5CCA235C-671C-4025-A7E4-757EFB8786FC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5CCA235C-671C-4025-A7E4-757EFB8786FC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {3CA5FFC8-9CAF-4D0D-AF0F-4631FBDA5F2A}
-	EndGlobalSection
-	GlobalSection(TeamFoundationVersionControl) = preSolution
-		SccNumberOfProjects = 4
-		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
-		SccTeamFoundationServer = http://tfs.beg.finsoft.com:8080/tfs/maincollection
-		SccLocalPath0 = .
-		SccProjectUniqueName1 = SqlBinder.DemoApp\\SqlBinder.DemoApp.csproj
-		SccProjectName1 = SqlBinder.DemoApp
-		SccLocalPath1 = SqlBinder.DemoApp
-		SccProjectUniqueName2 = SqlBinder\\SqlBinder.csproj
-		SccProjectName2 = SqlBinder
-		SccLocalPath2 = SqlBinder
-		SccProjectUniqueName3 = SqlBinder.DemoNorthwindDal\\SqlBinder.DemoNorthwindDal.csproj
-		SccProjectName3 = SqlBinder.DemoNorthwindDal
-		SccLocalPath3 = SqlBinder.DemoNorthwindDal
 	EndGlobalSection
 EndGlobal
