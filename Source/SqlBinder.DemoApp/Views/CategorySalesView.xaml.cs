@@ -28,10 +28,7 @@ namespace SqlBinder.DemoApp.Views
 		}
 
 		private void CategorySalesView_OnLoaded(object sender, RoutedEventArgs e)
-		{
-			//_fromDate.DisplayDate = DateTime.ParseExact("01/01/94", "MM/dd/yy", CultureInfo.InvariantCulture);
-
-
+		{			
 			((DemoViewModel) DataContext).RefreshData();
 		}
 	}
