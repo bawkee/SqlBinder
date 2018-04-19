@@ -16,19 +16,18 @@ namespace SqlBinder.UnitTesting
 		/// </summary>
 		[TestClass]
 		public class Negative_Tests
-		{
-			private MockSqlBinder _binder;
-
+		{			
 			[TestInitialize]
 			public void InitializeTest()
 			{
-				_binder = new MockSqlBinder(_connection) {ThrowScriptErrorException = true};
+				//
 			}
 
 			[TestMethod]			
 			public void NegativeTest_1()
 			{
-				var query = _binder.CreateQuery("SELECT * FROM TABLE1 {WHERE {COLUMN1 [Criteria1]}}");
+				var query = new MockQuery(_connection, "SELECT * FROM TABLE1 {WHERE {COLUMN1 [Criteria1]}}");
+				query.ThrowScriptErrorException = true;
 
 				// Set the condition
 				query.SetCondition("Criteria1", new StringValue(new [] { null, "A", "B" } ));
@@ -62,7 +61,8 @@ namespace SqlBinder.UnitTesting
 			[TestMethod]
 			public void NegativeTest_2()
 			{
-				var query = _binder.CreateQuery("SELECT * FROM TABLE1 {WHERE {COLUMN1 [Criteria1]}}");
+				var query = new MockQuery(_connection, "SELECT * FROM TABLE1 {WHERE {COLUMN1 [Criteria1]}}");
+				query.ThrowScriptErrorException = true;
 
 				// Set the condition
 				query.SetCondition("Criteria1", new NumberValue((IEnumerable<decimal>)null));

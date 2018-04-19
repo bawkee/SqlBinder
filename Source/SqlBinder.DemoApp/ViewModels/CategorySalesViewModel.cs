@@ -18,18 +18,14 @@ namespace SqlBinder.DemoApp.ViewModels
 
 		private bool _initialized;
 
-		// Uncomment if you don't want to bother going back to 1995 every time as default value on the picker is current year
-		//public CategorySalesViewModel()
-		//{
-		//	SetValue(DateTime.ParseExact("01/01/94", "MM/dd/yy", CultureInfo.InvariantCulture), nameof(FromDate));
-		//	SetValue(DateTime.ParseExact("01/01/97", "MM/dd/yy", CultureInfo.InvariantCulture), nameof(ToDate));
-		//}
-
 		public ObservableCollection<CategorySale> CategorySales
 		{
 			get => GetValue<ObservableCollection<CategorySale>>();
 			set => SetValue(value);
 		}
+
+		public DateTime DefaultFromDate { get; } = DateTime.ParseExact("01/01/94", "MM/dd/yy", CultureInfo.InvariantCulture);
+		public DateTime DefaultToDate { get; } = DateTime.ParseExact("01/01/96", "MM/dd/yy", CultureInfo.InvariantCulture);
 
 		public DateTime? FromDate
 		{

@@ -17,7 +17,7 @@ namespace SqlBinder
 		internal void ProcessParameter(IDbDataParameter parameter) => OnProcessParameter(parameter);
 
 		/// <summary>
-		/// Gets or sets a value indicating whether <see cref="Query"/> should output an SQL with a bind variable (command parameter) or just
+		/// Gets or sets a value indicating whether <see cref="QueryBase{TCONNECTION,TCOMMAND}"/> should output an SQL with a bind variable (command parameter) or just
 		/// plain SQL.
 		/// </summary>
 		public virtual bool UseBindVariables { get; } = true;

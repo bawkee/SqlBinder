@@ -15,14 +15,11 @@ namespace SqlBinder.DemoNorthwindDal.OleDb
     public class OleDbNorthwindDal : INorthwindDal, IDisposable
 	{
 		private readonly OleDbConnection _connection = new OleDbConnection();
-		private readonly OleDbSqlBinder _binder;
 
 		public OleDbNorthwindDal(string northwindMdb)
 		{
 			_connection.ConnectionString = $"Provider=Microsoft.Jet.OLEDB.4.0;Data Source={northwindMdb};";
 			_connection.Open();			
-
-			_binder = new OleDbSqlBinder(_connection);
 		}
 
 		public IEnumerable<Category> GetCategories()
@@ -114,7 +111,7 @@ namespace SqlBinder.DemoNorthwindDal.OleDb
 
 		public IEnumerable<CategorySale> GetCategorySales(int[] categoryIds = null, DateTime? fromDate = null, DateTime? toDate = null)
 		{
-			var query = _binder.CreateQuery(File.ReadAllText("OleDbSql\\CategorySales.sql"));
+			var query = new OleDbQuery(_connection, File.ReadAllText("OleDbSql\\CategorySales.sql"));
 
 			if (categoryIds?.Any() ?? false)
 				query.SetCondition("categoryIds", categoryIds);
@@ -130,7 +127,7 @@ namespace SqlBinder.DemoNorthwindDal.OleDb
 					{
 						CategoryId = (int)r["CategoryID"],
 						CategoryName = (string)r["CategoryName"],
-						TotalSales = (decimal)r["TotalSales"]
+						TotalSales = r["TotalSales"] as decimal? ?? 0
 					};
 				}
 			}
@@ -147,7 +144,7 @@ namespace SqlBinder.DemoNorthwindDal.OleDb
 			bool? isDiscontinued = null,
 			bool priceGreaterThanAvg = false)
 		{
-			var query = _binder.CreateQuery(File.ReadAllText("OleDbSql\\Products.sql"));
+			var query = new OleDbQuery(_connection, File.ReadAllText("OleDbSql\\Products.sql"));
 			
 			if (productId != null)
 				query.SetCondition("productId", productId);
@@ -207,7 +204,7 @@ namespace SqlBinder.DemoNorthwindDal.OleDb
 
 		public IEnumerable<string> GetShippingCities(string shippingCountry = null)
 		{
-			var query = _binder.CreateQuery("SELECT ShipCity FROM Orders {WHERE {ShipCountry [shippingCountry]}} GROUP BY ShipCity");
+			var query = new OleDbQuery(_connection, "SELECT ShipCity FROM Orders {WHERE {ShipCountry [shippingCountry]}} GROUP BY ShipCity");
 
 			if (shippingCountry != null)
 				query.SetCondition("shippingCountry", shippingCountry);
@@ -231,7 +228,7 @@ namespace SqlBinder.DemoNorthwindDal.OleDb
 			string shipCity = null,
 			string shipCountry = null)
 		{
-			var query = _binder.CreateQuery(File.ReadAllText("OleDbSql\\Orders.sql"));
+			var query = new OleDbQuery(_connection, File.ReadAllText("OleDbSql\\Orders.sql"));
 
 			if (orderId.HasValue)
 				query.SetCondition("orderId", orderId);
@@ -311,7 +308,7 @@ namespace SqlBinder.DemoNorthwindDal.OleDb
 
 		private void Trace(string message = "") => TraceLog.Add(message);
 
-		private void TraceQuery(string name, Query sqlBinderQuery)
+		private void TraceQuery(string name, OleDbQuery sqlBinderQuery)
 		{
 			Trace($"-- {name} SqlBinder Script ".PadRight(40, '-') + '>');
 			Trace(sqlBinderQuery.SqlBinderScript);

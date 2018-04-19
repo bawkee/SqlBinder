@@ -156,9 +156,6 @@
   <data name="CompoundParameterWithNoSeparator" xml:space="preserve">
     <value>Compound parameter {0} does not have a separator defined.</value>
   </data>
-  <data name="SubExpressionsNotSupported" xml:space="preserve">
-    <value>Brackets inside expression statements are not supported, they will be removed.</value>
-  </data>
   <data name="ParserFailure" xml:space="preserve">
     <value>An exception has occurred in the SqlBinder template parser engine.</value>
   </data>

@@ -3,33 +3,131 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using System.Text.RegularExpressions;
 using SqlBinder.ConditionValues;
 using SqlBinder.Parsing;
 using SqlBinder.Properties;
 
 namespace SqlBinder
 {
-	/// <summary>
-	/// Provides capability to parse and execute an SqlBinder script and set conditions to be matched against it.
-	/// </summary>
-	public class Query
+	[Serializable]
+	public class ParserException : Exception
 	{
-		internal Query(SqlBinder sq)
+		public ParserException(Exception innerException) : base(Exceptions.ParserFailure, innerException) { }
+	}
+
+	[Serializable]
+	public class UnmatchedConditionsException : Exception
+	{
+		public UnmatchedConditionsException(IEnumerable<Condition> conditions) : base(string.Format(Exceptions.NoMatchingParams,
+			string.Join(", ", conditions.Select(c => c.Parameter).ToArray())))
+		{ }
+	}
+
+	[Serializable]
+	public class InvalidConditionException : Exception
+	{
+		public InvalidConditionException(ConditionValue value, Operator op, string message)
+			: base(string.Format(Exceptions.InvalidCondition, value.GetType().Name, op, message)) { }
+		public InvalidConditionException(ConditionValue value, Operator op, Exception innerException)
+			: base(string.Format(Exceptions.InvalidCondition, value.GetType().Name, op, innerException.Message), innerException) { }
+	}
+
+	public class FormatParameterEventArgs : EventArgs
+	{
+		public string ParameterName { get; internal set; }
+		public string FormattedName { get; set; }
+	}
+
+	public delegate void FormatParameterEventHandler(object sender, FormatParameterEventArgs e);
+
+	/// <summary>
+	/// Provides capability to parse and execute an SqlBinder scripts.
+	/// </summary>
+	public abstract class QueryBase<TConnection, TCommand> 
+		where TConnection: class, IDbConnection 
+		where TCommand : class, IDbCommand
+	{
+		protected QueryBase(TConnection connection)
 		{
-			SqlBinder = sq;
+			DataConnection = connection;
 		}
 
-		internal Query(SqlBinder sq, string script)
+		protected QueryBase(TConnection connection, string script)
+			: this(connection)
 		{
-			SqlBinder = sq;
 			SqlBinderScript = script;
 		}
 
 		/// <summary>
-		/// Gets the parent SqlBinder class.
+		/// Basic, assumed, ADO.Net type mappings. This can be overriden on any level (Query, ConditionValue).
 		/// </summary>
-		public SqlBinder SqlBinder { get; internal set; }
+		private Dictionary<Type, DbType> _dbTypeMap { get; } =
+			new Dictionary<Type, DbType>
+			{
+				[typeof(byte)] = DbType.Byte,
+				[typeof(sbyte)] = DbType.SByte,
+				[typeof(short)] = DbType.Int16,
+				[typeof(ushort)] = DbType.UInt16,
+				[typeof(int)] = DbType.Int32,
+				[typeof(uint)] = DbType.UInt32,
+				[typeof(long)] = DbType.Int64,
+				[typeof(ulong)] = DbType.UInt64,
+				[typeof(float)] = DbType.Single,
+				[typeof(double)] = DbType.Double,
+				[typeof(decimal)] = DbType.Decimal,
+				[typeof(bool)] = DbType.Boolean,
+				[typeof(string)] = DbType.String,
+				[typeof(char)] = DbType.StringFixedLength,
+				[typeof(Guid)] = DbType.Guid,
+				[typeof(DateTime)] = DbType.DateTime,
+				[typeof(DateTimeOffset)] = DbType.DateTimeOffset,
+				[typeof(byte[])] = DbType.Binary
+			};
+
+		/// <summary>
+		/// When overriden in a derived class it allows customizing ADO DbType guessing based on clr types.
+		/// </summary>
+		protected virtual DbType OnResolveDbType(Type clrType)
+		{
+			var clrTypeNN = Nullable.GetUnderlyingType(clrType) ?? clrType;
+			return _dbTypeMap.ContainsKey(clrTypeNN) ? _dbTypeMap[clrTypeNN] : DbType.Object;
+		}
+
+		/// <summary>
+		/// Gets or sets default parameter format string for all queries. See <see cref="FormatParameterName"/> event.
+		/// </summary>
+		protected virtual string DefaultParameterFormat { get; } = "{0}";
+
+		/// <summary>
+		/// Occurs when parameter is to be formatted for the SQL ouput. Use this to specify custom parameter tags for your DBMS.
+		/// </summary>
+		public event FormatParameterEventHandler FormatParameterName;
+
+		/// <summary>
+		/// Fires an event which can be used to format all or some queries and can be overriden in a derived class.
+		/// </summary>
+		private string FormatParameterNameInternal(string parameterName)
+		{
+			var e = new FormatParameterEventArgs
+			{
+				ParameterName = parameterName,
+				FormattedName = string.Format(DefaultParameterFormat, parameterName)
+			};
+			OnFormatParameterName(this, e);
+			return e.FormattedName;
+		}
+
+		protected virtual void OnFormatParameterName(object sender, FormatParameterEventArgs e) => FormatParameterName?.Invoke(sender, e);
+
+		/// <summary>
+		/// Gets or sets a data connection which will be used to create commands and command parameters.
+		/// </summary>
+		public TConnection DataConnection { get; set; }
+
+		/// <summary>
+		/// Gets or sets a value indicating whether script parser exceptions should be thrown.
+		/// </summary>
+		public bool ThrowScriptErrorException { get; set; }
 
 		/// <summary>
 		/// Gets or sets an SqlBinder script that was passed to this query.
@@ -42,7 +140,7 @@ namespace SqlBinder
 		public List<Condition> Conditions { get; internal set; } = new List<Condition>();
 
 		/// <summary>
-		/// Gets or sets a collection of query-scoped variables that will be passed onto the parser engine.
+		/// Gets or sets a collection of variables that will be passed onto the parser engine.
 		/// </summary>
 		public Dictionary<string, object> Variables { get; set; } = new Dictionary<string, object>();
 
@@ -57,9 +155,9 @@ namespace SqlBinder
 		public string ParserWarnings { get; private set; }
 
 		/// <summary>
-		/// Gets a <see cref="IDbCommand"/> associated with this query.
+		/// Gets a <see cref="TCommand"/> associated with this query.
 		/// </summary>
-		public IDbCommand DbCommand { get; private set; } 
+		public TCommand DbCommand { get; private set; } 
 		
 		/// <summary>
 		/// Creates a condition for the query.
@@ -258,15 +356,16 @@ namespace SqlBinder
 		private readonly HashSet<Condition> _processedConditions = new HashSet<Condition>();
 
 		/// <summary>
-		/// Processes the script and creates a <see cref="IDbCommand"/> command.
+		/// Processes the script and creates a <see cref="TCommand"/> command.
 		/// </summary>			
-		public virtual IDbCommand CreateCommand()
+		[System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Security", "CA2100:Review SQL queries for security vulnerabilities")]
+		public virtual TCommand CreateCommand()
 		{
 			var parser = new Parser();
 
-			parser.RequestParameterValue += parser_RequestParameterValue;
+			parser.RequestParameterValue += Parser_RequestParameterValue;
 
-			DbCommand = SqlBinder.DataConnection.CreateCommand();
+			DbCommand = (TCommand)DataConnection.CreateCommand();
 			DbCommand.CommandType = CommandType.Text;
 
 			ParserBuffer pr;
@@ -283,7 +382,7 @@ namespace SqlBinder
 			if (!pr.IsValid)
 			{
 				ParserErrors = pr.Errors;
-				if (SqlBinder.ThrowScriptErrorException && pr.CompileException != null)
+				if (ThrowScriptErrorException && pr.CompileException != null)
 					throw new ParserException(pr.CompileException);
 			}
 
@@ -298,7 +397,7 @@ namespace SqlBinder
 			return DbCommand;
 		}		
 
-		private void parser_RequestParameterValue(object sender, RequestParameterArgs e)
+		private void Parser_RequestParameterValue(object sender, RequestParameterArgs e)
 		{
 			var cond = Conditions.FirstOrDefault(c => string.CompareOrdinal(c.Parameter, e.Parameter.Name) == 0);
 			
@@ -323,8 +422,6 @@ namespace SqlBinder
 
 				if (Variables.ContainsKey(variableName))
 					variableValue = Variables[variableName];
-				else if (SqlBinder.Variables.ContainsKey(variableName))
-					variableValue = SqlBinder.Variables[variableName];
 
 				if (variableValue != null)
 				{
@@ -374,7 +471,7 @@ namespace SqlBinder
 								var paramName = $"p{parameter}_{paramCnt}";
 								var param = AddCommandParameter(paramName, subValue);
 								conditionValue.ProcessParameter(param);
-								sqlParamNames.Add(SqlBinder.FormatParameterNameInternal(this, paramName));
+								sqlParamNames.Add(FormatParameterNameInternal(paramName));
 								paramCnt++;
 							}
 
@@ -390,7 +487,7 @@ namespace SqlBinder
 							var paramName = $"p{parameter}_{paramCnt}";
 							var param = AddCommandParameter(paramName, value);
 							conditionValue.ProcessParameter(param);
-							paramsSql[i] = SqlBinder.FormatParameterNameInternal(this, paramName);
+							paramsSql[i] = FormatParameterNameInternal(paramName);
 						}
 						else
 							paramsSql[i] = value;
@@ -408,11 +505,6 @@ namespace SqlBinder
 				throw new InvalidConditionException(conditionValue, sqlOperator, ex);
 			}
 		}
-
-		/// <summary>
-		/// When overriden in a derived class it allows customizing ADO DbType guessing based on clr types.
-		/// </summary>
-		protected virtual DbType OnResolveDbType(Type type) => SqlBinder.ResolveDbType(type);
 
 		/// <summary>
 		/// Delegate that can be used to intercept and alter command parameters on the fly. Use this to pass custom DBMS parameters. This is called

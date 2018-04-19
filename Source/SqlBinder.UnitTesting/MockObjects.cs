@@ -7,11 +7,17 @@ using System.Linq;
 
 namespace SqlBinder.UnitTesting
 {
-	public class MockSqlBinder : SqlBinder
+	public class MockQuery : QueryBase<MockDbConnection, MockDbCommand>
 	{
-		public MockSqlBinder(IDbConnection dataConnection) 
-			: base(dataConnection) { }
+		public MockQuery(MockDbConnection connection) 
+			: base(connection)
+		{
+		}
 
+		public MockQuery(MockDbConnection connection, string script) 
+			: base(connection, script)
+		{
+		}
 
 		protected override string DefaultParameterFormat => ":{0}";
 	}

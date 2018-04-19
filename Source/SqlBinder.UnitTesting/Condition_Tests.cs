@@ -13,18 +13,16 @@ namespace SqlBinder.UnitTesting
 		[TestClass]
 		public class Condition_Tests
 		{
-			private MockSqlBinder _binder;
-
 			[TestInitialize]
 			public void InitializeTest()
 			{
-				_binder = new MockSqlBinder(_connection);
+				//
 			}
 
 			[TestMethod]
 			public void BoolConditions_1()
 			{
-				var query = _binder.CreateQuery("SELECT * FROM TABLE1 {WHERE {COLUMN1 [Criteria1]}}");
+				var query = new MockQuery(_connection, "SELECT * FROM TABLE1 {WHERE {COLUMN1 [Criteria1]}}");
 
 				// IS
 				query.SetCondition("Criteria1", new BoolValue(true));
@@ -47,7 +45,7 @@ namespace SqlBinder.UnitTesting
 			[TestMethod]
 			public void DateConditions_1()
 			{
-				var query = _binder.CreateQuery("SELECT * FROM TABLE1 {WHERE {COLUMN1 [Criteria1]}}");
+				var query = new MockQuery(_connection, "SELECT * FROM TABLE1 {WHERE {COLUMN1 [Criteria1]}}");
 
 				var dt1 = DateTime.Now.AddDays(-10);
 				var dt2 = DateTime.Now;
@@ -141,7 +139,7 @@ namespace SqlBinder.UnitTesting
 			[TestMethod]
 			public void NumberConditions_1()
 			{
-				var query = _binder.CreateQuery("SELECT * FROM TABLE1 {WHERE {COLUMN1 [Criteria1]}}");
+				var query = new MockQuery(_connection,"SELECT * FROM TABLE1 {WHERE {COLUMN1 [Criteria1]}}");
 
 				Int32 n1 = 123;
 				Int32 n2 = 456;
@@ -235,7 +233,7 @@ namespace SqlBinder.UnitTesting
 			[TestMethod]
 			public void NumberConditions_2()
 			{
-				var query = _binder.CreateQuery("SELECT * FROM TABLE1 {WHERE {COLUMN1 [Criteria1]}}");
+				var query = new MockQuery(_connection,"SELECT * FROM TABLE1 {WHERE {COLUMN1 [Criteria1]}}");
 
 				decimal nDec = 123;
 				double nDbl = 123;
@@ -344,7 +342,7 @@ namespace SqlBinder.UnitTesting
 			[TestMethod]
 			public void StringConditions_1()
 			{
-				var query = _binder.CreateQuery("SELECT * FROM TABLE1 {WHERE {COLUMN1 [Criteria1]}}");
+				var query = new MockQuery(_connection,"SELECT * FROM TABLE1 {WHERE {COLUMN1 [Criteria1]}}");
 
 				var s1 = "Value 1";
 				var s2 = "Value 2";

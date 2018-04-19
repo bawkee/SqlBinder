@@ -108,9 +108,9 @@
 						<ColumnDefinition Width="Auto" />
 						<ColumnDefinition />
 					</Grid.ColumnDefinitions>
-					<DatePicker Grid.Column="0" SelectedDate="{Binding FromOrderDate}" />
+					<DatePicker Grid.Column="0" SelectedDate="{Binding FromOrderDate}" DisplayDate="{Binding DefaultFromDate, Mode=OneTime}" />
 					<TextBlock Grid.Column="1" Text="-" Margin="4,0" />
-					<DatePicker Grid.Column="2" SelectedDate="{Binding ToOrderDate}" />
+					<DatePicker Grid.Column="2" SelectedDate="{Binding ToOrderDate}" DisplayDate="{Binding DefaultToDate, Mode=OneTime}" />
 				</Grid>
 
 				<Label Margin="0,2,0,0">Required Date (from-to):</Label>
@@ -120,9 +120,9 @@
 						<ColumnDefinition Width="Auto" />
 						<ColumnDefinition />
 					</Grid.ColumnDefinitions>
-					<DatePicker Grid.Column="0" SelectedDate="{Binding FromRequiredDate}" />
+					<DatePicker Grid.Column="0" SelectedDate="{Binding FromRequiredDate}" DisplayDate="{Binding DefaultFromDate, Mode=OneTime}" />
 					<TextBlock Grid.Column="1" Text="-" Margin="4,0" />
-					<DatePicker Grid.Column="2" SelectedDate="{Binding ToRequiredDate}" />
+					<DatePicker Grid.Column="2" SelectedDate="{Binding ToRequiredDate}" DisplayDate="{Binding DefaultToDate, Mode=OneTime}" />
 				</Grid>
 
 				<Label Margin="0,2,0,0">Shipped Date (from-to):</Label>
@@ -132,9 +132,9 @@
 						<ColumnDefinition Width="Auto" />
 						<ColumnDefinition />
 					</Grid.ColumnDefinitions>
-					<DatePicker Grid.Column="0" SelectedDate="{Binding FromShippedDate}" />
+					<DatePicker Grid.Column="0" SelectedDate="{Binding FromShippedDate}" DisplayDate="{Binding DefaultFromDate, Mode=OneTime}" />
 					<TextBlock Grid.Column="1" Text="-" Margin="4,0" />
-					<DatePicker Grid.Column="2" SelectedDate="{Binding ToShippedDate}" />
+					<DatePicker Grid.Column="2" SelectedDate="{Binding ToShippedDate}" DisplayDate="{Binding DefaultToDate, Mode=OneTime}" />
 				</Grid>
 
 				<Label Margin="0,2,0,0">Freight Total (from-to):</Label>

@@ -14,18 +14,16 @@ namespace SqlBinder.UnitTesting
 		[TestClass]
 		public class Moderate_Sql
 		{
-			private MockSqlBinder _binder;
-
 			[TestInitialize]
 			public void InitializeTest()
 			{
-				_binder = new MockSqlBinder(_connection);
+				//
 			}
 
 			[TestMethod]
 			public void CommonSql_1()
 			{
-				var query = _binder.CreateQuery("SELECT * FROM TABLE1 {WHERE {COLUMN1 [Criteria1]}}");
+				var query = new MockQuery(_connection,"SELECT * FROM TABLE1 {WHERE {COLUMN1 [Criteria1]}}");
 
 				query.SetCondition("Criteria1", new BoolValue(true));
 
@@ -41,7 +39,7 @@ namespace SqlBinder.UnitTesting
 			[TestMethod]
 			public void CommonSql_2()
 			{
-				var query = _binder.CreateQuery("SELECT * FROM TABLE1 {WHERE{JUNK 1} {COLUMN1 [Criteria1]} {JUNK 2}}");
+				var query = new MockQuery(_connection, "SELECT * FROM TABLE1 {WHERE{JUNK 1} {COLUMN1 [Criteria1]} {JUNK 2}}");
 
 				query.SetCondition("Criteria1", new BoolValue(true));
 
@@ -57,7 +55,7 @@ namespace SqlBinder.UnitTesting
 			[TestMethod]
 			public void CommonSql_3()
 			{
-				var query = _binder.CreateQuery("SELECT * FROM TABLE1 {WHERE {COLUMN1 [Criteria1]} {COLUMN2 [Criteria2]}}");
+				var query = new MockQuery(_connection, "SELECT * FROM TABLE1 {WHERE {COLUMN1 [Criteria1]} {COLUMN2 [Criteria2]}}");
 
 				query.SetCondition("Criteria1", new BoolValue(true));
 				query.SetCondition("Criteria2", new NumberValue(13));
@@ -76,7 +74,7 @@ namespace SqlBinder.UnitTesting
 			[TestMethod]
 			public void CommonSql_4()
 			{
-				var query = _binder.CreateQuery("SELECT * FROM TABLE1 {WHERE {COLUMN1 [Criteria1]} {JUNK 1} {COLUMN2 [Criteria2]}} {JUNK 2}");
+				var query = new MockQuery(_connection, "SELECT * FROM TABLE1 {WHERE {COLUMN1 [Criteria1]} {JUNK 1} {COLUMN2 [Criteria2]}} {JUNK 2}");
 
 				query.SetCondition("Criteria1", new BoolValue(true));
 				query.SetCondition("Criteria2", new NumberValue(13));
@@ -97,7 +95,7 @@ namespace SqlBinder.UnitTesting
 			[TestMethod]
 			public void CommonSql_5()
 			{
-				var query = _binder.CreateQuery("SELECT * FROM TABLE1 {WHERE {COLUMN1 [Criteria1]}};");
+				var query = new MockQuery(_connection, "SELECT * FROM TABLE1 {WHERE {COLUMN1 [Criteria1]}};");
 
 				query.SetCondition("Criteria1", new CustomParameterlessConditionValue("test"));
 
@@ -119,7 +117,7 @@ namespace SqlBinder.UnitTesting
 			[TestMethod]
 			public void CommonSql_6()
 			{
-				var query = _binder.CreateQuery("SELECT * FROM TABLE1 {WHERE {COLUMN1 [Criteria1]} {COLUMN2 [Criteria2]} {COLUMN3 [Criteria3]}};");
+				var query = new MockQuery(_connection, "SELECT * FROM TABLE1 {WHERE {COLUMN1 [Criteria1]} {COLUMN2 [Criteria2]} {COLUMN3 [Criteria3]}};");
 
 				query.SetCondition("Criteria1", new CustomConditionValue(1, 2, 3));
 				query.SetCondition("Criteria2", new CustomParameterlessConditionValue("test"));
@@ -152,7 +150,7 @@ namespace SqlBinder.UnitTesting
 				// Slightly more complex query. We're getting Orders by Customer's name and OrderDate but we also have a possibility to filter by ShippedDate 
 				// which we will omit in this test. We'll looking for orders shipped in November '95 from a customer whose name begins with Thomas.
 
-				var query = _binder.CreateQuery("SELECT Orders.OrderID, Customers.ContactName, Orders.OrderDate, Orders.ShippedDate " +
+				var query = new MockQuery(_connection, "SELECT Orders.OrderID, Customers.ContactName, Orders.OrderDate, Orders.ShippedDate " +
 				                                "FROM Orders, Customers " +
 				                                "WHERE Customers.CustomerID = Orders.CustomerID " +
 				                                "{AND {Customers.ContactName [ContactName]} " +
@@ -194,7 +192,7 @@ namespace SqlBinder.UnitTesting
 				// This means we have 3 different conditions clustered inside a single group that generates an OR query (condition1 OR condition2). Also, now, we're looking at
 				// the shipment date rather than order date.
 
-				var query = _binder.CreateQuery("SELECT Orders.OrderID, Customers.ContactName, Orders.OrderDate, Orders.ShippedDate \n" +
+				var query = new MockQuery(_connection, "SELECT Orders.OrderID, Customers.ContactName, Orders.OrderDate, Orders.ShippedDate \n" +
 												"FROM Orders, Customers \n" +
 												"WHERE Customers.CustomerID = Orders.CustomerID \n" +
 												"{AND @{({Customers.ContactName [ContactNameFirst]} {Customers.ContactName [ContactNameMiddle]} {Customers.ContactName [ContactNameLast]})} \n" +
@@ -242,7 +240,7 @@ namespace SqlBinder.UnitTesting
 			[TestMethod]
 			public void NullSql_1()
 			{
-				var query = _binder.CreateQuery("SELECT * FROM TABLE1 {WHERE {COLUMN1 [Criteria1]}}");
+				var query = new MockQuery(_connection, "SELECT * FROM TABLE1 {WHERE {COLUMN1 [Criteria1]}}");
 
 				// Set the condition
 				query.SetCondition("Criteria1", new StringValue((string)null));
@@ -275,7 +273,7 @@ namespace SqlBinder.UnitTesting
 			[TestMethod]
 			public void NullSql_2()
 			{
-				var query = _binder.CreateQuery("SELECT * FROM TABLE1 {WHERE {COLUMN1 [Criteria1]}}");
+				var query = new MockQuery(_connection, "SELECT * FROM TABLE1 {WHERE {COLUMN1 [Criteria1]}}");
 
 				// Set the DateTime condition
 				query.SetCondition("Criteria1", new DateValue((DateTime?)null));
@@ -317,7 +315,7 @@ namespace SqlBinder.UnitTesting
 			[TestMethod]
 			public void EmptyStringSql()
 			{
-				var query = _binder.CreateQuery("SELECT * FROM TABLE1 {WHERE {COLUMN1 [Criteria1]}}");
+				var query = new MockQuery(_connection, "SELECT * FROM TABLE1 {WHERE {COLUMN1 [Criteria1]}}");
 
 				// Set the condition
 				query.SetCondition("Criteria1", new StringValue(""));
@@ -355,10 +353,10 @@ namespace SqlBinder.UnitTesting
 			[TestMethod]
 			public void Variables_1()
 			{
-				var query = _binder.CreateQuery("SELECT * FROM TABLE1 {WHERE {COLUMN1 [Variable1]}}");
+				var query = new MockQuery(_connection, "SELECT * FROM TABLE1 {WHERE {COLUMN1 [Variable1]}}");
 				var variable = "= 'Some Value'";
 
-				_binder.DefineVariable("Variable1", variable);
+				query.DefineVariable("Variable1", variable);
 
 				var cmd = query.CreateCommand();
 

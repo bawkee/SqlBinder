@@ -12,7 +12,7 @@ namespace SqlBinder.DemoApp.ViewModels
 	{
 		public ToggleVisibilityViewModel(bool isVisible = false)
 		{
-			IsVisible = IsVisible;
+			IsVisible = isVisible;
 			ToggleCommand = CreateCommand(OnToggle);
 		}
 

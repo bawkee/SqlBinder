@@ -10,13 +10,11 @@ namespace SqlBinder.UnitTesting
 		/// </summary>
 		[TestClass]
 		public class Parser_Tests
-		{
-			private MockSqlBinder _binder;
-
+		{			
 			[TestInitialize]
 			public void InitializeTest()
 			{
-				_binder = new MockSqlBinder(_connection);
+				//
 			}
 
 			[TestMethod]
@@ -25,7 +23,7 @@ namespace SqlBinder.UnitTesting
 				var withoutComments = "SELECT * FROM TABLE1 WHERE TABLE1.COLUMN1 = 123";
 				var withComments = "SELECT * FROM TABLE1{*, TABLE2*} WHERE TABLE1.COLUMN1 = 123{* AND TABLE2.COLUMN1 = TABLE1.COLUMN1 {AND {TABLE1.COLUMN1 [SomeCriteria]}}*}";
 
-				AssertCommand(_binder.CreateQuery(withComments).CreateCommand(), withoutComments);
+				AssertCommand(new MockQuery(_connection, withComments).CreateCommand(), withoutComments);
 			}
 
 			[TestMethod]
@@ -37,7 +35,7 @@ namespace SqlBinder.UnitTesting
 				                   " * They should work fine *} \n" +
 				                   "SELECT * FROM TABLE1";
 
-				AssertCommand(_binder.CreateQuery(withComments).CreateCommand(), withoutComments);
+				AssertCommand(new MockQuery(_connection, withComments).CreateCommand(), withoutComments);
 			}
 
 			[TestMethod]
@@ -46,7 +44,7 @@ namespace SqlBinder.UnitTesting
 				// Literals should be ignored entirely
 				var sql = "SELECT * FROM TABLE1 WHERE COLUMN1 = 'This is some {literal text} that includes @{special characters} like [this] or $[this]$ or ${ this maybe }$.'";
 
-				AssertCommand(_binder.CreateQuery(sql).CreateCommand(), sql);
+				AssertCommand(new MockQuery(_connection, sql).CreateCommand(), sql);
 			}
 
 			[TestMethod]
@@ -56,7 +54,7 @@ namespace SqlBinder.UnitTesting
 				var sql = "SELECT * FROM TABLE1 WHERE COLUMN1 = 123 /* This comment should include ${this scope}$ because it was escaped. */";
 				var expected = "SELECT * FROM TABLE1 WHERE COLUMN1 = 123 /* This comment should include {this scope} because it was escaped. */";
 
-				AssertCommand(_binder.CreateQuery(sql).CreateCommand(), expected);
+				AssertCommand(new MockQuery(_connection, sql).CreateCommand(), expected);
 			}
 
 			[TestMethod]
@@ -65,9 +63,9 @@ namespace SqlBinder.UnitTesting
 				// Escaping square brackets with dollar sign, a potentially common scenario in OLEDB queries
 				var sql = "SELECT * FROM TABLE1 {WHERE {$[Some Column 1]$ [SomeCriteria1]} {$[Some Column 2]$ [SomeCriteria2]} {$[Some Column 3]$ [SomeCriteria3]}}";
 				var expected = "SELECT * FROM TABLE1 WHERE [Some Column 1] = :pSomeCriteria1_1 AND [Some Column 3] = :pSomeCriteria3_1";
-
-				_binder.ThrowScriptErrorException = true;
-				var query = _binder.CreateQuery(sql);
+				
+				var query = new MockQuery(_connection, sql);
+				query.ThrowScriptErrorException = true;
 
 				query.SetCondition("SomeCriteria1", 123);
 				query.SetCondition("SomeCriteria3", 456);

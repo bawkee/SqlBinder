@@ -59,24 +59,5 @@ namespace SqlBinder.Properties {
                 resourceCulture = value;
             }
         }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Matches found per template for &apos;{0}&apos; class:
-        ///.
-        /// </summary>
-        internal static string MatchesFoundPerTemplateForClass {
-            get {
-                return ResourceManager.GetString("MatchesFoundPerTemplateForClass", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Template chosen: {0}.
-        /// </summary>
-        internal static string TemplateChosen {
-            get {
-                return ResourceManager.GetString("TemplateChosen", resourceCulture);
-            }
-        }
     }
 }

@@ -16,18 +16,17 @@ namespace SqlBinder.UnitTesting
 		{
 			private static string _expectedSql = "SELECT * FROM TABLE1";
 			private static string _expectedSqlComment = "/* Test comment */";
-			private MockSqlBinder _binder;
 
 			[TestInitialize]
 			public void InitializeTest()
 			{
-				_binder = new MockSqlBinder(_connection);
+				//
 			}
 
 			[TestMethod]
 			public void Baby_Sql_1()
 			{
-				AssertCommand(_binder.CreateQuery("SELECT * FROM TABLE1").CreateCommand());
+				AssertCommand(new MockQuery(_connection, "SELECT * FROM TABLE1").CreateCommand());
 			}
 
 			[TestMethod]
@@ -43,7 +42,7 @@ namespace SqlBinder.UnitTesting
 					"{JUNK ON THE LEFT} SELECT * {MIDDLE JUNK 1} {MIDDLE JUNK 2}   {MIDDLE JUNK 3}FROM TABLE1 {JUNK ON THE RIGHT {NESTED JUNK}}",
 					"{JUNK: ~!@#$%^&*()_+~<>?,./;':}SELECT * FROM TABLE1 {JUNK ON THE RIGHT}",
 				})
-					AssertCommand(_binder.CreateQuery(junkSql).CreateCommand());
+					AssertCommand(new MockQuery(_connection, junkSql).CreateCommand());
 			}
 
 			[TestMethod]
@@ -58,7 +57,7 @@ namespace SqlBinder.UnitTesting
 					"{JUNK ON THE LEFT {NESTED JUNK/* Test comment */}} SELECT * FROM TABLE1 {JUNK ON THE RIGHT {NESTED JUNK}}",
 					"{JUNK ON THE LEFT} SELECT * {/* Test comment */JUNK ON THE MIDDLE/* Test comment */}FROM TABLE1 {JUNK ON THE RIGHT {NESTED JUNK}}",
 				})
-					AssertCommand(_binder.CreateQuery(junkSql).CreateCommand());
+					AssertCommand(new MockQuery(_connection, junkSql).CreateCommand());
 			}
 
 			[TestMethod]
@@ -73,7 +72,7 @@ namespace SqlBinder.UnitTesting
 					"{* Test comment {* Nested comment *} {Curly braces junk} *}{JUNK ON THE LEFT {NESTED JUNK}} SELECT * FROM TABLE1 {JUNK ON THE RIGHT {NESTED JUNK}}",
 					"{JUNK ON THE LEFT} {* Special characters:[asdf][[[]}}}}~@#$%^&*()_+:'<>,./? *}SELECT * {JUNK ON THE MIDDLE}FROM TABLE1 {JUNK ON THE RIGHT {NESTED JUNK}}",
 				})
-					AssertCommand(_binder.CreateQuery(junkSql).CreateCommand());
+					AssertCommand(new MockQuery(_connection, junkSql).CreateCommand());
 			}
 
 			[TestMethod]
@@ -87,14 +86,14 @@ namespace SqlBinder.UnitTesting
 					"{JUNK ON THE LEFT {NESTED JUNK [criteria1]}} SELECT * FROM TABLE1 {JUNK ON THE RIGHT {NESTED JUNK [criteria2]}}",
 					"{JUNK ON THE LEFT [criteria1]} SELECT * {JUNK ON THE MIDDLE}FROM TABLE1 {JUNK ON THE RIGHT {NESTED JUNK [criteria2]}}",
 				})
-					AssertCommand(_binder.CreateQuery(junkSql).CreateCommand());
+					AssertCommand(new MockQuery(_connection, junkSql).CreateCommand());
 			}
 
 			[TestMethod]
 			[ExpectedException(typeof(UnmatchedConditionsException))]
 			public void Invalid_Script_1()
 			{
-				var query = _binder.CreateQuery("SELECT * FROM TABLE1");
+				var query = new MockQuery(_connection, "SELECT * FROM TABLE1");
 				query.SetCondition("condition1", 0);
 				AssertCommand(query.CreateCommand());
 			}

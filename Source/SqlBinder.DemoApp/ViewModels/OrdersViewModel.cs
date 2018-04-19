@@ -16,19 +16,6 @@ namespace SqlBinder.DemoApp.ViewModels
 
 		private bool _initialized;
 
-		// Uncomment if you don't want to bother going back to 1995 every time as default value on the picker is current year
-		//public OrdersViewModel()
-		//{
-		//	SetValue(DateTime.ParseExact("01/01/94", "MM/dd/yy", CultureInfo.InvariantCulture), nameof(FromOrderDate));
-		//	SetValue(DateTime.ParseExact("01/01/97", "MM/dd/yy", CultureInfo.InvariantCulture), nameof(ToOrderDate));
-
-		//	SetValue(DateTime.ParseExact("01/01/94", "MM/dd/yy", CultureInfo.InvariantCulture), nameof(FromRequiredDate));
-		//	SetValue(DateTime.ParseExact("01/01/97", "MM/dd/yy", CultureInfo.InvariantCulture), nameof(ToRequiredDate));
-
-		//	SetValue(DateTime.ParseExact("01/01/94", "MM/dd/yy", CultureInfo.InvariantCulture), nameof(FromShippedDate));
-		//	SetValue(DateTime.ParseExact("01/01/97", "MM/dd/yy", CultureInfo.InvariantCulture), nameof(ToShippedDate));
-		//}
-
 		public ObservableCollection<Order> Orders
 		{
 			get => GetValue<ObservableCollection<Order>>();
@@ -195,6 +182,9 @@ namespace SqlBinder.DemoApp.ViewModels
 					DeferredRefreshData();
 			}
 		}
+
+		public DateTime DefaultFromDate { get; } = DateTime.ParseExact("01/01/94", "MM/dd/yy", CultureInfo.InvariantCulture);
+		public DateTime DefaultToDate { get; } = DateTime.ParseExact("01/01/96", "MM/dd/yy", CultureInfo.InvariantCulture);
 
 		public DateTime? ToOrderDate
 		{

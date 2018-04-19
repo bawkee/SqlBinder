@@ -3,7 +3,6 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-             xmlns:local="clr-namespace:SqlBinder.DemoApp.Views"
              xmlns:viewModels="clr-namespace:SqlBinder.DemoApp.ViewModels"
              xmlns:controls="clr-namespace:SqlBinder.DemoApp.Controls"
              mc:Ignorable="d" 
@@ -27,10 +26,10 @@
 			
 			<StackPanel>
 				<Label>From Date:</Label>
-				<DatePicker Width="200" SelectedDateFormat="Long" SelectedDate="{Binding FromDate}" />
+				<DatePicker Width="200" SelectedDateFormat="Long" SelectedDate="{Binding FromDate}" DisplayDate="{Binding DefaultFromDate, Mode=OneTime}" />
 
 				<Label Margin="0,10,0,0">To Date:</Label>
-				<DatePicker Width="200" SelectedDateFormat="Long" SelectedDate="{Binding ToDate}" />
+				<DatePicker Width="200" SelectedDateFormat="Long" SelectedDate="{Binding ToDate}" DisplayDate="{Binding DefaultToDate, Mode=OneTime}" />
 			</StackPanel>
 		</StackPanel>
 

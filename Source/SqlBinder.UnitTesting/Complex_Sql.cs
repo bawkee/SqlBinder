@@ -13,17 +13,12 @@ namespace SqlBinder.UnitTesting
 		[TestClass]
 		public class Complex_Sql
 		{
-			private MockSqlBinder _binder;
-			private Query _query;
+			private MockQuery _query;
 
 			[TestInitialize]
 			public void InitializeTest()
 			{
-				_binder = new MockSqlBinder(_connection)
-				{
-					ThrowScriptErrorException = true
-				};
-				_query = _binder.CreateQuery(
+				_query = new MockQuery(_connection,
 					"SELECT Orders.OrderID, Customers.ContactName, Orders.OrderDate, Orders.ShippedDate\n" +
 				    "FROM Orders, Customers\n" +
 				    "WHERE Customers.CustomerID = Orders.CustomerID\n" +
@@ -33,6 +28,7 @@ namespace SqlBinder.UnitTesting
 				    "{Orders.EmployeeID IN (SELECT EmployeeID FROM Employees WHERE {FirstName [EmployeeFirstName]} {LastName [EmployeeLastName]})}\n" +
 					"{Orders.OrderID IN (SELECT OrderID FROM $[Order Details]$ WHERE ProductID IN (SELECT ProductID FROM Products WHERE {ProductName [ProductName]} {SupplierID IN (SELECT SupplierID FROM Suppliers WHERE {CompanyName [SupplierCompanyName]})}))}\n" +
 				    "{Orders.Freight [Freight]}}");
+				_query.ThrowScriptErrorException = true;
 			}
 
 			/// <summary>
