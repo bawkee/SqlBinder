@@ -22,7 +22,7 @@ namespace SqlBinder.Properties {
     [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "15.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    internal class Exceptions {
+    public class Exceptions {
         
         private static global::System.Resources.ResourceManager resourceMan;
         
@@ -63,7 +63,7 @@ namespace SqlBinder.Properties {
         /// <summary>
         ///   Looks up a localized string similar to Compound parameter {0} does not have a separator defined..
         /// </summary>
-        internal static string CompoundParameterWithNoSeparator {
+        public static string CompoundParameterWithNoSeparator {
             get {
                 return ResourceManager.GetString("CompoundParameterWithNoSeparator", resourceCulture);
             }
@@ -72,7 +72,7 @@ namespace SqlBinder.Properties {
         /// <summary>
         ///   Looks up a localized string similar to Could not find a global variable {0}..
         /// </summary>
-        internal static string CouldNotFindGlobalVariable {
+        public static string CouldNotFindGlobalVariable {
             get {
                 return ResourceManager.GetString("CouldNotFindGlobalVariable", resourceCulture);
             }
@@ -81,7 +81,7 @@ namespace SqlBinder.Properties {
         /// <summary>
         ///   Looks up a localized string similar to Empty sql was returned..
         /// </summary>
-        internal static string EmptySqlReturned {
+        public static string EmptySqlReturned {
             get {
                 return ResourceManager.GetString("EmptySqlReturned", resourceCulture);
             }
@@ -90,7 +90,7 @@ namespace SqlBinder.Properties {
         /// <summary>
         ///   Looks up a localized string similar to Illegal combination of value type and operator..
         /// </summary>
-        internal static string IllegalComboOfValueAndOperator {
+        public static string IllegalComboOfValueAndOperator {
             get {
                 return ResourceManager.GetString("IllegalComboOfValueAndOperator", resourceCulture);
             }
@@ -99,7 +99,7 @@ namespace SqlBinder.Properties {
         /// <summary>
         ///   Looks up a localized string similar to Sql formatting for value of type &apos;{0}&apos; and operator &apos;{1}&apos; is not possible. {2}.
         /// </summary>
-        internal static string InvalidCondition {
+        public static string InvalidCondition {
             get {
                 return ResourceManager.GetString("InvalidCondition", resourceCulture);
             }
@@ -108,7 +108,7 @@ namespace SqlBinder.Properties {
         /// <summary>
         ///   Looks up a localized string similar to There is a missing &apos;{&apos; in the script..
         /// </summary>
-        internal static string MissingLeftCurlyBraces {
+        public static string MissingLeftCurlyBraces {
             get {
                 return ResourceManager.GetString("MissingLeftCurlyBraces", resourceCulture);
             }
@@ -117,7 +117,7 @@ namespace SqlBinder.Properties {
         /// <summary>
         ///   Looks up a localized string similar to There is a missing &apos;[&apos; in the script..
         /// </summary>
-        internal static string MissingLeftSquareBrackets {
+        public static string MissingLeftSquareBrackets {
             get {
                 return ResourceManager.GetString("MissingLeftSquareBrackets", resourceCulture);
             }
@@ -126,7 +126,7 @@ namespace SqlBinder.Properties {
         /// <summary>
         ///   Looks up a localized string similar to There is a missing &apos;}&apos; in the script..
         /// </summary>
-        internal static string MissingRightCurlyBraces {
+        public static string MissingRightCurlyBraces {
             get {
                 return ResourceManager.GetString("MissingRightCurlyBraces", resourceCulture);
             }
@@ -135,7 +135,7 @@ namespace SqlBinder.Properties {
         /// <summary>
         ///   Looks up a localized string similar to There is a missing &apos;]&apos; in the script..
         /// </summary>
-        internal static string MissingRightSquareBrackets {
+        public static string MissingRightSquareBrackets {
             get {
                 return ResourceManager.GetString("MissingRightSquareBrackets", resourceCulture);
             }
@@ -144,7 +144,7 @@ namespace SqlBinder.Properties {
         /// <summary>
         ///   Looks up a localized string similar to More than one scopes were found in a scope containing a compound parameter..
         /// </summary>
-        internal static string MultipleChildScopesInCompound {
+        public static string MultipleChildScopesInCompound {
             get {
                 return ResourceManager.GetString("MultipleChildScopesInCompound", resourceCulture);
             }
@@ -153,7 +153,7 @@ namespace SqlBinder.Properties {
         /// <summary>
         ///   Looks up a localized string similar to Following conditions had no matching parameters in the script: {0}..
         /// </summary>
-        internal static string NoMatchingParams {
+        public static string NoMatchingParams {
             get {
                 return ResourceManager.GetString("NoMatchingParams", resourceCulture);
             }
@@ -162,7 +162,7 @@ namespace SqlBinder.Properties {
         /// <summary>
         ///   Looks up a localized string similar to Parameter {0} does not exist..
         /// </summary>
-        internal static string ParamDoesNotExist {
+        public static string ParamDoesNotExist {
             get {
                 return ResourceManager.GetString("ParamDoesNotExist", resourceCulture);
             }
@@ -171,7 +171,7 @@ namespace SqlBinder.Properties {
         /// <summary>
         ///   Looks up a localized string similar to Parameter {0} was not processed..
         /// </summary>
-        internal static string ParameterNotProcessed {
+        public static string ParameterNotProcessed {
             get {
                 return ResourceManager.GetString("ParameterNotProcessed", resourceCulture);
             }
@@ -180,7 +180,7 @@ namespace SqlBinder.Properties {
         /// <summary>
         ///   Looks up a localized string similar to An exception has occurred in the SqlBinder template parser engine..
         /// </summary>
-        internal static string ParserFailure {
+        public static string ParserFailure {
             get {
                 return ResourceManager.GetString("ParserFailure", resourceCulture);
             }
@@ -189,7 +189,7 @@ namespace SqlBinder.Properties {
         /// <summary>
         ///   Looks up a localized string similar to Number of sql parameter placeholders and number of values don&apos;t match..
         /// </summary>
-        internal static string PlaceholdersAndActualParamsDontMatch {
+        public static string PlaceholdersAndActualParamsDontMatch {
             get {
                 return ResourceManager.GetString("PlaceholdersAndActualParamsDontMatch", resourceCulture);
             }
@@ -198,7 +198,7 @@ namespace SqlBinder.Properties {
         /// <summary>
         ///   Looks up a localized string similar to Brackets inside expression statements are not supported, they will be removed..
         /// </summary>
-        internal static string SubExpressionsNotSupported {
+        public static string SubExpressionsNotSupported {
             get {
                 return ResourceManager.GetString("SubExpressionsNotSupported", resourceCulture);
             }

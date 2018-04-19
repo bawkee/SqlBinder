@@ -55,8 +55,10 @@
   <ItemGroup>
     <Compile Include="Complex_Sql.cs" />
     <Compile Include="Condition_Tests.cs" />
+    <Compile Include="CustomConditionValues.cs" />
     <Compile Include="MockObjects.cs" />
     <Compile Include="Moderate_Sql.cs" />
+    <Compile Include="Negative_Tests.cs" />
     <Compile Include="Parser_Tests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Simplest_Sql.cs" />

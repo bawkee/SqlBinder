@@ -11,14 +11,16 @@ namespace SqlBinder.ConditionValues
 
 		public BoolValue(bool? value) { _value = value; }
 
-		protected override object[] OnGetValues() { return new [] { _value }; }
+		protected override object[] OnGetValues() { return _value == null ? new object[] {} : new [] { _value }; }
 
 		protected override string OnGetSql(int sqlOperator)
 		{
 			switch (sqlOperator)
 			{
-				case (int)Operator.Is: return "= {0}";
-				case (int)Operator.IsNot: return "!= {0}";
+				case (int)Operator.Is:
+					return _value == null ? "IS NULL" : "= {0}";
+				case (int)Operator.IsNot:
+					return _value == null ? "IS NOT NULL" : "!= {0}";
 				default: throw new InvalidConditionException(this, (Operator)sqlOperator, Exceptions.IllegalComboOfValueAndOperator);
 			}
 		}

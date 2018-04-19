@@ -3,7 +3,8 @@
 namespace SqlBinder
 {
 	/// <summary>
-	/// Basic sql operators that can be used with conditions.
+	/// Basic sql operators that can be used with conditions. Please note that if you want to use custom operators on custom conditions, you should start
+	/// with 50 (0x32), as everything below is reserved and may be used internally.
 	/// </summary>
 	public enum Operator
 	{
@@ -75,7 +76,7 @@ namespace SqlBinder
 	}
 
 	/// <summary>
-	/// Basic operators for string condition shortcut overloads
+	/// Basic operators for string condition shortcut overloads.
 	/// </summary>
 	public enum StringOperator
 	{

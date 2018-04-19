@@ -15,7 +15,7 @@ namespace SqlBinder
 		}
 
 		/// <summary>
-		/// Gets the parameter associated with this condition..
+		/// Gets the parameter associated with this condition.
 		/// </summary>
 		public string Parameter { get; internal set; }
 

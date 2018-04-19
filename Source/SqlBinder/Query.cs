@@ -345,47 +345,55 @@ namespace SqlBinder
 		{
 			try
 			{
-				var sql = conditionValue.GetSql((int)sqlOperator);
+				var sql = conditionValue.GetSql(sqlOperator);
 
 				if (string.IsNullOrEmpty(sql))
 					throw new InvalidOperationException(Exceptions.EmptySqlReturned);
 
-				var formatParams = Regex.Matches(sql, @"{\d*?}");
 				var values = conditionValue.GetValues();
 
-				if (formatParams.Count != values.Length)
-					throw new InvalidOperationException(Exceptions.PlaceholdersAndActualParamsDontMatch);
-
-				if (values.Length <= 0)
+				if (values == null || values.Length <= 0)
 					return sql;
 
 				var paramsSql = new object[values.Length];
 				var paramCnt = 1;
 
+				// Create command paramete(s) for each value
 				for (var i = 0; i < values.Length; i++)
 				{
 					var value = values[i];
 
 					if (!(value is string) && value is IEnumerable valueEnumerable)
 					{
-						// This value is enumerable (e.g. IN, NOT IN)
-						var sqlParamNames = new List<string>();
-						foreach (var subValue in valueEnumerable)
+						if (conditionValue.UseBindVariables)
 						{
-							var paramName = $"p{parameter}_{paramCnt}";
-							var param = AddCommandParameter(paramName, subValue);
-							conditionValue.ProcessParameter(param);
-							sqlParamNames.Add(SqlBinder.FormatParameterNameInternal(this, paramName));
-							paramCnt++;
+							// This value is enumerable (e.g. IN, NOT IN)
+							var sqlParamNames = new List<string>();
+							foreach (var subValue in valueEnumerable)
+							{
+								var paramName = $"p{parameter}_{paramCnt}";
+								var param = AddCommandParameter(paramName, subValue);
+								conditionValue.ProcessParameter(param);
+								sqlParamNames.Add(SqlBinder.FormatParameterNameInternal(this, paramName));
+								paramCnt++;
+							}
+
+							paramsSql[i] = string.Join(", ", sqlParamNames.ToArray());
 						}
-						paramsSql[i] = string.Join(", ", sqlParamNames.ToArray());
+						else
+							paramsSql[i] = string.Join(", ", valueEnumerable);
 					}
 					else
 					{
-						var paramName = $"p{parameter}_{paramCnt}";
-						var param = AddCommandParameter(paramName, value);
-						conditionValue.ProcessParameter(param);
-						paramsSql[i] = SqlBinder.FormatParameterNameInternal(this, paramName);
+						if (conditionValue.UseBindVariables)
+						{
+							var paramName = $"p{parameter}_{paramCnt}";
+							var param = AddCommandParameter(paramName, value);
+							conditionValue.ProcessParameter(param);
+							paramsSql[i] = SqlBinder.FormatParameterNameInternal(this, paramName);
+						}
+						else
+							paramsSql[i] = value;
 					}
 
 					paramCnt++;

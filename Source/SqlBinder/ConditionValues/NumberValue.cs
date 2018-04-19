@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using SqlBinder.Properties;
 
 namespace SqlBinder.ConditionValues
@@ -8,61 +9,65 @@ namespace SqlBinder.ConditionValues
 	/// </summary>
 	public class NumberValue : ConditionValue
 	{
-		private readonly object[] _values;
+		private object[] _values = {};
 
 		protected NumberValue() { }
 
-		public NumberValue(decimal value) => _values = new object[] { value };
-		public NumberValue(double value) => _values = new object[] { value };
-		public NumberValue(float value) => _values = new object[] { value };
-		public NumberValue(int value) => _values = new object[] { value };
-		public NumberValue(uint value) => _values = new object[] { value };
-		public NumberValue(long value) => _values = new object[] { value };
-		public NumberValue(ulong value) => _values = new object[] { value };
-		public NumberValue(byte value) => _values = new object[] { value };
-		public NumberValue(sbyte value) => _values = new object[] { value };
-		public NumberValue(short value) => _values = new object[] { value };
-		public NumberValue(ushort value) => _values = new object[] { value };
-		public NumberValue(char value) => _values = new object[] { value };
+		public NumberValue(decimal value) => SetValue(value);
+		public NumberValue(double value) => SetValue(value);
+		public NumberValue(float value) => SetValue(value);
+		public NumberValue(int value) => SetValue(value);
+		public NumberValue(uint value) => SetValue(value);
+		public NumberValue(long value) => SetValue(value);
+		public NumberValue(ulong value) => SetValue(value);
+		public NumberValue(byte value) => SetValue(value);
+		public NumberValue(sbyte value) => SetValue(value);
+		public NumberValue(short value) => SetValue(value);
+		public NumberValue(ushort value) => SetValue(value);
+		public NumberValue(char value) => SetValue(value);
 
-		public NumberValue(decimal? value) => _values = new object[] { value };
-		public NumberValue(double? value) => _values = new object[] { value };
-		public NumberValue(float? value) => _values = new object[] { value };
-		public NumberValue(int? value) => _values = new object[] { value };
-		public NumberValue(uint? value) => _values = new object[] { value };
-		public NumberValue(long? value) => _values = new object[] { value };
-		public NumberValue(ulong? value) => _values = new object[] { value };
-		public NumberValue(byte? value) => _values = new object[] { value };
-		public NumberValue(sbyte? value) => _values = new object[] { value };
-		public NumberValue(short? value) => _values = new object[] { value };
-		public NumberValue(ushort? value) => _values = new object[] { value };
-		public NumberValue(char? value) => _values = new object[] { value };
+		public NumberValue(decimal? value) => SetValue(value);
+		public NumberValue(double? value) => SetValue(value);
+		public NumberValue(float? value) => SetValue(value);
+		public NumberValue(int? value) => SetValue(value);
+		public NumberValue(uint? value) => SetValue(value);
+		public NumberValue(long? value) => SetValue(value);
+		public NumberValue(ulong? value) => SetValue(value);
+		public NumberValue(byte? value) => SetValue(value);
+		public NumberValue(sbyte? value) => SetValue(value);
+		public NumberValue(short? value) => SetValue(value);
+		public NumberValue(ushort? value) => SetValue(value);
+		public NumberValue(char? value) => SetValue(value);
 
-		public NumberValue(decimal from, decimal to) => _values = new object[] {from, to};
-		public NumberValue(double from, double to) => _values = new object[] { from, to };
-		public NumberValue(float from, float to) => _values = new object[] { from, to };
-		public NumberValue(int from, int to) => _values = new object[] { from, to };
-		public NumberValue(uint from, uint to) => _values = new object[] { from, to };
-		public NumberValue(long from, long to) => _values = new object[] { from, to };
-		public NumberValue(ulong from, ulong to) => _values = new object[] { from, to };
-		public NumberValue(byte from, byte to) => _values = new object[] { from, to };
-		public NumberValue(sbyte from, sbyte to) => _values = new object[] { from, to };
-		public NumberValue(short from, short to) => _values = new object[] { from, to };
-		public NumberValue(ushort from, ushort to) => _values = new object[] { from, to };
-		public NumberValue(char from, char to) => _values = new object[] { from, to };
+		public NumberValue(decimal from, decimal to) => SetValues(from, to);
+		public NumberValue(double from, double to) => SetValues(from, to);
+		public NumberValue(float from, float to) => SetValues(from, to);
+		public NumberValue(int from, int to) => SetValues(from, to);
+		public NumberValue(uint from, uint to) => SetValues(from, to);
+		public NumberValue(long from, long to) => SetValues(from, to);
+		public NumberValue(ulong from, ulong to) => SetValues(from, to);
+		public NumberValue(byte from, byte to) => SetValues(from, to);
+		public NumberValue(sbyte from, sbyte to) => SetValues(from, to);
+		public NumberValue(short from, short to) => SetValues(from, to);
+		public NumberValue(ushort from, ushort to) => SetValues(from, to);
+		public NumberValue(char from, char to) => SetValues(from, to);
 
-		public NumberValue(IEnumerable<decimal> values) => _values = new object[] { values };
-		public NumberValue(IEnumerable<double> values) => _values = new object[] { values };
-		public NumberValue(IEnumerable<float> values) => _values = new object[] { values };
-		public NumberValue(IEnumerable<int> values) => _values = new object[] { values };
-		public NumberValue(IEnumerable<uint> values) => _values = new object[] { values };
-		public NumberValue(IEnumerable<long> values) => _values = new object[] { values };
-		public NumberValue(IEnumerable<ulong> values) => _values = new object[] { values };
-		public NumberValue(IEnumerable<byte> values) => _values = new object[] { values };
-		public NumberValue(IEnumerable<sbyte> values) => _values = new object[] { values };
-		public NumberValue(IEnumerable<short> values) => _values = new object[] { values };
-		public NumberValue(IEnumerable<ushort> values) => _values = new object[] { values };
-		public NumberValue(IEnumerable<char> values) => _values = new object[] { values };
+		public NumberValue(IEnumerable<decimal> values) => SetValues(values);
+		public NumberValue(IEnumerable<double> values) => SetValues(values);
+		public NumberValue(IEnumerable<float> values) => SetValues(values);
+		public NumberValue(IEnumerable<int> values) => SetValues(values);
+		public NumberValue(IEnumerable<uint> values) => SetValues(values);
+		public NumberValue(IEnumerable<long> values) => SetValues(values);
+		public NumberValue(IEnumerable<ulong> values) => SetValues(values);
+		public NumberValue(IEnumerable<byte> values) => SetValues(values);
+		public NumberValue(IEnumerable<sbyte> values) => SetValues(values);
+		public NumberValue(IEnumerable<short> values) => SetValues(values);
+		public NumberValue(IEnumerable<ushort> values) => SetValues(values);
+		public NumberValue(IEnumerable<char> values) => SetValues(values);
+
+		protected void SetValue(object value) => _values = value == null ? new object[] {} : new [] {value};
+
+		protected void SetValues(params object[] values) => _values = values ?? throw new ArgumentNullException(nameof(values));
 
 		protected override object[] OnGetValues() => _values;
 
@@ -70,16 +75,18 @@ namespace SqlBinder.ConditionValues
 		{			
 			switch (sqlOperator)
 			{
-				case (int)Operator.Is: return "= {0}";
-				case (int)Operator.IsNot: return "!= {0}";
-				case (int)Operator.IsLessThan: return "< {0}";
-				case (int)Operator.IsLessThanOrEqualTo: return "<= {0}";
-				case (int)Operator.IsGreaterThan: return "> {0}";
-				case (int)Operator.IsGreaterThanOrEqualTo: return ">= {0}";
-				case (int)Operator.IsBetween: return "BETWEEN {0} AND {1}";
-				case (int)Operator.IsNotBetween: return "NOT BETWEEN {0} AND {1}";
-				case (int)Operator.IsAnyOf: return "IN ({0})";
-				case (int)Operator.IsNotAnyOf: return "NOT IN ({0})";
+				case (int)Operator.Is:
+					return _values.Length == 0 ? "IS NULL" : CheckSql("= {0}", 1);
+				case (int)Operator.IsNot:
+					return _values.Length == 0 ? "IS NOT NULL" : CheckSql("!= {0}", 1);
+				case (int)Operator.IsLessThan: return CheckSql("< {0}", 1);
+				case (int)Operator.IsLessThanOrEqualTo: return CheckSql("<= {0}", 1);
+				case (int)Operator.IsGreaterThan: return CheckSql("> {0}", 1);
+				case (int)Operator.IsGreaterThanOrEqualTo: return CheckSql(">= {0}", 1);
+				case (int)Operator.IsBetween: return CheckSql("BETWEEN {0} AND {1}", 2);
+				case (int)Operator.IsNotBetween: return CheckSql("NOT BETWEEN {0} AND {1}", 2);
+				case (int)Operator.IsAnyOf: return CheckSql("IN ({0})", 1, true);
+				case (int)Operator.IsNotAnyOf: return CheckSql("NOT IN ({0})", 1, true);
 				default: throw new InvalidConditionException(this, (Operator)sqlOperator, Exceptions.IllegalComboOfValueAndOperator);
 			}
 		}
