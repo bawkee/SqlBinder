@@ -6,6 +6,7 @@ using System.Data.Common;
 using System.Data.OleDb;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using SqlBinder.DemoNorthwindDal.Entities;
@@ -111,7 +112,7 @@ namespace SqlBinder.DemoNorthwindDal.OleDb
 
 		public IEnumerable<CategorySale> GetCategorySales(int[] categoryIds = null, DateTime? fromDate = null, DateTime? toDate = null)
 		{
-			var query = new OleDbQuery(_connection, File.ReadAllText("OleDbSql\\CategorySales.sql"));
+			var query = new OleDbQuery(_connection, GetSqlBinderScript("CategorySales.sql"));
 
 			if (categoryIds?.Any() ?? false)
 				query.SetCondition("categoryIds", categoryIds);
@@ -144,7 +145,7 @@ namespace SqlBinder.DemoNorthwindDal.OleDb
 			bool? isDiscontinued = null,
 			bool priceGreaterThanAvg = false)
 		{
-			var query = new OleDbQuery(_connection, File.ReadAllText("OleDbSql\\Products.sql"));
+			var query = new OleDbQuery(_connection, GetSqlBinderScript("Products.sql"));
 			
 			if (productId != null)
 				query.SetCondition("productId", productId);
@@ -228,7 +229,7 @@ namespace SqlBinder.DemoNorthwindDal.OleDb
 			string shipCity = null,
 			string shipCountry = null)
 		{
-			var query = new OleDbQuery(_connection, File.ReadAllText("OleDbSql\\Orders.sql"));
+			var query = new OleDbQuery(_connection, GetSqlBinderScript("Orders.sql"));
 
 			if (orderId.HasValue)
 				query.SetCondition("orderId", orderId);
@@ -302,6 +303,21 @@ namespace SqlBinder.DemoNorthwindDal.OleDb
 			cmd.CommandText = text;
 			cmd.CommandType = CommandType.Text;
 			return cmd;
+		}
+
+		/// <summary>
+		/// Reads the embedded sql file from the assembly's manifest. This is a pretty safe way to store your sql queries.
+		/// </summary>
+		public static string GetSqlBinderScript(string fileName)
+		{
+			var asm = Assembly.GetExecutingAssembly();
+			var resPath = $"{asm.GetName().Name}.OleDbSql.{fileName}";
+			using (var stream = asm.GetManifestResourceStream(resPath))
+			{
+				if (stream == null)
+					throw new FileNotFoundException("Could not find SqlBinder script in the manifest!", resPath);
+				return new StreamReader(stream).ReadToEnd();
+			}
 		}
 
 		public ObservableCollection<string> TraceLog { get; } = new ObservableCollection<string>();

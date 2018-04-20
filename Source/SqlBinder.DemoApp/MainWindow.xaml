@@ -10,7 +10,8 @@
         Height="750" Width="1260" 
         Background="{x:Static SystemColors.ControlBrush}"
         SnapsToDevicePixels="True"
-        UseLayoutRounding="True">
+        UseLayoutRounding="True" 
+        Icon="Resources/program.ico">
 	
 	<Window.DataContext>
 		<viewModels:MainViewModel />
@@ -52,7 +53,7 @@
 					</DockPanel>
 				</Border>
 				<TextBox Text="{Binding TraceLogString, Mode=OneWay}" FontFamily="Consolas" FontSize="8pt" IsReadOnly="True" Height="200" 
-				         BorderThickness="0" VerticalScrollBarVisibility="Visible" TextChanged="txtLog_OnTextChanged" 
+				         Padding="5,0,5,0" BorderThickness="0" VerticalScrollBarVisibility="Visible" TextChanged="txtLog_OnTextChanged" 
 				         IsVisibleChanged="txtLog_OnIsVisibleChanged" Visibility="{Binding TraceLogToggle.Visibility}" />
 			</DockPanel>
 		</Border>

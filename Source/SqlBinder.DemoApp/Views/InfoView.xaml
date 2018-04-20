@@ -6,7 +6,7 @@
              xmlns:viewModels="clr-namespace:SqlBinder.DemoApp.ViewModels"
              mc:Ignorable="d"                                        
              d:DataContext="{d:DesignInstance viewModels:OrdersViewModel}"
-             d:DesignHeight="450" d:DesignWidth="800"
+             d:DesignWidth="800" 
              >
 
 	<UserControl.Resources>
@@ -35,15 +35,17 @@
 		</ControlTemplate>
 	</UserControl.Resources>
 
-	<StackPanel Margin="10,5,10,5">
-		<TextBlock Style="{StaticResource h1}">SqlBinder Demo</TextBlock>
-		<TextBlock>
-			Welcome! This is a demo application for SqlBinder, a C# SQL templating/formatting library. You can find this demo and the library on <Hyperlink>CodeProject</Hyperlink>
-			or <Hyperlink>GitHub</Hyperlink>. <LineBreak />
-			This demo is a WPF application purely due to convenience of presenting core features of SqlBinder library. It is by no means limited to desktop applications.
-		</TextBlock>
-		
-		<TextBlock>
+	<ScrollViewer>
+		<StackPanel Margin="10,5,10,5">
+			<TextBlock Style="{StaticResource h1}">SqlBinder Demo</TextBlock>
+			<TextBlock>
+			Welcome! This is a demo application for SqlBinder, a C# SQL templating/formatting library. It is intended to demonstrate basic functionalities of SqlBinder. 
+			You can find this demo and the library on <Hyperlink IsEnabled="False">CodeProject</Hyperlink>
+			or <Hyperlink NavigateUri="https://github.com/bawkee/SqlBinder" RequestNavigate="Hyperlink_OnRequestNavigate">GitHub</Hyperlink>. <LineBreak />
+			This demo is a WPF application purely due to convenience of presenting. SqlBinder is by no means limited to desktop applications.
+			</TextBlock>
+
+			<TextBlock>
 			Important notes: <LineBreak/>
 			<StackPanel Style="{StaticResource ul}">
 				<ContentControl Template="{StaticResource bullet}">
@@ -54,9 +56,19 @@
 					<TextBlock>I recommend using the debug log at the bottom of the window - in there you can track SQL templates and parse results as SqlBinder is being used.
 						Data is reloaded every time a demo tab page is opened or a filter field changed.</TextBlock>
 				</ContentControl>
+				<ContentControl Template="{StaticResource bullet}">
+					<TextBlock>The example SqlBinder queries are located in the .\Source\SqlBinder.DemoNorthwindDal\OleDb folder as *.sql text files and are compiled into the 
+						SqlBinder.DemoNorthwindDal assembly itself as embedded resources.</TextBlock>
+				</ContentControl>
 			</StackPanel>
 		</TextBlock>
-	</StackPanel>
-	
+
+			<TextBlock>I hope that you find this library and this example useful. Have fun,<LineBreak/>
+			Bojan Sala
+			</TextBlock>
+
+		</StackPanel>
+	</ScrollViewer>
+
 
 </UserControl>
