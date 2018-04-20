@@ -24,7 +24,7 @@ namespace SqlBinder.UnitTesting
 			}
 
 			[TestMethod]			
-			public void NegativeTest_1()
+			public void Negative_Test_1()
 			{
 				var query = new MockQuery(_connection, "SELECT * FROM TABLE1 {WHERE {COLUMN1 [Criteria1]}}");
 				query.ThrowScriptErrorException = true;
@@ -35,6 +35,7 @@ namespace SqlBinder.UnitTesting
 				try
 				{
 					query.CreateCommand();
+					Assert.Fail();
 				}
 				catch (Exception ex)
 				{
@@ -49,6 +50,7 @@ namespace SqlBinder.UnitTesting
 				try
 				{
 					query.CreateCommand();
+					Assert.Fail();
 				}
 				catch (Exception ex)
 				{
@@ -59,35 +61,48 @@ namespace SqlBinder.UnitTesting
 			}
 
 			[TestMethod]
-			public void NegativeTest_2()
+			public void Negative_Test_2()
 			{
 				var query = new MockQuery(_connection, "SELECT * FROM TABLE1 {WHERE {COLUMN1 [Criteria1]}}");
 				query.ThrowScriptErrorException = true;
 
 				// Set the condition
-				query.SetCondition("Criteria1", new NumberValue((IEnumerable<decimal>)null));
-
 				try
 				{
+					query.SetCondition("Criteria1", new NumberValue((IEnumerable<decimal>)null));
 					query.CreateCommand();
+					Assert.Fail();
 				}
 				catch (Exception ex)
 				{
 					Assert.IsInstanceOfType(ex, typeof(ArgumentException));
 				}
 
-				// Set the condition
-				query.SetCondition("Criteria1", Operator.Contains, new NumberValue(1));
-
+				// Set the condition				
 				try
 				{
+					query.SetCondition("Criteria1", Operator.Contains, new NumberValue(1));
 					query.CreateCommand();
+					Assert.Fail();
 				}
 				catch (Exception ex)
 				{
 					Assert.IsInstanceOfType(ex, typeof(ParserException));
 					Assert.IsNotNull(ex.InnerException);
 					Assert.IsInstanceOfType(ex.InnerException, typeof(InvalidConditionException));
+				}
+
+
+				// Set the condition				
+				try
+				{
+					query.SetCondition("Criteria1", new StringValue(null));
+					query.CreateCommand();
+					Assert.Fail();
+				}
+				catch (Exception ex)
+				{
+					Assert.IsInstanceOfType(ex, typeof(ArgumentException));
 				}
 			}
 		}

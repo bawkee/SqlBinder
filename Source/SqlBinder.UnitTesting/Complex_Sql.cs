@@ -35,7 +35,7 @@ namespace SqlBinder.UnitTesting
 			/// Simple test where the above heavy-duty query is reduced to a simple ID query
 			/// </summary>
 			[TestMethod]
-			public void ComplexSql_1()
+			public void Complex_Sql_1()
 			{
 				_query.SetCondition("OrderID", Operator.Is, new NumberValue(10));
 
@@ -53,14 +53,14 @@ namespace SqlBinder.UnitTesting
 
 				Assert.IsTrue(cmd.Parameters.Count == 1);
 
-				Assert.AreEqual(10, ((IDbDataParameter)cmd.Parameters[0]).Value);
+				Assert.AreEqual(10, cmd.Parameters[0].Value);
 			}
 
 			/// <summary>
 			/// Simple test where we just want orders with specific freight cost
 			/// </summary>
 			[TestMethod]
-			public void ComplexSql_2()
+			public void Complex_Sql_2()
 			{
 				_query.SetCondition("Freight", Operator.IsNotBetween, new NumberValue(50, 100));
 
@@ -78,15 +78,15 @@ namespace SqlBinder.UnitTesting
 
 				Assert.IsTrue(cmd.Parameters.Count == 2);
 
-				Assert.AreEqual(50, ((IDbDataParameter)cmd.Parameters[0]).Value);
-				Assert.AreEqual(100, ((IDbDataParameter)cmd.Parameters[1]).Value);
+				Assert.AreEqual(50, cmd.Parameters[0].Value);
+				Assert.AreEqual(100, cmd.Parameters[1].Value);
 			}
 
 			/// <summary>
 			/// A much more complex query now, we're looking for specific freight, specific dates and product name now.
 			/// </summary>
 			[TestMethod]
-			public void ComplexSql_3()
+			public void Complex_Sql_3()
 			{			
 				_query.SetCondition("ShippedDate", Operator.IsLessThanOrEqualTo,
 					new DateValue(DateTime.Parse("12/30/1995", System.Globalization.CultureInfo.InvariantCulture)));
@@ -114,18 +114,18 @@ namespace SqlBinder.UnitTesting
 
 				Assert.IsTrue(cmd.Parameters.Count == 5);
 
-				Assert.AreEqual(DateTime.Parse("12/30/1995", System.Globalization.CultureInfo.InvariantCulture), ((IDbDataParameter)cmd.Parameters[0]).Value);
-				Assert.AreEqual(DateTime.Parse("9/1/1995", System.Globalization.CultureInfo.InvariantCulture), ((IDbDataParameter)cmd.Parameters[1]).Value);
-				Assert.AreEqual(DateTime.Parse("11/30/1995", System.Globalization.CultureInfo.InvariantCulture), ((IDbDataParameter)cmd.Parameters[2]).Value);
-				Assert.AreEqual("Tofu", ((IDbDataParameter)cmd.Parameters[3]).Value);
-				Assert.AreEqual(200, ((IDbDataParameter)cmd.Parameters[4]).Value);
+				Assert.AreEqual(DateTime.Parse("12/30/1995", System.Globalization.CultureInfo.InvariantCulture), cmd.Parameters[0].Value);
+				Assert.AreEqual(DateTime.Parse("9/1/1995", System.Globalization.CultureInfo.InvariantCulture), cmd.Parameters[1].Value);
+				Assert.AreEqual(DateTime.Parse("11/30/1995", System.Globalization.CultureInfo.InvariantCulture), cmd.Parameters[2].Value);
+				Assert.AreEqual("Tofu", cmd.Parameters[3].Value);
+				Assert.AreEqual(200, cmd.Parameters[4].Value);
 			}
 
 			/// <summary>
 			/// Here with such complex query we'll now test the shortcut SetCondition overloads. We'll also dynamically extend and reduce the query without rebuilding it.
 			/// </summary>
 			[TestMethod]
-			public void ComplexSql_4()
+			public void Complex_Sql_4()
 			{
 				// Compile the query 
 
@@ -156,14 +156,14 @@ namespace SqlBinder.UnitTesting
 
 				Assert.IsTrue(cmd.Parameters.Count == 8);
 
-				Assert.AreEqual(DateTime.Parse("12/30/1995", System.Globalization.CultureInfo.InvariantCulture), ((IDbDataParameter)cmd.Parameters[0]).Value);
-				Assert.AreEqual(DateTime.Parse("11/20/1995", System.Globalization.CultureInfo.InvariantCulture), ((IDbDataParameter)cmd.Parameters[1]).Value);
-				Assert.AreEqual(DateTime.Parse("11/21/1995", System.Globalization.CultureInfo.InvariantCulture), ((IDbDataParameter)cmd.Parameters[2]).Value);
-				Assert.AreEqual(DateTime.Parse("11/25/1995", System.Globalization.CultureInfo.InvariantCulture), ((IDbDataParameter)cmd.Parameters[3]).Value);
-				Assert.AreEqual("Tofu", ((IDbDataParameter)cmd.Parameters[4]).Value);
-				Assert.AreEqual("Chai", ((IDbDataParameter)cmd.Parameters[5]).Value);
-				Assert.AreEqual("Chocolade", ((IDbDataParameter)cmd.Parameters[6]).Value);
-				Assert.AreEqual(200m, ((IDbDataParameter)cmd.Parameters[7]).Value);
+				Assert.AreEqual(DateTime.Parse("12/30/1995", System.Globalization.CultureInfo.InvariantCulture), cmd.Parameters[0].Value);
+				Assert.AreEqual(DateTime.Parse("11/20/1995", System.Globalization.CultureInfo.InvariantCulture), cmd.Parameters[1].Value);
+				Assert.AreEqual(DateTime.Parse("11/21/1995", System.Globalization.CultureInfo.InvariantCulture), cmd.Parameters[2].Value);
+				Assert.AreEqual(DateTime.Parse("11/25/1995", System.Globalization.CultureInfo.InvariantCulture), cmd.Parameters[3].Value);
+				Assert.AreEqual("Tofu", cmd.Parameters[4].Value);
+				Assert.AreEqual("Chai", cmd.Parameters[5].Value);
+				Assert.AreEqual("Chocolade", cmd.Parameters[6].Value);
+				Assert.AreEqual(200m, cmd.Parameters[7].Value);
 
 				// Add extra condition
 
@@ -185,15 +185,15 @@ namespace SqlBinder.UnitTesting
 
 				Assert.IsTrue(cmd.Parameters.Count == 9);
 
-				Assert.AreEqual(DateTime.Parse("12/30/1995", System.Globalization.CultureInfo.InvariantCulture), ((IDbDataParameter)cmd.Parameters[0]).Value);
-				Assert.AreEqual(DateTime.Parse("11/20/1995", System.Globalization.CultureInfo.InvariantCulture), ((IDbDataParameter)cmd.Parameters[1]).Value);
-				Assert.AreEqual(DateTime.Parse("11/21/1995", System.Globalization.CultureInfo.InvariantCulture), ((IDbDataParameter)cmd.Parameters[2]).Value);
-				Assert.AreEqual(DateTime.Parse("11/25/1995", System.Globalization.CultureInfo.InvariantCulture), ((IDbDataParameter)cmd.Parameters[3]).Value);
-				Assert.AreEqual("Tofu", ((IDbDataParameter)cmd.Parameters[4]).Value);
-				Assert.AreEqual("Chai", ((IDbDataParameter)cmd.Parameters[5]).Value);
-				Assert.AreEqual("Chocolade", ((IDbDataParameter)cmd.Parameters[6]).Value);
-				Assert.AreEqual("Tokyo Traders", ((IDbDataParameter)cmd.Parameters[7]).Value);
-				Assert.AreEqual(200m, ((IDbDataParameter)cmd.Parameters[8]).Value);
+				Assert.AreEqual(DateTime.Parse("12/30/1995", System.Globalization.CultureInfo.InvariantCulture), cmd.Parameters[0].Value);
+				Assert.AreEqual(DateTime.Parse("11/20/1995", System.Globalization.CultureInfo.InvariantCulture), cmd.Parameters[1].Value);
+				Assert.AreEqual(DateTime.Parse("11/21/1995", System.Globalization.CultureInfo.InvariantCulture), cmd.Parameters[2].Value);
+				Assert.AreEqual(DateTime.Parse("11/25/1995", System.Globalization.CultureInfo.InvariantCulture), cmd.Parameters[3].Value);
+				Assert.AreEqual("Tofu", cmd.Parameters[4].Value);
+				Assert.AreEqual("Chai", cmd.Parameters[5].Value);
+				Assert.AreEqual("Chocolade", cmd.Parameters[6].Value);
+				Assert.AreEqual("Tokyo Traders", cmd.Parameters[7].Value);
+				Assert.AreEqual(200m, cmd.Parameters[8].Value);
 
 				// Remove two conditions
 
@@ -216,11 +216,11 @@ namespace SqlBinder.UnitTesting
 
 				Assert.IsTrue(cmd.Parameters.Count == 5);
 
-				Assert.AreEqual(DateTime.Parse("11/20/1995", System.Globalization.CultureInfo.InvariantCulture), ((IDbDataParameter)cmd.Parameters[0]).Value);
-				Assert.AreEqual(DateTime.Parse("11/21/1995", System.Globalization.CultureInfo.InvariantCulture), ((IDbDataParameter)cmd.Parameters[1]).Value);
-				Assert.AreEqual(DateTime.Parse("11/25/1995", System.Globalization.CultureInfo.InvariantCulture), ((IDbDataParameter)cmd.Parameters[2]).Value);
-				Assert.AreEqual("Tokyo Traders", ((IDbDataParameter)cmd.Parameters[3]).Value);
-				Assert.AreEqual(200m, ((IDbDataParameter)cmd.Parameters[4]).Value);
+				Assert.AreEqual(DateTime.Parse("11/20/1995", System.Globalization.CultureInfo.InvariantCulture), cmd.Parameters[0].Value);
+				Assert.AreEqual(DateTime.Parse("11/21/1995", System.Globalization.CultureInfo.InvariantCulture), cmd.Parameters[1].Value);
+				Assert.AreEqual(DateTime.Parse("11/25/1995", System.Globalization.CultureInfo.InvariantCulture), cmd.Parameters[2].Value);
+				Assert.AreEqual("Tokyo Traders", cmd.Parameters[3].Value);
+				Assert.AreEqual(200m, cmd.Parameters[4].Value);
 			}
 
 			private void AssertCommand(IDbCommand cmd)

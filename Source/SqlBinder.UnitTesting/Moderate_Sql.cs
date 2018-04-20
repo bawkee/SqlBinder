@@ -21,7 +21,7 @@ namespace SqlBinder.UnitTesting
 			}
 
 			[TestMethod]
-			public void CommonSql_1()
+			public void Common_Sql_1()
 			{
 				var query = new MockQuery(_connection,"SELECT * FROM TABLE1 {WHERE {COLUMN1 [Criteria1]}}");
 
@@ -32,12 +32,12 @@ namespace SqlBinder.UnitTesting
 				AssertCommand(cmd);
 				Assert.AreEqual("SELECT * FROM TABLE1 WHERE COLUMN1 = :pCriteria1_1", cmd.CommandText);
 				Assert.IsTrue(cmd.Parameters.Count == 1);
-				Assert.AreEqual("pCriteria1_1", ((IDbDataParameter) cmd.Parameters[0]).ParameterName);
-				Assert.AreEqual(true, ((IDbDataParameter) cmd.Parameters[0]).Value);
+				Assert.AreEqual("pCriteria1_1", cmd.Parameters[0].ParameterName);
+				Assert.AreEqual(true, cmd.Parameters[0].Value);
 			}
 
 			[TestMethod]
-			public void CommonSql_2()
+			public void Common_Sql_2()
 			{
 				var query = new MockQuery(_connection, "SELECT * FROM TABLE1 {WHERE{JUNK 1} {COLUMN1 [Criteria1]} {JUNK 2}}");
 
@@ -48,12 +48,12 @@ namespace SqlBinder.UnitTesting
 				AssertCommand(cmd);
 				Assert.AreEqual("SELECT * FROM TABLE1 WHERE COLUMN1 = :pCriteria1_1", cmd.CommandText);
 				Assert.IsTrue(cmd.Parameters.Count == 1);
-				Assert.AreEqual("pCriteria1_1", ((IDbDataParameter)cmd.Parameters[0]).ParameterName);
-				Assert.AreEqual(true, ((IDbDataParameter)cmd.Parameters[0]).Value);
+				Assert.AreEqual("pCriteria1_1", cmd.Parameters[0].ParameterName);
+				Assert.AreEqual(true, cmd.Parameters[0].Value);
 			}
 
 			[TestMethod]
-			public void CommonSql_3()
+			public void Common_Sql_3()
 			{
 				var query = new MockQuery(_connection, "SELECT * FROM TABLE1 {WHERE {COLUMN1 [Criteria1]} {COLUMN2 [Criteria2]}}");
 
@@ -65,14 +65,14 @@ namespace SqlBinder.UnitTesting
 				AssertCommand(cmd);
 				Assert.AreEqual("SELECT * FROM TABLE1 WHERE COLUMN1 = :pCriteria1_1 AND COLUMN2 = :pCriteria2_1", cmd.CommandText);
 				Assert.IsTrue(cmd.Parameters.Count == 2);
-				Assert.AreEqual("pCriteria1_1", ((IDbDataParameter) cmd.Parameters[0]).ParameterName);
-				Assert.AreEqual("pCriteria2_1", ((IDbDataParameter) cmd.Parameters[1]).ParameterName);
-				Assert.AreEqual(true, ((IDbDataParameter) cmd.Parameters[0]).Value);
-				Assert.AreEqual(13, ((IDbDataParameter) cmd.Parameters[1]).Value);
+				Assert.AreEqual("pCriteria1_1", cmd.Parameters[0].ParameterName);
+				Assert.AreEqual("pCriteria2_1", cmd.Parameters[1].ParameterName);
+				Assert.AreEqual(true, cmd.Parameters[0].Value);
+				Assert.AreEqual(13, cmd.Parameters[1].Value);
 			}
 
 			[TestMethod]
-			public void CommonSql_4()
+			public void Common_Sql_4()
 			{
 				var query = new MockQuery(_connection, "SELECT * FROM TABLE1 {WHERE {COLUMN1 [Criteria1]} {JUNK 1} {COLUMN2 [Criteria2]}} {JUNK 2}");
 
@@ -86,14 +86,14 @@ namespace SqlBinder.UnitTesting
 				// Note that now there is expected extra space before the AND resulting from the JUNK 1.
 				Assert.AreEqual("SELECT * FROM TABLE1 WHERE COLUMN1 = :pCriteria1_1 AND COLUMN2 = :pCriteria2_1", cmd.CommandText);
 				Assert.IsTrue(cmd.Parameters.Count == 2);
-				Assert.AreEqual("pCriteria1_1", ((IDbDataParameter)cmd.Parameters[0]).ParameterName);
-				Assert.AreEqual("pCriteria2_1", ((IDbDataParameter)cmd.Parameters[1]).ParameterName);
-				Assert.AreEqual(true, ((IDbDataParameter)cmd.Parameters[0]).Value);
-				Assert.AreEqual(13, ((IDbDataParameter)cmd.Parameters[1]).Value);
+				Assert.AreEqual("pCriteria1_1", cmd.Parameters[0].ParameterName);
+				Assert.AreEqual("pCriteria2_1", cmd.Parameters[1].ParameterName);
+				Assert.AreEqual(true, cmd.Parameters[0].Value);
+				Assert.AreEqual(13, cmd.Parameters[1].Value);
 			}
 
 			[TestMethod]
-			public void CommonSql_5()
+			public void Common_Sql_5()
 			{
 				var query = new MockQuery(_connection, "SELECT * FROM TABLE1 {WHERE {COLUMN1 [Criteria1]}};");
 
@@ -115,37 +115,82 @@ namespace SqlBinder.UnitTesting
 			}
 
 			[TestMethod]
-			public void CommonSql_6()
+			public void Convert_In_To_Equality_1()
 			{
-				var query = new MockQuery(_connection, "SELECT * FROM TABLE1 {WHERE {COLUMN1 [Criteria1]} {COLUMN2 [Criteria2]} {COLUMN3 [Criteria3]}};");
+				// Tests the scenario where IN('A') or IN(123) should be automatically converted by the = 'A' and = 123 etc. This happens 
+				// in the ConditionValue classes
 
-				query.SetCondition("Criteria1", new CustomConditionValue(1, 2, 3));
-				query.SetCondition("Criteria2", new CustomParameterlessConditionValue("test"));
-				query.SetCondition("Criteria3", new CustomConditionValue(4, 5, 6));
+				var query = new MockQuery(_connection, "SELECT * FROM TABLE1 {WHERE {COLUMN1 [Criteria1]}}");
+
+				// Set conditions, string short overload
+				query.SetCondition("Criteria1", new [] { "A" });
 
 				var cmd = query.CreateCommand();
 
 				AssertCommand(cmd);
-				Assert.AreEqual("SELECT * FROM TABLE1 WHERE COLUMN1 = sillyProcedure(:pCriteria1_1, :pCriteria1_2, :pCriteria1_3) " +
-				                "AND COLUMN2 = 'test' /*hint*/ AND COLUMN3 = sillyProcedure(:pCriteria3_1, :pCriteria3_2, :pCriteria3_3);", cmd.CommandText);
-				Assert.IsTrue(cmd.Parameters.Count == 6);
-				Assert.AreEqual("pCriteria1_1", ((IDbDataParameter)cmd.Parameters[0]).ParameterName);
-				Assert.AreEqual("pCriteria1_2", ((IDbDataParameter)cmd.Parameters[1]).ParameterName);
-				Assert.AreEqual("pCriteria1_3", ((IDbDataParameter)cmd.Parameters[2]).ParameterName);
-				Assert.AreEqual("pCriteria3_1", ((IDbDataParameter)cmd.Parameters[3]).ParameterName);
-				Assert.AreEqual("pCriteria3_2", ((IDbDataParameter)cmd.Parameters[4]).ParameterName);
-				Assert.AreEqual("pCriteria3_3", ((IDbDataParameter)cmd.Parameters[5]).ParameterName);
-				Assert.AreEqual(1, ((IDbDataParameter)cmd.Parameters[0]).Value);
-				Assert.AreEqual(2, ((IDbDataParameter)cmd.Parameters[1]).Value);
-				Assert.AreEqual(3, ((IDbDataParameter)cmd.Parameters[2]).Value);
-				Assert.AreEqual(4, ((IDbDataParameter)cmd.Parameters[3]).Value);
-				Assert.AreEqual(5, ((IDbDataParameter)cmd.Parameters[4]).Value);
-				Assert.AreEqual(6, ((IDbDataParameter)cmd.Parameters[5]).Value);
+				Assert.AreEqual("SELECT * FROM TABLE1 WHERE COLUMN1 = :pCriteria1_1", cmd.CommandText);
+				Assert.IsTrue(cmd.Parameters.Count == 1);
+				Assert.AreEqual("pCriteria1_1", cmd.Parameters[0].ParameterName);
+				Assert.AreEqual("A", cmd.Parameters[0].Value);
 
+				// Set conditions, string short overload, negative
+				query.SetCondition("Criteria1", new[] { "A" }, true);
+
+				cmd = query.CreateCommand();
+
+				AssertCommand(cmd);
+				Assert.AreEqual("SELECT * FROM TABLE1 WHERE COLUMN1 != :pCriteria1_1", cmd.CommandText);
+				Assert.IsTrue(cmd.Parameters.Count == 1);
+				Assert.AreEqual("pCriteria1_1", cmd.Parameters[0].ParameterName);
+				Assert.AreEqual("A", cmd.Parameters[0].Value);
+
+				// Set conditions, string
+				query.SetCondition("Criteria1", Operator.IsAnyOf, new StringValue(new[] { "A" }));
+
+				cmd = query.CreateCommand();
+
+				AssertCommand(cmd);
+				Assert.AreEqual("SELECT * FROM TABLE1 WHERE COLUMN1 = :pCriteria1_1", cmd.CommandText);
+				Assert.IsTrue(cmd.Parameters.Count == 1);
+				Assert.AreEqual("pCriteria1_1", cmd.Parameters[0].ParameterName);
+				Assert.AreEqual("A", cmd.Parameters[0].Value);
+
+				// Set conditions, number short overload
+				query.SetCondition("Criteria1", new[] { 123 });
+
+				cmd = query.CreateCommand();
+
+				AssertCommand(cmd);
+				Assert.AreEqual("SELECT * FROM TABLE1 WHERE COLUMN1 = :pCriteria1_1", cmd.CommandText);
+				Assert.IsTrue(cmd.Parameters.Count == 1);
+				Assert.AreEqual("pCriteria1_1", cmd.Parameters[0].ParameterName);
+				Assert.AreEqual(123, cmd.Parameters[0].Value);
+
+				// Set conditions, number short overload, negative
+				query.SetCondition("Criteria1", new[] { 123 }, true);
+
+				cmd = query.CreateCommand();
+
+				AssertCommand(cmd);
+				Assert.AreEqual("SELECT * FROM TABLE1 WHERE COLUMN1 != :pCriteria1_1", cmd.CommandText);
+				Assert.IsTrue(cmd.Parameters.Count == 1);
+				Assert.AreEqual("pCriteria1_1", cmd.Parameters[0].ParameterName);
+				Assert.AreEqual(123, cmd.Parameters[0].Value);
+
+				// Set conditions, number
+				query.SetCondition("Criteria1", Operator.IsAnyOf, new NumberValue(new[] { 123 }));
+
+				cmd = query.CreateCommand();
+
+				AssertCommand(cmd);
+				Assert.AreEqual("SELECT * FROM TABLE1 WHERE COLUMN1 = :pCriteria1_1", cmd.CommandText);
+				Assert.IsTrue(cmd.Parameters.Count == 1);
+				Assert.AreEqual("pCriteria1_1", cmd.Parameters[0].ParameterName);
+				Assert.AreEqual(123, cmd.Parameters[0].Value);
 			}
 
 			[TestMethod]
-			public void JoinSql_1()
+			public void Join_Sql_1()
 			{
 				// Slightly more complex query. We're getting Orders by Customer's name and OrderDate but we also have a possibility to filter by ShippedDate 
 				// which we will omit in this test. We'll looking for orders shipped in November '95 from a customer whose name begins with Thomas.
@@ -176,17 +221,17 @@ namespace SqlBinder.UnitTesting
 					, cmd.CommandText);
 
 				Assert.IsTrue(cmd.Parameters.Count == 3);
-				Assert.AreEqual("pContactName_1", ((IDbDataParameter)cmd.Parameters[0]).ParameterName);
-				Assert.AreEqual("pOrderDate_1", ((IDbDataParameter)cmd.Parameters[1]).ParameterName);
-				Assert.AreEqual("pOrderDate_2", ((IDbDataParameter)cmd.Parameters[2]).ParameterName);
+				Assert.AreEqual("pContactName_1", cmd.Parameters[0].ParameterName);
+				Assert.AreEqual("pOrderDate_1", cmd.Parameters[1].ParameterName);
+				Assert.AreEqual("pOrderDate_2", cmd.Parameters[2].ParameterName);
 
-				Assert.AreEqual("Thomas%", ((IDbDataParameter)cmd.Parameters[0]).Value);
-				Assert.AreEqual(DateTime.Parse("11/1/1995", System.Globalization.CultureInfo.InvariantCulture), ((IDbDataParameter)cmd.Parameters[1]).Value);
-				Assert.AreEqual(DateTime.Parse("11/30/1995", System.Globalization.CultureInfo.InvariantCulture), ((IDbDataParameter)cmd.Parameters[2]).Value);
+				Assert.AreEqual("Thomas%", cmd.Parameters[0].Value);
+				Assert.AreEqual(DateTime.Parse("11/1/1995", System.Globalization.CultureInfo.InvariantCulture), cmd.Parameters[1].Value);
+				Assert.AreEqual(DateTime.Parse("11/30/1995", System.Globalization.CultureInfo.InvariantCulture), cmd.Parameters[2].Value);
 			}
 
 			[TestMethod]
-			public void JoinSql_2()
+			public void Join_Sql_2()
 			{
 				// More complex query. Similar to previous one except now we're looking for customer whose name either: begins with Thomas, ends with Hardy or has " John " in the middle.
 				// This means we have 3 different conditions clustered inside a single group that generates an OR query (condition1 OR condition2). Also, now, we're looking at
@@ -226,19 +271,19 @@ namespace SqlBinder.UnitTesting
 					, cmd.CommandText);
 
 				Assert.IsTrue(cmd.Parameters.Count == 4);
-				Assert.AreEqual("pContactNameFirst_1", ((IDbDataParameter)cmd.Parameters[0]).ParameterName);
-				Assert.AreEqual("pContactNameMiddle_1", ((IDbDataParameter)cmd.Parameters[1]).ParameterName);
-				Assert.AreEqual("pContactNameLast_1", ((IDbDataParameter)cmd.Parameters[2]).ParameterName);
-				Assert.AreEqual("pShippedDate_1", ((IDbDataParameter)cmd.Parameters[3]).ParameterName);
+				Assert.AreEqual("pContactNameFirst_1", cmd.Parameters[0].ParameterName);
+				Assert.AreEqual("pContactNameMiddle_1", cmd.Parameters[1].ParameterName);
+				Assert.AreEqual("pContactNameLast_1", cmd.Parameters[2].ParameterName);
+				Assert.AreEqual("pShippedDate_1", cmd.Parameters[3].ParameterName);
 
-				Assert.AreEqual("Thomas%", ((IDbDataParameter)cmd.Parameters[0]).Value);
-				Assert.AreEqual("% John %", ((IDbDataParameter)cmd.Parameters[1]).Value);
-				Assert.AreEqual("%Hardy", ((IDbDataParameter)cmd.Parameters[2]).Value);
-				Assert.AreEqual(DateTime.Parse("11/20/1995", System.Globalization.CultureInfo.InvariantCulture), ((IDbDataParameter)cmd.Parameters[3]).Value);
+				Assert.AreEqual("Thomas%", cmd.Parameters[0].Value);
+				Assert.AreEqual("% John %", cmd.Parameters[1].Value);
+				Assert.AreEqual("%Hardy", cmd.Parameters[2].Value);
+				Assert.AreEqual(DateTime.Parse("11/20/1995", System.Globalization.CultureInfo.InvariantCulture), cmd.Parameters[3].Value);
 			}
 
 			[TestMethod]
-			public void NullSql_1()
+			public void Null_Sql_1()
 			{
 				var query = new MockQuery(_connection, "SELECT * FROM TABLE1 {WHERE {COLUMN1 [Criteria1]}}");
 
@@ -271,7 +316,7 @@ namespace SqlBinder.UnitTesting
 			}
 
 			[TestMethod]
-			public void NullSql_2()
+			public void Null_Sql_2()
 			{
 				var query = new MockQuery(_connection, "SELECT * FROM TABLE1 {WHERE {COLUMN1 [Criteria1]}}");
 
@@ -313,7 +358,7 @@ namespace SqlBinder.UnitTesting
 			}
 
 			[TestMethod]
-			public void EmptyStringSql()
+			public void Empty_String_Sql()
 			{
 				var query = new MockQuery(_connection, "SELECT * FROM TABLE1 {WHERE {COLUMN1 [Criteria1]}}");
 
@@ -325,7 +370,7 @@ namespace SqlBinder.UnitTesting
 				AssertCommand(cmd);
 				Assert.AreEqual("SELECT * FROM TABLE1 WHERE COLUMN1 = :pCriteria1_1", cmd.CommandText);
 				Assert.IsTrue(cmd.Parameters.Count == 1);
-				Assert.AreEqual("", ((IDbDataParameter)cmd.Parameters[0]).Value);
+				Assert.AreEqual("", cmd.Parameters[0].Value);
 
 				// Now try IS NOT
 				query.SetCondition("Criteria1", "", StringOperator.IsNot);
@@ -335,7 +380,7 @@ namespace SqlBinder.UnitTesting
 				AssertCommand(cmd);
 				Assert.AreEqual("SELECT * FROM TABLE1 WHERE COLUMN1 != :pCriteria1_1", cmd.CommandText);
 				Assert.IsTrue(cmd.Parameters.Count == 1);
-				Assert.AreEqual("", ((IDbDataParameter)cmd.Parameters[0]).Value);
+				Assert.AreEqual("", cmd.Parameters[0].Value);
 
 				// Set the condition
 				query.SetCondition("Criteria1", Operator.IsAnyOf, new StringValue(new[] { null, "A", "B" }));
@@ -345,9 +390,9 @@ namespace SqlBinder.UnitTesting
 				AssertCommand(cmd);
 				Assert.AreEqual("SELECT * FROM TABLE1 WHERE COLUMN1 IN (:pCriteria1_1, :pCriteria1_2, :pCriteria1_3)", cmd.CommandText);
 				Assert.IsTrue(cmd.Parameters.Count == 3);
-				Assert.AreEqual(DBNull.Value, ((IDbDataParameter)cmd.Parameters[0]).Value);
-				Assert.AreEqual("A", ((IDbDataParameter)cmd.Parameters[1]).Value);
-				Assert.AreEqual("B", ((IDbDataParameter)cmd.Parameters[2]).Value);
+				Assert.AreEqual(DBNull.Value, cmd.Parameters[0].Value);
+				Assert.AreEqual("A", cmd.Parameters[1].Value);
+				Assert.AreEqual("B", cmd.Parameters[2].Value);
 			}
 
 			[TestMethod]

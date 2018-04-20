@@ -38,15 +38,32 @@ namespace SqlBinder
 		/// </summary>
 		protected abstract string OnGetSql(int sqlOperator);
 
+		protected bool IsList(object var) => !(var is string) && var is IEnumerable;
+
 		/// <summary>
 		/// Use this to validate sql string format against value count.
 		/// </summary>
-		protected virtual string CheckSql(string sql, int paramCount, bool allowLists = false)
+		protected virtual string ValidateParams(string sql, int paramCount, bool allowLists = false)
 		{
-			if (GetValues().Length != paramCount ||
-				!allowLists && GetValues().Any(v => !(v is string) && v is IEnumerable))
+			if (GetValues().Length != paramCount || !allowLists && GetValues().Any(IsList))
 				throw new InvalidOperationException(Exceptions.PlaceholdersAndActualParamsDontMatch);
 			return sql;
+		}
+
+		/// <summary>
+		/// If enumerable has just one element then its purpose is pointess and help reduce it to optimize the whole process and potentially SQL.
+		/// </summary>
+		protected object ReduceEnum(IEnumerable input)
+		{
+			if (input == null)
+				return null;
+			var e = input.GetEnumerator();
+			if (!e.MoveNext())
+				return null;
+			var item = e.Current;
+			if (!e.MoveNext())
+				return item;
+			return null;
 		}
 	}
 }
