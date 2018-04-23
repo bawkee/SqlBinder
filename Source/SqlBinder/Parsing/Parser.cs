@@ -350,6 +350,9 @@ namespace SqlBinder.Parsing
 					if (!new[] { ' ', '\t', '\r', '\n' }.Contains(Buffer.SbOutput[Buffer.SbOutput.Length - 1]))
 						Buffer.Write(" ");
 					
+					// It used to support any operator but after more than 8 years besides just 'AND' I've only used 'OR' a couple of times so I 
+					// didn't see a point polluting the syntax. It might be a good idea to support more but have to be careful not to interfere 
+					// with the SQL.
 					Buffer.Write(string.Format("{0} ", parentScope?.Tag == "@" ? ParserSqlKeywords.OR : ParserSqlKeywords.AND));
 				}
 

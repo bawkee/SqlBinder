@@ -13,6 +13,7 @@ namespace SqlBinder
 	public class ParserException : Exception
 	{
 		public ParserException(Exception innerException) : base(Exceptions.ParserFailure, innerException) { }
+		public ParserException(string errorMessage) : base(string.Format(Exceptions.ScriptNotValid, errorMessage)) { }
 	}
 
 	[Serializable]
@@ -125,9 +126,14 @@ namespace SqlBinder
 		public TConnection DataConnection { get; set; }
 
 		/// <summary>
-		/// Gets or sets a value indicating whether script parser exceptions should be thrown.
+		/// Gets or sets a value indicating whether script parser exceptions and errors should be thrown. True by default.
 		/// </summary>
-		public bool ThrowScriptErrorException { get; set; }
+		public bool ThrowScriptErrorException { get; set; } = true;
+
+		/// <summary>
+		/// Gets or sets a value indicating whether script parser exceptions and errors should be logged to debug output (True by default).
+		/// </summary>
+		public bool LogScriptErrorException { get; set; } = true;
 
 		/// <summary>
 		/// Gets or sets an SqlBinder script that was passed to this query.
@@ -382,8 +388,21 @@ namespace SqlBinder
 			if (!pr.IsValid)
 			{
 				ParserErrors = pr.Errors;
-				if (ThrowScriptErrorException && pr.CompileException != null)
-					throw new ParserException(pr.CompileException);
+
+				if (ThrowScriptErrorException)
+				{
+					if (pr.CompileException != null)
+						throw new ParserException(pr.CompileException);					
+					throw new ParserException(pr.Errors);
+				}
+
+				if (LogScriptErrorException)
+				{
+					if (pr.CompileException != null)
+						System.Diagnostics.Debug.WriteLine(new ParserException(pr.CompileException).Message);
+					else
+						System.Diagnostics.Debug.WriteLine(new ParserException(pr.Errors).Message);
+				}
 			}
 
 			var unprocessedConditions = Conditions.Except(_processedConditions).ToArray();

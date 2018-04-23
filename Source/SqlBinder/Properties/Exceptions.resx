@@ -162,4 +162,10 @@
   <data name="NoMatchingParams" xml:space="preserve">
     <value>Following conditions had no matching parameters in the script: {0}.</value>
   </data>
+	<data name="ScriptNotValid" xml:space="preserve">
+    <value>Your SqlBinder script is not valid: {0}</value>
+  </data>
+	<data name="ParserWarning" xml:space="preserve">
+    <value>SqlBinder parser warning: {0}</value>
+  </data>
 </root>

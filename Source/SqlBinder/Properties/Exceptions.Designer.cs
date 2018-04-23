@@ -187,11 +187,29 @@ namespace SqlBinder.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to SqlBinder parser warning: {0}.
+        /// </summary>
+        public static string ParserWarning {
+            get {
+                return ResourceManager.GetString("ParserWarning", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Number of sql parameter placeholders and number of values don&apos;t match..
         /// </summary>
         public static string PlaceholdersAndActualParamsDontMatch {
             get {
                 return ResourceManager.GetString("PlaceholdersAndActualParamsDontMatch", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Your SqlBinder script is not valid: {0}.
+        /// </summary>
+        public static string ScriptNotValid {
+            get {
+                return ResourceManager.GetString("ScriptNotValid", resourceCulture);
             }
         }
     }
