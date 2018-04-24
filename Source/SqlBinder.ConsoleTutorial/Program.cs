@@ -20,9 +20,9 @@ namespace SqlBinder.ConsoleTutorial
 
 				// Comment/uncomment the tutorial you want to play with. You can browse contents of the database from within Visual Studio 
 				// (double click on the Northwind Traders.mdb item in the project) and experiment.
-
-				//Tutorial1(connection);
-				Tutorial2(connection);
+				
+				Tutorial1(connection);
+				//Tutorial2(connection);
 				//Tutorial3(connection);
 			}
 

@@ -6,7 +6,7 @@
         xmlns:viewModels="clr-namespace:SqlBinder.DemoApp.ViewModels"
         xmlns:views="clr-namespace:SqlBinder.DemoApp.Views"
         mc:Ignorable="d"
-        Title="MainWindow" 
+        Title="SqlBinder Demo" 
         Height="750" Width="1260" 
         Background="{x:Static SystemColors.ControlBrush}"
         SnapsToDevicePixels="True"

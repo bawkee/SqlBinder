@@ -7,13 +7,9 @@ namespace SqlBinder.ConsoleTutorial
 		protected override string DefaultParameterFormat => "@{0}";
 
 		public OleDbQuery(OleDbConnection connection)
-			: base(connection)
-		{
-		}
+			: base(connection) { }
 
 		public OleDbQuery(OleDbConnection connection, string script)
-			: base(connection, script)
-		{
-		}
+			: base(connection, script) { }
 	}
 }
