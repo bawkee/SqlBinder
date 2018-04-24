@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("SqlBinder")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("Library that helps transform SQL templates and given set of conditions into a ADO.Net-compatible command.")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Bojan Sala")]
 [assembly: AssemblyProduct("SqlBinder")]

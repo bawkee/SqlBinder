@@ -1,6 +1,6 @@
 # SqlBinder
 
-Is a free, open-source library that helps you transform a given SQL-like script and a set of conditions into an `IDbCommand`.
+Is a free, open-source library that helps you transform a given SQL template and a set of conditions into an `IDbCommand`.
 
 It is *not* an ORM solution - instead, it is DBMS-independent, SQL-centric **templating engine**. All it does is it removes the hassle of writing SQL and bind variable generating code. It does *not* generate the SQL itself, it lets you re-format an existing SQL instead.
 
