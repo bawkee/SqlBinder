@@ -123,7 +123,7 @@ To be translated into this:
 
 There are great many things into which `[employeeId]` can be translated into.
 
-## Example 2
+## Example 2: Query employees even more
 Let's do a different query this time:
 ```SQL
 SELECT * FROM Employees {WHERE {City [city]} {HireDate [hireDate]} {YEAR(HireDate) [hireDateYear]}}
@@ -167,7 +167,7 @@ The resulting SQL:
 SELECT * FROM Employees WHERE HireDate >= @phireDate_1
 ```
 
-**How about... Employees from London that were hired between 1993 and 1994?**
+**How about employees from London that were hired between 1993 and 1994?**
 
 ```C#
 query.Conditions.Clear();
