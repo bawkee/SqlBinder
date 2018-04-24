@@ -211,13 +211,17 @@ namespace SqlBinder
 		/// <summary>
 		/// Creates a <see cref="Condition" /> with <see cref="NumberValue"/> for the query.
 		/// </summary>
-		public virtual void SetCondition(string parameterName, decimal? from = null, decimal? to = null, bool inclusive = false)
+		public virtual void SetCondition(string parameterName, decimal? from = null, decimal? to = null, bool inclusive = true)
 		{
 			var grthan = inclusive ? Operator.IsGreaterThanOrEqualTo : Operator.IsGreaterThan;
 			var lessthan = inclusive ? Operator.IsLessThanOrEqualTo : Operator.IsLessThan;
 
 			if (from.HasValue && to.HasValue)
+			{
+				if (!inclusive)
+					throw new ArgumentException(Exceptions.SqlBetweenCanOnlyBeInclusive, nameof(inclusive));
 				SetCondition(parameterName, Operator.IsBetween, new NumberValue(from.Value, to.Value));
+			}
 			else if (from.HasValue)
 				SetCondition(parameterName, grthan, new NumberValue(from.Value));
 			else if (to.HasValue)
@@ -281,7 +285,11 @@ namespace SqlBinder
 			var lessthan = inclusive ? Operator.IsLessThanOrEqualTo : Operator.IsLessThan;
 
 			if (from.HasValue && to.HasValue)
+			{
+				if (!inclusive)
+					throw new ArgumentException(Exceptions.SqlBetweenCanOnlyBeInclusive, nameof(inclusive));
 				SetCondition(parameterName, Operator.IsBetween, new DateValue(from.Value, to.Value));
+			}
 			else if (from.HasValue)
 				SetCondition(parameterName, grthan, new DateValue(from.Value));
 			else if (to.HasValue)

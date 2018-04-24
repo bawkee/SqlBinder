@@ -212,5 +212,14 @@ namespace SqlBinder.Properties {
                 return ResourceManager.GetString("ScriptNotValid", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to When both &apos;from&apos; and &apos;to&apos; values are specified, the output SQL will always be inclusive. To specify an exclusive range you would have to alter your script to contain two parameter placeholders rather than one..
+        /// </summary>
+        public static string SqlBetweenCanOnlyBeInclusive {
+            get {
+                return ResourceManager.GetString("SqlBetweenCanOnlyBeInclusive", resourceCulture);
+            }
+        }
     }
 }

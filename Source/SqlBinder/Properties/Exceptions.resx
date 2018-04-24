@@ -168,4 +168,7 @@
 	<data name="ParserWarning" xml:space="preserve">
     <value>SqlBinder parser warning: {0}</value>
   </data>
+	<data name="SqlBetweenCanOnlyBeInclusive" xml:space="preserve">
+    <value>When both 'from' and 'to' values are specified, the output SQL will always be inclusive. To specify an exclusive range you would have to alter your script to contain two parameter placeholders rather than one.</value>
+  </data>
 </root>
