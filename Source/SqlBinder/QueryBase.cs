@@ -6,6 +6,7 @@ using System.Linq;
 using SqlBinder.ConditionValues;
 using SqlBinder.Parsing;
 using SqlBinder.Properties;
+// ReSharper disable StaticMemberInGenericType
 
 namespace SqlBinder
 {
@@ -62,7 +63,7 @@ namespace SqlBinder
 		/// <summary>
 		/// Basic, assumed, ADO.Net type mappings. This can be overriden on any level (Query, ConditionValue).
 		/// </summary>
-		private Dictionary<Type, DbType> _dbTypeMap { get; } =
+		private static Dictionary<Type, DbType> _dbTypeMap { get; } =
 			new Dictionary<Type, DbType>
 			{
 				[typeof(byte)] = DbType.Byte,
