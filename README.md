@@ -1,14 +1,31 @@
 # SqlBinder
+
 Is a free, open-source library that helps you transform a given SQL-like script and a set of conditions into an `IDbCommand`.
 
-It is *not* an ORM solution - instead, it is DBMS-independent, SQL-centric **templating engine**. All it does is it removes the hassle of writing/generating SQL queries and bind variables. It does *not* generate the entire SQL, only very small parts of it - you still write 99% of the SQL and the 1% that *it does* generate is very easily configurable.
+It is *not* an ORM solution - instead, it is DBMS-independent, SQL-centric **templating engine**. All it does is it removes the hassle of writing SQL and bind variable generating code. It does *not* generate the SQL itself, it lets you re-format an existing SQL instead.
 
-## Example 1
-We will connect to Northwind demo database: 
+So with one template you can create multiple different (but similar) queries.
+
+## Example 1: Query employees 
+
+At the heart of SqlBinder is an abstract class called `QueryBase`, we will use it to define our OleDbQuery class:
+
+```C#
+public class OleDbQuery : QueryBase<OleDbConnection, OleDbCommand>
+{
+	protected override string DefaultParameterFormat => "@{0}";
+
+	public OleDbQuery(OleDbConnection connection, string script)
+		: base(connection, script) { }
+}
+```
+
+Done. Now let's connect to Northwind demo database: 
 
 ```C#
 var connection = new OleDbConnection("Provider=Microsoft.Jet.OLEDB.4.0;Data Source=Northwind Traders.mdb")
 ```
+
 
 And then write a simple OleDB SQL query which will retreive the list of employees.
 
@@ -16,122 +33,82 @@ And then write a simple OleDB SQL query which will retreive the list of employee
 var query = new OleDbQuery(connection, @"SELECT * FROM Employees {WHERE EmployeeID [employeeId]}");
 ```
 
-As you can see this is not typical SQL, there is some *formatting* syntax in it which is later processed by the SqlBinder and removed from your SQL. Don't worry about it now though, it will become self-explainatory pretty soon.
+As you can see this is not typical SQL, there is some *formatting* syntax in it which is later processed by the SqlBinder. It's an *SQL template* which will be used to create the actual SQL.
 
-We can create a command out of this query right now, without any further action:
+We can in fact create a command out of this template right now:
 
 ```C#
 IDbCommand cmd = query.CreateCommand();
 
-Console.WriteLine(cmd.CommandText);
+Console.WriteLine(cmd.CommandText); // Output the passed SQL
 ```
 
 Output:
-
 ```SQL
 SELECT * FROM Employees
 ```
 
-Lets execute this command and get the reader:
-
-```C#
-using (var r = query.CreateCommand().ExecuteReader())
-{
-	while (r.Read())
-		Console.WriteLine(r["FirstName"]);
-}
-```
-
-It will output all the employees:
-
-```
-Nancy
-Andrew
-Janet
-Margaret
-Steven
-Michael
-Robert
-Laura
-Anne
-```
-
-Now we will use the same query to single out an **employee by his ID**:
+Now let's single out an **employee by his ID**:
 
 ```C#
 query.SetCondition("employeeId", 1);
+
+cmd = query.CreateCommand();
+
+Console.WriteLine(cmd.CommandText); // Output the passed SQL
 ```
 
-Then, we can execute the exact same code as before, to output the results:
-
-```C#
-using (var r = query.CreateCommand().ExecuteReader())
-{
-	while (r.Read())
-		Console.WriteLine(r["FirstName"]);
-}
-```
-
-And this is the output:
-
-```
-Nancy
-```
-
-The command which was created by the SqlBinder had this SQL:
+This is the output:
 
 ```SQL
 SELECT * FROM Employees WHERE EmployeeID = @pemployeeId_1
 ```
 
-Notice that we're using the same query to create two entirely different commands. Due to SqlBinder formatting syntax, there was sufficient information to support the creation of both commands.
+Notice that we're using the same query to create two entirely different commands.
 
-Let's go further and retrieve **employees by IDs 1 and 2**. Again, we use the same query but different stuff is supplied to the crucial `SetCondition` method.
+Let's go further and retrieve **employees by IDs 1 and 2**. Again, we use the same query but different parameters are supplied to the crucial `SetCondition` method.
 
 ```C#
 query.SetCondition("employeeId", new[] { 1, 2 });
 
-using (var r = query.CreateCommand().ExecuteReader())
-{
-	while (r.Read())
-		Console.WriteLine(r["FirstName"]);
-}
+cmd = query.CreateCommand();
+
+Console.WriteLine(cmd.CommandText); // Output the passed SQL
 ```
 
-The result:
+Output:
 
-```
-Nancy
-Andrew
+```SQL
+SELECT * FROM Employees WHERE EmployeeID IN (@pemployeeId_1, @pemployeeId_2)
 ```
 
-**So what happened?** Let's first go back to our SQL:
+**So what happened?** Let's first go back to our SQL *template*:
 
 ```SQL
 SELECT * FROM Employees {WHERE EmployeeID [employeeId]}
 ```
 
-This was given to SqlBinder's core class, the `Query`.
+This was passed to the `OleDbQuery`, a class we previously created that inherits from `SqlBinder.QueryBase`.
 
-**In the first example**, `Query` was not provided any conditions, so, it removed all the magical syntax as it served no purpose. Note that all the magical syntax begins with `{` and ends with `}` and it may be nested.
+**In the first example**, `OleDbQuery` was not provided any conditions, so, it removed all the magical syntax that begins with `{` and ends with `}` as it served no purpose. 
 
-**In the second example**, we called `SetCondition("employeeId", 1);` this time which changes everything, now the magical syntax comes into play.
+**In the second example**, we called `SetCondition("employeeId", 1);` so now the magical syntax comes into play.
 
-Allow  me to demonstrate. This:
+So, this template:
 
 ```SQL
 ... {WHERE EmployeeID [employeeId]} ...
 ```
-Plus this:
+Plus this method:
 ```C#
 SetCondition("employeeId", 1);
 ```
-Equals:
+Produced this SQL:
 ```SQL
 ... WHERE EmployeeID = @pemployeeId_1 ...
 ```
 
-The `[employeeId]` placeholder was simply replaced by `= @pemployeeId_1`. SqlBinder automatically takes care of the command parameters (bind variables) that will be passed to DBMS.
+The `[employeeId]` placeholder was simply replaced by `= @pemployeeId_1`. SqlBinder also automatically takes care of the command parameters (bind variables) that will be passed to `IDbCommand`.
 
 **In the third example**, we called `SetCondition("employeeId", new[] { 1, 2 });` which means we would like two employees this time. 
 
@@ -144,14 +121,14 @@ To be translated into this:
 ... WHERE EmployeeID IN (@pemployeeId_1, @pemployeeId_2) ...
 ```
 
-There are great many things into which `[employeeId]` can be translated into to serve 99% of your daily SQLing needs.
+There are great many things into which `[employeeId]` can be translated into.
 
 ## Example 2
-Let's do a different query this time, let's do this one:
+Let's do a different query this time:
 ```SQL
 SELECT * FROM Employees {WHERE {City [city]} {HireDate [hireDate]} {YEAR(HireDate) [hireDateYear]}}
 ```
-This time we have nested *scopes* `{...}` in the  magical syntax. First of, note that this syntax can be put anywhere in the SQL and that the `WHERE` clause means nothing to SqlBinder, it's just plain text that will be removed if its parent *scope* is removed. The scope is removed only if all its child scopes and all its child `[...]` placeholders are removed. A placeholder will be removed if no matching *condition* is found.
+This time we have nested *scopes* `{...{...}...}`. First of, note that this syntax can be put anywhere in the SQL and that the `WHERE` clause means nothing to SqlBinder, it's just plain text that will be removed if its parent *scope* is removed. The scope is removed only if all its child scopes *and* all its child `[...]` placeholders (if any) are removed. A placeholder will be removed if no matching *condition* was found for it.
 
 Again, if we don't pass any *conditions*, all the magical stuff is removed and you end up with:
 
@@ -182,7 +159,7 @@ query.Conditions.Clear();
 query.SetCondition("hireDate", from: new DateTime(1993, 6, 1));
 ```
 
-This is just regular C# syntax, the `from:` part helps compiler find the right overload as there are many. Also, this time we're clearing the conditions collection as we don't want `hireDateYear` as well, we just want `hireDate` right now - if you look at the SQL again you'll see they are different placeholders.
+This is just regular C# syntax, the `from:` part helps compiler find the right overload as there are many. Also, this time we're clearing the conditions collection as we don't want `hireDateYear` as well, we just want `hireDate` right now - if you look at the SQL again you'll see that they are different placeholders.
 
 The resulting SQL:
 
@@ -205,10 +182,17 @@ The resulting SQL:
 SELECT * FROM Employees WHERE City = @pcity_1 AND YEAR(HireDate) BETWEEN @phireDateYear_1 AND @phireDateYear_2
 ```
 
-For complete code of these examples refer to the `Source/SqlBinder.ConsoleTutorial` folder where you can test this in real time and experiment on your own.
+Neat!
+
+For complete source code of these examples refer to the `Source/SqlBinder.ConsoleTutorial` folder where you can experiment on your own.
 
 ## The Demo App
-A very nice interactive demo app is available in the source.
+
+This library comes with a very nice, interactive Demo App developed in WPF which serves as a more complex example of the SqlBinder usage. It's still actually quite basic but offers a quite solid insight into the core features. 
+
+![screenshot1](https://raw.githubusercontent.com/bawkee/SqlBinder/master/Source/SqlBinder.DemoApp/screenshot1.png "Demo Screenshot")
+
+You can browse the Northwind database using some relatively complex queries which come as *.sql files you can alter any way you like and watch SqlBinder work its magic in the Debug Log.
 
 ## The Syntax
 The syntax looks like this:
