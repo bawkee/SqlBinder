@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections;
-using System.Data;
+using System.Collections.Generic;
 using System.Linq;
 using SqlBinder.Properties;
 
@@ -14,10 +14,10 @@ namespace SqlBinder
 		internal object[] GetValues() => OnGetValues();
 		internal string GetSql(int sqlOperator) => OnGetSql(sqlOperator);
 		internal string GetSql(Operator sqlOperator) => OnGetSql((int)sqlOperator);
-		internal void ProcessParameter(IDbDataParameter parameter) => OnProcessParameter(parameter);
+		internal void ProcessParameter(string paramName, object paramValue) => OnProcessParameter(paramName, paramValue);
 
 		/// <summary>
-		/// Gets or sets a value indicating whether <see cref="QueryBase{TCONNECTION,TCOMMAND}"/> should output an SQL with a bind variable (command parameter) or just
+		/// Gets or sets a value indicating whether <see cref="Query"/> should output an SQL with a bind variable (command parameter) or just
 		/// plain SQL.
 		/// </summary>
 		public virtual bool UseBindVariables { get; } = true;
@@ -25,7 +25,7 @@ namespace SqlBinder
 		/// <summary>
 		/// Allows custom processing logic for any parameter that resulted from this <see cref="ConditionValue"/>.
 		/// </summary>
-		protected virtual void OnProcessParameter(IDbDataParameter parameter) { }
+		protected virtual void OnProcessParameter(string paramName, object paramValue) { }
 
 		/// <summary>
 		/// When overriden in a derived class it must return an array of values that match the format string returned by <see cref="OnGetSql(int)"/>.

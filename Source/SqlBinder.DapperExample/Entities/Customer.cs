@@ -1,4 +1,4 @@
-﻿namespace SqlBinder.DemoNorthwindDal.Entities
+﻿namespace SqlBinder.DapperExample.Entities
 {
 	public class Customer
 	{

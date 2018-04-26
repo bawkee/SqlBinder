@@ -45,12 +45,14 @@
   <ItemGroup>
     <Compile Include="Condition.cs" />
     <Compile Include="ConditionValue.cs" />
+    <Compile Include="DbQuery.cs" />
+    <Compile Include="Parsing\Parser2.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="QueryBase.cs" />
+    <Compile Include="Query.cs" />
     <Compile Include="Operators.cs" />
     <Compile Include="Parsing\Parser.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

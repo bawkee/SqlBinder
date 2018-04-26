@@ -112,7 +112,7 @@ namespace SqlBinder.DemoNorthwindDal.OleDb
 
 		public IEnumerable<CategorySale> GetCategorySales(int[] categoryIds = null, DateTime? fromDate = null, DateTime? toDate = null)
 		{
-			var query = new OleDbQuery(_connection, GetSqlBinderScript("CategorySales.sql"));
+			var query = new DbQuery(_connection, GetSqlBinderScript("CategorySales.sql"));
 
 			if (categoryIds?.Any() ?? false)
 				query.SetCondition("categoryIds", categoryIds);
@@ -145,7 +145,7 @@ namespace SqlBinder.DemoNorthwindDal.OleDb
 			bool? isDiscontinued = null,
 			bool priceGreaterThanAvg = false)
 		{
-			var query = new OleDbQuery(_connection, GetSqlBinderScript("Products.sql"));
+			var query = new DbQuery(_connection, GetSqlBinderScript("Products.sql"));
 			
 			if (productId != null)
 				query.SetCondition("productId", productId);
@@ -205,7 +205,7 @@ namespace SqlBinder.DemoNorthwindDal.OleDb
 
 		public IEnumerable<string> GetShippingCities(string shippingCountry = null)
 		{
-			var query = new OleDbQuery(_connection, "SELECT ShipCity FROM Orders {WHERE {ShipCountry [shippingCountry]}} GROUP BY ShipCity");
+			var query = new DbQuery(_connection, "SELECT ShipCity FROM Orders {WHERE {ShipCountry [shippingCountry]}} GROUP BY ShipCity");
 
 			if (shippingCountry != null)
 				query.SetCondition("shippingCountry", shippingCountry);
@@ -229,7 +229,7 @@ namespace SqlBinder.DemoNorthwindDal.OleDb
 			string shipCity = null,
 			string shipCountry = null)
 		{
-			var query = new OleDbQuery(_connection, GetSqlBinderScript("Orders.sql"));
+			var query = new DbQuery(_connection, GetSqlBinderScript("Orders.sql"));
 
 			if (orderId.HasValue)
 				query.SetCondition("orderId", orderId);
@@ -324,13 +324,13 @@ namespace SqlBinder.DemoNorthwindDal.OleDb
 
 		private void Trace(string message = "") => TraceLog.Add(message);
 
-		private void TraceQuery(string name, OleDbQuery sqlBinderQuery)
+		private void TraceQuery(string name, Query sqlBinderQuery)
 		{
 			Trace($"-- {name} SqlBinder Script ".PadRight(40, '-') + '>');
 			Trace(sqlBinderQuery.SqlBinderScript);
 			Trace();
 			Trace($"-- {name} Output Sql ".PadRight(40, '-') + '>');
-			Trace(sqlBinderQuery.DbCommand.CommandText);
+			Trace(sqlBinderQuery.OutputSql);
 			Trace();
 		}
 

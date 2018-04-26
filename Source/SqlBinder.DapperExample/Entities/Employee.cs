@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace SqlBinder.DemoNorthwindDal.Entities
+namespace SqlBinder.DapperExample.Entities
 {
 	public class Employee
 	{

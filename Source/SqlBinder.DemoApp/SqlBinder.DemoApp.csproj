@@ -163,9 +163,6 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Northwind Traders.mdb">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
     <Resource Include="Resources\program.ico" />
     <Resource Include="Resources\northwindLogoBw.png" />
   </ItemGroup>
@@ -175,6 +172,11 @@
       <Name>SqlBinder.DemoNorthwindDal</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Content Include="..\DemoDatabase\Northwind Traders.mdb">
+      <Link>Northwind Traders.mdb</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
