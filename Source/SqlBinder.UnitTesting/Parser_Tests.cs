@@ -18,6 +18,18 @@ namespace SqlBinder.UnitTesting
 			}
 
 			[TestMethod]
+			public void SimpleTest_1()
+			{
+				var syntax = "SELECT * FROM TEST {WHERE SOMETTHING LIKE 'Test' AND {SomethingElse [somethingElse]} {SomethingThird [somethingThird]}}";
+
+				var parser = new Parsing2.Parser();
+
+				var root = parser.Parse(syntax);
+
+
+			}
+
+			[TestMethod]
 			public void Comments_1()
 			{
 				var withoutComments = "SELECT * FROM TABLE1 WHERE TABLE1.COLUMN1 = 123";
