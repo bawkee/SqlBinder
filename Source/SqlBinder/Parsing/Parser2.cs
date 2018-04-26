@@ -28,46 +28,76 @@ namespace SqlBinder.Parsing2
 			typeof(OracleAQMLiteral),
 			typeof(Scope),
 			typeof(Parameter),
+			typeof(ContentText),
 			typeof(ScopeSeparator),
 			typeof(Sql)
 		};
 
-		public void Parse(string script)
+		public Root Parse(string script)
 		{
-			var scopedElementTypes = ElementTypes.Where(t => t == typeof(ScopedElement)).ToArray();
-
-			
-
 			var reader = new Reader(script);
+			var root = reader.Element;
 
 			while(reader.Read())
 			{
-				if (reader.Element is Root || reader.Element.Parent is NestedElement)
+				var scopedElement = reader.Element as ScopedElement ?? reader.Element.Parent as ScopedElement;
+				var nestedElement = reader.Element as NestedElement ?? reader.Element.Parent as NestedElement;
+				var contentElement = reader.Element as ContentElement ?? reader.Element.Parent as ContentElement;
+
+				if (scopedElement != null) // Try to close the current scope
 				{
-					foreach (var type in scopedElementTypes)
+					if (scopedElement.ValidateClosingTag())
 					{
-						if (Activator.CreateInstance(type) is ScopedElement scopedObj)
-						{
-							if (scopedObj.Process(reader))
-							{
-								if (reader.Element is NestedElement nestedElement)
-									nestedElement.Children.Add(scopedObj);
-								else
-									((NestedElement) reader.Element.Parent).Children.Add(scopedObj);
-								reader.Element = scopedObj;
-								goto continue_while;
-							}
-						}
+						reader.Advance(scopedElement.ClosingTag.Length - 1);
+						reader.Element = scopedElement.Parent;
+						goto continue_while;
 					}
 				}
 
-				if (reader.Element is TextElement element)
+				if (nestedElement != null) // Try to create new scope
+				{
+					var scopedElementTypes = ElementTypes.Where(t => t.IsSubclassOf(typeof(ScopedElement))).ToArray();
+
+					foreach (var type in scopedElementTypes)
+					{
+						if (!(Activator.CreateInstance(type, nestedElement) is ScopedElement newScopedElement) 
+						    || !newScopedElement.Process(reader))
+							continue;
+						nestedElement.Children.Add(newScopedElement);
+						reader.Advance(newScopedElement.OpeningTag.Length - 1);
+						reader.Element = newScopedElement;
+						goto continue_while;
+					}
+				}
+
+				if (reader.Element is TextElement element) // Keep writing on text elem
 				{
 					element.Text.Append(reader.Char);
+				}
+				else // Try to create new text elem
+				{
+					var textElementTypes = ElementTypes.Where(t => t.IsSubclassOf(typeof(TextElement))).ToArray();
+
+					foreach (var type in textElementTypes)
+					{
+						if (!(Activator.CreateInstance(type, reader.Element) is TextElement newTextElement)
+						    || !newTextElement.Process(reader))
+							continue;
+						if (contentElement != null)
+							contentElement.Content = newTextElement;
+						else if (nestedElement != null)
+							nestedElement.Children.Add(newTextElement);
+						else
+							throw new InvalidOperationException();
+						reader.Element = newTextElement;
+						goto continue_while;
+					}					
 				}
 
 				continue_while: ;
 			}
+
+			return root as Root;
 		}
 	}
 
@@ -75,10 +105,11 @@ namespace SqlBinder.Parsing2
 	{
 		public Reader(string buffer) => Buffer = buffer;
 		public string Buffer { get; set; }
-		public int Index { get; set; }
-		public char Char { get; set; }
+		public int Index { get; set; } = -1;
+		public void Advance(int n) => Index += n;
+		public char Char { get; set; } 
 		public Element Element { get; set; } = new Root();
-		public bool Read() => (Char = Index < Buffer.Length ? Buffer[Index++] : (char)0) > 0;
+		public bool Read() => (Char = ++Index < Buffer.Length ? Buffer[Index] : (char)0) > 0;
 		public char Peek(int n = 1) => Index + n < Buffer.Length ? Buffer[Index + n] : (char)0;
 		public string PeekTwo() => new string(new[] {Char, Peek()});
 	}
@@ -115,16 +146,28 @@ namespace SqlBinder.Parsing2
 
 	public abstract class TextElement : Element
 	{
-		public StringBuilder Text { get; set; }
+		protected TextElement(Element parent) => Parent = parent;
+
+		public StringBuilder Text { get; set; } = new StringBuilder(512);
+
+		protected override bool OnProcess()
+		{
+			Text.Append(_reader.Char);
+			return true;
+		}
 	}
 
 	public abstract class ScopedElement : Element
 	{
+		protected ScopedElement(Element parent) => Parent = parent;
+
 		public string OpeningTag { get; set; }
 		public string ClosingTag { get; set; }
 
 		protected static bool ValidateTag(Reader r, string tag)
 		{
+			if (string.IsNullOrEmpty(tag))
+				return false;
 			for (var i = 0; i < tag.Length; i++)
 				if (r.Peek(i) != tag[i])
 					return false;
@@ -145,23 +188,27 @@ namespace SqlBinder.Parsing2
 	public abstract class ContentElement : ScopedElement
 	{
 		public Element Content { get; set; }
+
+		protected ContentElement(Element parent) : base(parent) { }
 	}
 
 	public abstract class NestedElement : ScopedElement
 	{		
 		public HashSet<Element> Children { get; set; } = new HashSet<Element>();
+
+		protected NestedElement(Element parent) : base(parent) { }
 	}
 
 	/* -------------------- */
 
 	public class Root : NestedElement
 	{
-		//
+		public Root() : base(null) { }
 	}
 
 	public class SqlBinderComment : ContentElement
 	{
-		public SqlBinderComment()
+		public SqlBinderComment(Element parent) : base(parent)
 		{
 			OpeningTag = "{*";
 			ClosingTag = "*}";
@@ -170,12 +217,19 @@ namespace SqlBinder.Parsing2
 
 	public class Sql : TextElement
 	{
-		
+		public Sql(Element parent) : base(parent)
+		{
+		}
+
+		protected override bool OnProcess()
+		{
+			return _reader.Element is NestedElement && base.OnProcess();
+		}
 	}
 
 	public class SingleQuoteLiteral : ContentElement
 	{
-		public SingleQuoteLiteral()
+		public SingleQuoteLiteral(Element parent) : base(parent)
 		{
 			OpeningTag = ClosingTag = "'";
 		}
@@ -183,7 +237,7 @@ namespace SqlBinder.Parsing2
 
 	public class DoubleQuoteLiteral : ContentElement
 	{
-		public DoubleQuoteLiteral()
+		public DoubleQuoteLiteral(Element parent) : base(parent)
 		{
 			OpeningTag = ClosingTag = "\"";
 		}
@@ -191,22 +245,49 @@ namespace SqlBinder.Parsing2
 
 	public class OracleAQMLiteral : ContentElement
 	{
-
+		public OracleAQMLiteral(Element parent) : base(parent)
+		{
+		}
 	}
 
 	public class ScopeSeparator : TextElement
 	{
+		public ScopeSeparator(Element parent) : base(parent)
+		{
+		}
 
+		protected override bool OnProcess()
+		{
+			return false && base.OnProcess();
+		}
+	}
+
+	public class ContentText : TextElement
+	{
+		public ContentText(Element parent) : base(parent)
+		{
+		}
+
+		protected override bool OnProcess()
+		{
+			return _reader.Element is ContentElement && base.OnProcess();
+		}
 	}
 
 	public class Parameter : ContentElement
 	{
-		public string Name => ((TextElement) Content).Text.ToString();
+		public Parameter(Element parent) : base(parent)
+		{
+			OpeningTag = "[";
+			ClosingTag = "]";
+		}
+
+		public string Name => ((ContentText) Content).Text.ToString();
 	}
 
 	public class Scope : NestedElement
 	{
-		public Scope()
+		public Scope(Element parent) : base(parent)
 		{
 			OpeningTag = "{";
 			ClosingTag = "}";
