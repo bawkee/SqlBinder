@@ -46,7 +46,7 @@ namespace SqlBinder.Parsing2
 
 		private bool TryToCloseScope(Reader reader, ScopedElement scopedElement)
 		{
-			if (scopedElement == null || !scopedElement.ValidateClosingTag(reader))
+			if (scopedElement == null || !scopedElement.EvaluateClosingTag(reader))
 				return false;
 			reader.Advance(scopedElement.ClosingTag.Length - 1);
 			reader.Element = scopedElement.Parent;
@@ -58,45 +58,18 @@ namespace SqlBinder.Parsing2
 			if (nestedElement == null)
 				return false;
 
-			//ScopedElement newElem = new SingleQuoteLiteral(nestedElement);
-			//if (!newElem.Evaluate(reader))
-			//{
-			//	newElem = new DoubleQuoteLiteral(nestedElement);
-			//	if (!newElem.Evaluate(reader))
-			//	{
-			//		newElem = new OracleAQMLiteral(nestedElement);
-			//		if (!newElem.Evaluate(reader))
-			//		{
-			//			newElem = new Scope(nestedElement);
-			//			if (!newElem.Evaluate(reader))
-			//			{
-			//				newElem = new Parameter(nestedElement);
-			//				if (!newElem.Evaluate(reader))
-			//					return false;
-			//			}
-			//		}
-			//	}
-			//}
+			ScopedElement newElem;
 
-			ScopedElement newElem = new SingleQuoteLiteral(nestedElement);
-			if (!newElem.Evaluate(reader))
-			{
-				//newElem = new DoubleQuoteLiteral(nestedElement);
-				//if (!newElem.Evaluate(reader))
-				//{
-				//	newElem = new OracleAQMLiteral(nestedElement);
-				//	if (!newElem.Evaluate(reader))
-				//	{
-						newElem = new Scope(nestedElement);
-						if (!newElem.Evaluate(reader))
-						{
-							newElem = new Parameter(nestedElement);
-							if (!newElem.Evaluate(reader))
-								return false;
-						}
-				//	}
-				//}
-			}
+			if (SingleQuoteLiteral.Evaluate(reader))
+				newElem = new SingleQuoteLiteral(nestedElement);
+			else if (DoubleQuoteLiteral.Evaluate(reader))
+				newElem = new DoubleQuoteLiteral(nestedElement);
+			else if (Scope.Evaluate(reader))
+				newElem = new Scope(nestedElement);
+			else if (Parameter.Evaluate(reader))
+				newElem = new Parameter(nestedElement);
+			else
+				return false;
 
 			nestedElement.Children.Add(newElem);
 			reader.Advance(newElem.OpeningTag.Length - 1);
@@ -106,17 +79,16 @@ namespace SqlBinder.Parsing2
 
 		private static bool TryToCreateTextElement(Reader reader, ContentElement contentElement, NestedElement nestedElement)
 		{
-			TextElement newElem = new ContentText(reader.Element);
-			if (!newElem.Evaluate(reader))
-			{
+			TextElement newElem;
+
+			if (ContentText.Evaluate(reader))
+				newElem = new ContentText(reader.Element);
+			else if (ScopeSeparator.Evaluate(reader))
 				newElem = new ScopeSeparator(reader.Element);
-				if (!newElem.Evaluate(reader))
-				{
-					newElem = new Sql(reader.Element);
-					if (!newElem.Evaluate(reader))
-						return false;
-				}
-			}
+			else if (Sql.Evaluate(reader))
+				newElem = new Sql(reader.Element);
+			else
+				return false;
 
 			if (contentElement != null)
 				contentElement.Content = newElem;
@@ -124,49 +96,50 @@ namespace SqlBinder.Parsing2
 				nestedElement.Children.Add(newElem);
 			else
 				throw new InvalidOperationException();
+
+			newElem.Text.Append(reader.Char);
+
 			reader.Element = newElem;
-			return true;			
-		}
-	}
 
-	public class ElementPool
-	{
-		private Dictionary<Type, Element> _elementPool = new Dictionary<Type, Element>();
-
-		public Element Resolve(Type elementType, Element parent)
-		{
-			return Element.CreateElement(elementType, parent);
-
-			if (!_elementPool.ContainsKey(elementType))
-				return _elementPool[elementType] = Element.CreateElement(elementType, parent);
-			return _elementPool[elementType];
-		}
-
-		public void Release(Type elementType)
-		{
-			_elementPool.Remove(elementType);
+			return true;
 		}
 	}
 
 	public class Reader
 	{
 		public Reader(string buffer) => Buffer = buffer;
+
 		public string Buffer { get; set; }
+
 		public int Index { get; set; } = -1;
+
 		public void Advance(int n) => Index += n;
-		public char Char { get; set; } 
+
+		public char Char { get; set; }
+
 		public Element Element { get; set; } = new Root();
+
 		public bool Read() => (Char = ++Index < Buffer.Length ? Buffer[Index] : (char)0) > 0;
+
 		public char Peek(int n = 0) => Index + n < Buffer.Length ? Buffer[Index + n] : (char)0;
-		public ElementPool ElementPool { get; set; } = new ElementPool();
+
+		public bool ValidateString(string str)
+		{
+			if (string.IsNullOrEmpty(str))
+				return false;
+			for (var i = 0; i < str.Length; i++)
+				if (Peek(i) != str[i])
+					return false;
+			return true;
+		}
 	}
 
-	public class ReaderRestorer : IDisposable
+	public class ReaderSnapshot : IDisposable
 	{
 		public int StartingIndex { get; }
 		public Reader Reader { get; set; }
 
-		public ReaderRestorer(Reader reader)
+		public ReaderSnapshot(Reader reader)
 		{
 			Reader = reader;
 			StartingIndex = reader.Index;
@@ -193,33 +166,6 @@ namespace SqlBinder.Parsing2
 	public abstract class Element
 	{
 		public Element Parent { get; set; }
-
-		public bool Evaluate(Reader reader) => OnEvaulate(reader);
-
-		protected virtual bool OnEvaulate(Reader reader) => false;
-
-		public static Element CreateElement(Type elementType, Element parent)
-		{
-			if (elementType == typeof(Sql))
-				return new Sql(parent);
-			if (elementType == typeof(Scope))
-				return new Scope(parent);
-			if (elementType == typeof(ScopeSeparator))
-				return new ScopeSeparator(parent);
-			if (elementType == typeof(Parameter))
-				return new Parameter(parent);
-			if (elementType == typeof(ContentText))
-				return new ContentText(parent);
-			if (elementType == typeof(SingleQuoteLiteral))
-				return new SingleQuoteLiteral(parent);
-			if (elementType == typeof(DoubleQuoteLiteral))
-				return new DoubleQuoteLiteral(parent);
-			if (elementType == typeof(OracleAQMLiteral))
-				return new OracleAQMLiteral(parent);
-			if (elementType == typeof(SqlBinderComment))
-				return new SqlBinderComment(parent);
-			throw new NotSupportedException();
-		}
 	}
 
 	public abstract class TextElement : Element
@@ -228,12 +174,6 @@ namespace SqlBinder.Parsing2
 
 		public StringBuilder Text { get; set; } = new StringBuilder(512);
 
-		protected override bool OnEvaulate(Reader reader)
-		{
-			Text.Append(reader.Char);
-			return true;
-		}
-
 		public override string ToString() => $"{GetType().Name} ({Text})";
 	}
 
@@ -241,28 +181,12 @@ namespace SqlBinder.Parsing2
 	{
 		protected ScopedElement(Element parent) => Parent = parent;
 
-		public string OpeningTag { get; set; }
-		public string ClosingTag { get; set; }
+		public abstract string OpeningTag { get; }
+		public abstract string ClosingTag { get; }
 
-		protected static bool ValidateTag(Reader r, string tag)
-		{
-			if (string.IsNullOrEmpty(tag))
-				return false;
-			for (var i = 0; i < tag.Length; i++)
-				if (r.Peek(i) != tag[i])
-					return false;
-			return true;
-		}
+		protected static bool Evaluate(Reader reader, string tag) => reader.ValidateString(tag);
 
-		private bool? _openingTag; // Cache since there is no point to re-validate
-
-		protected override bool OnEvaulate(Reader reader)
-		{			
-			return (bool)(_openingTag = ValidateOpeningTag(reader));
-		}
-		
-		public virtual bool ValidateOpeningTag(Reader reader) => _openingTag ?? ValidateTag(reader, OpeningTag);
-		public virtual bool ValidateClosingTag(Reader reader) => ValidateTag(reader, ClosingTag);
+		public virtual bool EvaluateClosingTag(Reader reader) => Evaluate(reader, ClosingTag);
 	}
 
 	public abstract class ContentElement : ScopedElement
@@ -288,15 +212,21 @@ namespace SqlBinder.Parsing2
 	public class Root : NestedElement
 	{
 		public Root() : base(null) { }
+		public override string OpeningTag => null;
+		public override string ClosingTag => null;
 	}
 
 	public class SqlBinderComment : ContentElement
 	{
-		public SqlBinderComment(Element parent) : base(parent)
-		{
-			OpeningTag = "{*";
-			ClosingTag = "*}";
-		}
+		private const string OPENING_TAG = "{*";
+		private const string CLOSING_TAG = "*}";
+
+		public override string OpeningTag => OPENING_TAG;
+		public override string ClosingTag => CLOSING_TAG;		
+
+		public SqlBinderComment(Element parent) : base(parent) { }
+
+		public static bool Evaluate(Reader reader) => Evaluate(reader, OPENING_TAG);		
 	}
 
 	public class Sql : TextElement
@@ -305,33 +235,41 @@ namespace SqlBinder.Parsing2
 		{
 		}
 
-		protected override bool OnEvaulate(Reader reader)
-		{
-			return reader.Element is NestedElement && base.OnEvaulate(reader);
-		}
+		public static bool Evaluate(Reader reader) => reader.Element is NestedElement;
 	}
 
 	public class SingleQuoteLiteral : ContentElement
 	{
-		public SingleQuoteLiteral(Element parent) : base(parent)
-		{
-			OpeningTag = ClosingTag = "'";
-		}
+		private const string TAG = "'";
+
+		public override string OpeningTag => TAG;
+		public override string ClosingTag => TAG;
+
+		public SingleQuoteLiteral(Element parent) : base(parent) { }
+
+		public static bool Evaluate(Reader reader) => Evaluate(reader, TAG);
 	}
 
 	public class DoubleQuoteLiteral : ContentElement
 	{
-		public DoubleQuoteLiteral(Element parent) : base(parent)
-		{
-			OpeningTag = ClosingTag = "\"";
-		}
+		private const string TAG = "\"";
+
+		public override string OpeningTag => TAG;
+		public override string ClosingTag => TAG;
+
+		public DoubleQuoteLiteral(Element parent) : base(parent) { }
+
+		public static bool Evaluate(Reader reader) => Evaluate(reader, TAG);
 	}
 
 	public class OracleAQMLiteral : ContentElement
 	{
-		public OracleAQMLiteral(Element parent) : base(parent)
-		{
-		}
+		private const string TAG = "'";
+
+		public override string OpeningTag => TAG;
+		public override string ClosingTag => TAG;
+
+		public OracleAQMLiteral(Element parent) : base(parent) { }
 	}
 
 	public class ScopeSeparator : TextElement
@@ -342,27 +280,24 @@ namespace SqlBinder.Parsing2
 		{
 		}
 
-		protected override bool OnEvaulate(Reader reader)
+		public static bool Evaluate(Reader reader)
 		{
-			if (!(Parent is NestedElement nestedParent))
+			if (!(reader.Element.Parent is NestedElement nestedParent))
 				return false;
 
 			if (!char.IsWhiteSpace(reader.Char))
 				return false;
-			
+
 			if (nestedParent.Children.LastOrDefault(e => e is Scope) == null)
 				return false;
 
-			using (new ReaderRestorer(reader))
+			using (new ReaderSnapshot(reader))
 			{
 				while (reader.Read())
 				{
 					if (char.IsWhiteSpace(reader.Char))
-					{
-						Separator.Append(reader.Char);
 						continue;
-					}
-					return new Scope(reader.Element).Evaluate(reader);						
+					return Scope.Evaluate(reader);
 				}
 			}
 
@@ -378,29 +313,34 @@ namespace SqlBinder.Parsing2
 		{
 		}
 
-		protected override bool OnEvaulate(Reader reader)
-		{
-			return reader.Element is ContentElement && base.OnEvaulate(reader);
-		}
+		public static bool Evaluate(Reader reader) => reader.Element is ContentElement;
 	}
 
 	public class Parameter : ContentElement
 	{
-		public Parameter(Element parent) : base(parent)
-		{
-			OpeningTag = "[";
-			ClosingTag = "]";
-		}
+		private const string OPENING_TAG = "[";
+		private const string CLOSING_TAG = "]";
+
+		public override string OpeningTag => OPENING_TAG;
+		public override string ClosingTag => CLOSING_TAG;
+
+		public Parameter(Element parent) : base(parent) { }
+
+		public static bool Evaluate(Reader reader) => Evaluate(reader, OPENING_TAG);		
 
 		public string Name => ((ContentText) Content).Text.ToString();
 	}
 
 	public class Scope : NestedElement
 	{
-		public Scope(Element parent) : base(parent)
-		{
-			OpeningTag = "{";
-			ClosingTag = "}";
-		}
+		private const string OPENING_TAG = "{";
+		private const string CLOSING_TAG = "}";
+
+		public override string OpeningTag => OPENING_TAG;
+		public override string ClosingTag => CLOSING_TAG;
+
+		public Scope(Element parent) : base(parent) { }
+
+		public static bool Evaluate(Reader reader) => Evaluate(reader, OPENING_TAG);		
 	}
 }
