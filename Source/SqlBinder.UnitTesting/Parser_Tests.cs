@@ -22,7 +22,7 @@ namespace SqlBinder.UnitTesting
 			[TestMethod]
 			public void SimpleTest_1()
 			{
-				var syntax = "SELECT * FROM TEST {WHERE SOMETHING LIKE 'Test' AND {SomethingElse [somethingElse]} {SomethingThird [somethingThird]}}";
+				var syntax = "SELECT * FROM TEST {WHERE SOMETHING LIKE 'Test' AND {SomethingElse [somethingElse]} {SomethingThird [somethingThird]}};";
 				var parser = new Parser();
 				var root = parser.Parse(syntax);
 				var nesting = 0;
@@ -44,7 +44,7 @@ namespace SqlBinder.UnitTesting
 			[TestMethod]
 			public void PerformanceTest_1()
 			{
-				var syntax = "SELECT * FROM TEST {WHERE SOMETHING LIKE 'Test' AND {SomethingElse [somethingElse]} {SomethingThird [somethingThird]}}";
+				var syntax = "SELECT * FROM TEST {WHERE SOMETHING LIKE 'Test' AND {SomethingElse [somethingElse]} {SomethingThird [somethingThird]}};";
 				var parser2 = new Parser();
 
 				parser2.Parse(syntax);
