@@ -1,5 +1,7 @@
 ﻿using System.Data;
+using System.Diagnostics;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using SqlBinder.Parsing2;
 
 namespace SqlBinder.UnitTesting
 {
@@ -20,14 +22,58 @@ namespace SqlBinder.UnitTesting
 			[TestMethod]
 			public void SimpleTest_1()
 			{
-				var syntax = "SELECT * FROM TEST {WHERE SOMETTHING LIKE 'Test' AND {SomethingElse [somethingElse]} {SomethingThird [somethingThird]}}";
-
-				var parser = new Parsing2.Parser();
-
+				var syntax = "SELECT * FROM TEST {WHERE SOMETHING LIKE 'Test' AND {SomethingElse [somethingElse]} {SomethingThird [somethingThird]}}";
+				var parser = new Parser();
 				var root = parser.Parse(syntax);
+				var nesting = 0;
+				OutputLexerResults(root, ref nesting);
+			}
+
+			private void OutputLexerResults(Element element, ref int nesting)
+			{
+				Debug.WriteLine(new string('\t', nesting) + element);
+				if (element is NestedElement nestedElement)
+				{
+					nesting++;
+					foreach (var childElement in nestedElement.Children)
+						OutputLexerResults(childElement, ref nesting);
+					nesting--;
+				}
+			}
+
+			[TestMethod]
+			public void PerformanceTest_1()
+			{
+				var syntax = "SELECT * FROM TEST {WHERE SOMETHING LIKE 'Test' AND {SomethingElse [somethingElse]} {SomethingThird [somethingThird]}}";
+				var parser2 = new Parser();
+
+				parser2.Parse(syntax);
+				var sw = new Stopwatch();
+				sw.Start();
+				for (var i = 0; i < 1000; i++)
+					parser2.Parse(syntax);
+				sw.Stop();
+
+				Debug.WriteLine("Elap1: " + sw.Elapsed.TotalMilliseconds);
+
+				SqlBinder.Parsing.Parser parser = new Parsing.Parser();
+				parser.Parse(syntax);				
+				sw.Restart();
+				for (var i = 0; i < 1000; i++)
+					parser.Parse(syntax);
+				sw.Stop();
+
+				Debug.WriteLine("Elap2: " + sw.Elapsed.TotalMilliseconds);				
+			}
+
+			[TestMethod]
+			public void PerformanceTest_2()
+			{
+				var syntax = "SELECT * FROM TEST {WHERE SOMETHING LIKE 'Test' AND {SomethingElse [somethingElse]} {SomethingThird [somethingThird]}}";
 
 
 			}
+
 
 			[TestMethod]
 			public void Comments_1()
