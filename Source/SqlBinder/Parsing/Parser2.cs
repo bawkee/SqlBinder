@@ -7,9 +7,9 @@ using System.Text;
 
 namespace SqlBinder.Parsing2
 {
-	public class Parser
+	public class Lexer
 	{
-		public Root Parse(string script)
+		public Root Process(string script)
 		{
 			var reader = new Reader(script);
 			var root = reader.Element;
@@ -23,14 +23,14 @@ namespace SqlBinder.Parsing2
 				if (TryToCloseScope(reader, scopedElement))
 					continue;
 
-				if (TryToCreateScope(reader, nestedElement))
+				if (TryToCreateScope(reader, nestedElement, contentElement))
 					continue;
 
 				if (reader.Element is TextElement element) // Keep writing on text elem
 					element.Text.Append(reader.Char);
 				else
 					CreateTextElement(reader, contentElement, nestedElement);
-			}			
+			}
 
 			return root as Root;
 		}
@@ -44,9 +44,9 @@ namespace SqlBinder.Parsing2
 			return true;
 		}
 
-		private static bool TryToCreateScope(Reader reader, NestedElement nestedElement)
+		private static bool TryToCreateScope(Reader reader, NestedElement nestedElement, ContentElement contentElement)
 		{
-			if (nestedElement == null)
+			if (nestedElement == null || contentElement != null)
 				return false;
 
 			ScopedElement newElem;
@@ -221,14 +221,47 @@ namespace SqlBinder.Parsing2
 		public static bool Evaluate(Reader reader) => Evaluate(reader, TAG);
 	}
 
-	public class OracleAQMLiteral : ContentElement
+	public class OracleAQMLiteral : ContentElement // Oracle alternative quoting mechanism
 	{
-		private const string TAG = "'";
+		private const string OPENING_TAG = "q'";
+		private const string CLOSING_TAG = "'";
 
-		public override string OpeningTag => TAG;
-		public override string ClosingTag => TAG;
+		public override string OpeningTag => OPENING_TAG;
+		public override string ClosingTag => CLOSING_TAG;
+
+		//public OracleAQMLiteral(Element parent, Reader reader) : base(parent)
+		//{
+		//	Content = new OracleAQMScope(this, reader.Peek(2));
+		//}
 
 		public OracleAQMLiteral(Element parent) : base(parent) { }
+
+		public static bool Evaluate(Reader reader) => Evaluate(reader, OPENING_TAG) && OracleAQMScope.Evaluate(reader);
+
+		public override bool EvaluateClosingTag(Reader reader) => Content != null && base.EvaluateClosingTag(reader);
+	}
+
+	public class OracleAQMScope : ContentElement // Oracle sub-literal, can only be a 'content' of OracleAQMLiteral
+	{
+		public const string STANDARD_PAIRS = "[]{}()<>";
+		public const string ILLEGAL_CHARACTERS = "\r\n\t '";
+
+		public override string OpeningTag { get; }
+		public override string ClosingTag { get; }
+
+		public OracleAQMScope(Element parent, char openingTag) : base(parent)
+		{
+			var i = STANDARD_PAIRS.IndexOf(openingTag);
+			if (i > -1)
+			{
+				OpeningTag = STANDARD_PAIRS[i].ToString();
+				ClosingTag = (i + 1) % 2 == 0 ? STANDARD_PAIRS[i - 1].ToString() : STANDARD_PAIRS[i + 1].ToString();
+			}
+			else
+				OpeningTag = ClosingTag = openingTag.ToString();
+		}
+
+		public static bool Evaluate(Reader reader) => reader.Element is OracleAQMLiteral && !ILLEGAL_CHARACTERS.Contains(reader.Peek(2));
 	}
 
 	public class ScopeSeparator : TextElement
