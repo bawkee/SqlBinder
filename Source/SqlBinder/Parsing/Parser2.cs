@@ -53,6 +53,7 @@ namespace SqlBinder.Parsing2
 			
 			if (SingleQuoteLiteral.Evaluate(reader)) newElem = new SingleQuoteLiteral(nestedElement);
 			else if (DoubleQuoteLiteral.Evaluate(reader)) newElem = new DoubleQuoteLiteral(nestedElement);
+			else if (OracleAQMLiteral.Evaluate(reader)) newElem = new OracleAQMLiteral(nestedElement, reader);
 			else if (Scope.Evaluate(reader)) newElem = new Scope(nestedElement);
 			else if (Parameter.Evaluate(reader)) newElem = new Parameter(nestedElement);
 			else return false;
@@ -197,71 +198,87 @@ namespace SqlBinder.Parsing2
 		public static bool Evaluate(Reader reader) => reader.Element is NestedElement;
 	}
 
-	public class SingleQuoteLiteral : ContentElement
+	public abstract class EscapableLiteral : ContentElement
 	{
-		private const string TAG = "'";
+		protected EscapableLiteral(Element parent) : base(parent) { }
 
+		private bool _skip;
+
+		public override bool EvaluateClosingTag(Reader reader)
+		{
+			if (_skip)
+				return _skip = false;
+			if (!base.EvaluateClosingTag(reader))
+				return false;
+			if (Content != null && reader.Peek(-1) == '\\')
+				return false;
+			if (reader.Peek(1) != LiteralTag)
+				return true;
+			_skip = true;
+			return false;
+		}
+
+		public abstract char LiteralTag { get; }
+	}
+
+	public class SingleQuoteLiteral : EscapableLiteral
+	{
+		public const string TAG = "'";
 		public override string OpeningTag => TAG;
 		public override string ClosingTag => TAG;
-
+		public override char LiteralTag => TAG[0];
 		public SingleQuoteLiteral(Element parent) : base(parent) { }
-
 		public static bool Evaluate(Reader reader) => Evaluate(reader, TAG);
 	}
 
-	public class DoubleQuoteLiteral : ContentElement
+	public class DoubleQuoteLiteral : EscapableLiteral
 	{
-		private const string TAG = "\"";
-
+		public const string TAG = "\"";
 		public override string OpeningTag => TAG;
 		public override string ClosingTag => TAG;
-
+		public override char LiteralTag => TAG[0];
 		public DoubleQuoteLiteral(Element parent) : base(parent) { }
-
 		public static bool Evaluate(Reader reader) => Evaluate(reader, TAG);
 	}
 
 	public class OracleAQMLiteral : ContentElement // Oracle alternative quoting mechanism
 	{
-		private const string OPENING_TAG = "q'";
-		private const string CLOSING_TAG = "'";
-
-		public override string OpeningTag => OPENING_TAG;
-		public override string ClosingTag => CLOSING_TAG;
-
-		//public OracleAQMLiteral(Element parent, Reader reader) : base(parent)
-		//{
-		//	Content = new OracleAQMScope(this, reader.Peek(2));
-		//}
-
-		public OracleAQMLiteral(Element parent) : base(parent) { }
-
-		public static bool Evaluate(Reader reader) => Evaluate(reader, OPENING_TAG) && OracleAQMScope.Evaluate(reader);
-
-		public override bool EvaluateClosingTag(Reader reader) => Content != null && base.EvaluateClosingTag(reader);
-	}
-
-	public class OracleAQMScope : ContentElement // Oracle sub-literal, can only be a 'content' of OracleAQMLiteral
-	{
+		public const string OPENING_TAG = "q'";
+		public const string CLOSING_TAG = "'";
 		public const string STANDARD_PAIRS = "[]{}()<>";
 		public const string ILLEGAL_CHARACTERS = "\r\n\t '";
 
 		public override string OpeningTag { get; }
 		public override string ClosingTag { get; }
 
-		public OracleAQMScope(Element parent, char openingTag) : base(parent)
+		public OracleAQMLiteral(Element parent, Reader reader) : base(parent)
 		{
-			var i = STANDARD_PAIRS.IndexOf(openingTag);
-			if (i > -1)
-			{
-				OpeningTag = STANDARD_PAIRS[i].ToString();
-				ClosingTag = (i + 1) % 2 == 0 ? STANDARD_PAIRS[i - 1].ToString() : STANDARD_PAIRS[i + 1].ToString();
-			}
+			var alternativeTag = reader.Peek(2);
+
+			OpeningTag = OPENING_TAG + alternativeTag;
+
+			var standardPair = STANDARD_PAIRS.IndexOf(alternativeTag);
+			if (standardPair > -1)
+				ClosingTag = STANDARD_PAIRS[standardPair + 1] + CLOSING_TAG;
 			else
-				OpeningTag = ClosingTag = openingTag.ToString();
+				ClosingTag = alternativeTag + CLOSING_TAG;
+
 		}
 
-		public static bool Evaluate(Reader reader) => reader.Element is OracleAQMLiteral && !ILLEGAL_CHARACTERS.Contains(reader.Peek(2));
+		public OracleAQMLiteral(Element parent) : base(parent) { }
+
+		public static bool Evaluate(Reader reader)
+		{
+			if (!Evaluate(reader, OPENING_TAG))
+				return false;
+			if (ILLEGAL_CHARACTERS.Contains(reader.Peek(2)))
+				return false;
+			var standardPair = STANDARD_PAIRS.IndexOf(reader.Peek(2));
+			return standardPair < 0 || standardPair % 2 == 0;
+		}
+
+		// Code smell -->
+		public override bool EvaluateClosingTag(Reader reader) => Content != null && base.EvaluateClosingTag(reader);
 	}
 
 	public class ScopeSeparator : TextElement
