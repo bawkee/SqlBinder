@@ -115,9 +115,10 @@ namespace SqlBinder.UnitTesting
 							 "q'{This has alternative {} quotes}' OR " +
 							 "q'{This has alternative \\} quotes}' OR " +
 							 "q'\"This has alternative \"\" quotes\"' OR " +
-				             "q'\"This has alternative \\\" quotes\"' OR " +
+				             "q'\"This has alternative \\\" quotes\"' OR " +				             
 							 "'''This''' OR " +
-				             "\"\"\"This\"\"\"";
+				             "\"\"\"This\"\"\" OR " +
+				             "testq'[This]'}";
 
 				/* 
 				 '{Test}'
@@ -138,7 +139,6 @@ namespace SqlBinder.UnitTesting
 				 q'{This has alternative \} quotes}'
 				 q'"This has alternative "" quotes"'
 				 q'"This has alternative \" quotes"'
-
 				 */
 
 				var root = new Lexer().Process(syntax);
@@ -324,6 +324,60 @@ namespace SqlBinder.UnitTesting
 				Assert.AreEqual("\"", ((ScopedElement)((Scope)root.Children[1]).Children[39]).ClosingTag);
 				Assert.AreEqual("\"\"This\"\"", ((ContentText)((ContentElement)((Scope)root.Children[1]).Children[39]).Content).Text.ToString());
 
+				Assert.IsInstanceOfType(((Scope)root.Children[1]).Children[41], typeof(SingleQuoteLiteral));
+				Assert.IsTrue(((Scope)root.Children[1]).Children[41].Parent == root.Children[1]);
+				Assert.IsInstanceOfType(((ContentElement)((Scope)root.Children[1]).Children[41]).Content, typeof(ContentText));
+				Assert.AreEqual("'", ((ScopedElement)((Scope)root.Children[1]).Children[41]).OpeningTag);
+				Assert.AreEqual("'", ((ScopedElement)((Scope)root.Children[1]).Children[41]).ClosingTag);
+				Assert.AreEqual("[This]", ((ContentText)((ContentElement)((Scope)root.Children[1]).Children[41]).Content).Text.ToString());
+			}
+
+			[TestMethod]
+			public void ParserTest_LexingLiterals_Postgre()
+			{
+				var syntax = "SELECT * FROM TEST {WHERE " +
+				             "$q${This is 'quoted' text}$q$ OR " +
+				             "$${This is \"quoted\" text}$$ OR " +
+				             "$tag$This is q'{quoted}' text$tag$ OR " +
+				             "$tag$This $is $'quoted' $$ text$tag$ OR " +
+				             "$tag$This is $'$quoted$'$ text$tag$}";
+
+				var root = new Lexer().Process(syntax);
+
+				var nesting = 0;
+				OutputLexerResults(root, ref nesting);
+
+				Assert.IsNull(root.ClosingTag);
+				Assert.IsNull(root.OpeningTag);
+				Assert.IsNull(root.Parent);
+				Assert.IsTrue(root.Children.Count == 2);
+
+				Assert.IsInstanceOfType(root.Children[0], typeof(Sql));
+				Assert.IsTrue(((Sql)root.Children[0]).Parent == root);
+				Assert.AreEqual(((Sql)root.Children[0]).Text.ToString(), "SELECT * FROM TEST ");
+
+				Assert.IsInstanceOfType(root.Children[1], typeof(Scope));
+				Assert.IsTrue(((Scope)root.Children[1]).Parent == root);
+				Assert.AreEqual("{", ((Scope)root.Children[1]).OpeningTag);
+				Assert.AreEqual("}", ((Scope)root.Children[1]).ClosingTag);
+
+				Assert.IsInstanceOfType(((Scope)root.Children[1]).Children[0], typeof(Sql));
+				Assert.IsTrue(((Scope)root.Children[1]).Children[0].Parent == root.Children[1]);
+				Assert.AreEqual("WHERE ", ((Sql)((Scope)root.Children[1]).Children[0]).Text.ToString());
+
+				Assert.IsInstanceOfType(((Scope)root.Children[1]).Children[1], typeof(PostgreDoubleDollarLiteral));
+				Assert.IsTrue(((Scope)root.Children[1]).Children[1].Parent == root.Children[1]);
+				Assert.IsInstanceOfType(((ContentElement)((Scope)root.Children[1]).Children[1]).Content, typeof(ContentText));
+				Assert.AreEqual("$q$", ((ScopedElement)((Scope)root.Children[1]).Children[1]).OpeningTag);
+				Assert.AreEqual("$q$", ((ScopedElement)((Scope)root.Children[1]).Children[1]).ClosingTag);
+				Assert.AreEqual("{This is 'quoted' text}", ((ContentText)((ContentElement)((Scope)root.Children[1]).Children[1]).Content).Text.ToString());
+
+				Assert.IsInstanceOfType(((Scope)root.Children[1]).Children[3], typeof(PostgreDoubleDollarLiteral));
+				Assert.IsTrue(((Scope)root.Children[1]).Children[3].Parent == root.Children[1]);
+				Assert.IsInstanceOfType(((ContentElement)((Scope)root.Children[1]).Children[3]).Content, typeof(ContentText));
+				Assert.AreEqual("$$", ((ScopedElement)((Scope)root.Children[1]).Children[3]).OpeningTag);
+				Assert.AreEqual("$$", ((ScopedElement)((Scope)root.Children[1]).Children[3]).ClosingTag);
+				Assert.AreEqual("{This is \"quoted\" text}", ((ContentText)((ContentElement)((Scope)root.Children[1]).Children[3]).Content).Text.ToString());
 
 			}
 

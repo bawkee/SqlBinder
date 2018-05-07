@@ -54,6 +54,7 @@ namespace SqlBinder.Parsing2
 			if (SingleQuoteLiteral.Evaluate(reader)) newElem = new SingleQuoteLiteral(nestedElement);
 			else if (DoubleQuoteLiteral.Evaluate(reader)) newElem = new DoubleQuoteLiteral(nestedElement);
 			else if (OracleAQMLiteral.Evaluate(reader)) newElem = new OracleAQMLiteral(nestedElement, reader);
+			else if (PostgreDoubleDollarLiteral.Evaluate(reader)) newElem = new PostgreDoubleDollarLiteral(nestedElement, reader);
 			else if (Scope.Evaluate(reader)) newElem = new Scope(nestedElement);
 			else if (Parameter.Evaluate(reader)) newElem = new Parameter(nestedElement);
 			else return false;
@@ -198,9 +199,9 @@ namespace SqlBinder.Parsing2
 		public static bool Evaluate(Reader reader) => reader.Element is NestedElement;
 	}
 
-	public abstract class EscapableLiteral : ContentElement
+	public abstract class EscapableStringLiteral : ContentElement
 	{
-		protected EscapableLiteral(Element parent) : base(parent) { }
+		protected EscapableStringLiteral(Element parent) : base(parent) { }
 
 		private bool _skip;
 
@@ -221,7 +222,7 @@ namespace SqlBinder.Parsing2
 		public abstract char LiteralTag { get; }
 	}
 
-	public class SingleQuoteLiteral : EscapableLiteral
+	public class SingleQuoteLiteral : EscapableStringLiteral
 	{
 		public const string TAG = "'";
 		public override string OpeningTag => TAG;
@@ -231,7 +232,7 @@ namespace SqlBinder.Parsing2
 		public static bool Evaluate(Reader reader) => Evaluate(reader, TAG);
 	}
 
-	public class DoubleQuoteLiteral : EscapableLiteral
+	public class DoubleQuoteLiteral : EscapableStringLiteral
 	{
 		public const string TAG = "\"";
 		public override string OpeningTag => TAG;
@@ -247,6 +248,7 @@ namespace SqlBinder.Parsing2
 		public const string CLOSING_TAG = "'";
 		public const string STANDARD_PAIRS = "[]{}()<>";
 		public const string ILLEGAL_CHARACTERS = "\r\n\t '";
+		public const string WHITE_SPACE = "\r\n\t \0";
 
 		public override string OpeningTag { get; }
 		public override string ClosingTag { get; }
@@ -273,12 +275,63 @@ namespace SqlBinder.Parsing2
 				return false;
 			if (ILLEGAL_CHARACTERS.Contains(reader.Peek(2)))
 				return false;
+			if (!WHITE_SPACE.Contains(reader.Peek(-1)))
+				return false;
 			var standardPair = STANDARD_PAIRS.IndexOf(reader.Peek(2));
 			return standardPair < 0 || standardPair % 2 == 0;
 		}
 
-		// Code smell -->
 		public override bool EvaluateClosingTag(Reader reader) => Content != null && base.EvaluateClosingTag(reader);
+	}
+
+	public class PostgreDoubleDollarLiteral : ContentElement // This conflicts with Informix EXEC SQL keyword
+	{
+		public const char SYMBOL = '$';
+		public const ushort MAX_TAG = 256;
+
+		public override string OpeningTag { get; }
+		public override string ClosingTag { get; }
+
+		public const string WHITE_SPACE = "\r\n\t \0";
+
+		public PostgreDoubleDollarLiteral(Element parent, Reader reader) : base(parent)
+		{
+			OpeningTag = ClosingTag = DetermineTag(reader);
+		}
+
+		public static bool Evaluate(Reader reader)
+		{
+			if (reader.Char != SYMBOL)
+				return false;
+			if (!WHITE_SPACE.Contains(reader.Peek(-1)))
+				return false;
+			return DetermineTag(reader) != null;
+		}
+
+		private static unsafe string  DetermineTag(Reader reader)
+		{
+			char* buf = stackalloc char[MAX_TAG];
+			var done = false;			
+
+			for (ushort i = 0; i < MAX_TAG - 1; i++)
+			{
+				var c = reader.Peek(i);
+				if (i > 0)
+				{
+					if (c == SYMBOL)
+						done = true;
+					else if (!char.IsLetter(c))
+						break; // Invalid character
+				}
+				buf[i] = c;
+				if (done)
+				{
+					buf[i + 1] = '\0';
+					return new string(buf);
+				}
+			}
+			return null;
+		}
 	}
 
 	public class ScopeSeparator : TextElement
@@ -291,7 +344,7 @@ namespace SqlBinder.Parsing2
 			if (!char.IsWhiteSpace(reader.Char)) return false;
 			if (nestedParent.Children.LastOrDefault(e => e is Scope) == null) return false;
 
-			using (new ReaderSnapshot(reader))
+			using (new ReaderSnapshot(reader)) // <-- code smell, heap alloc and GC fuckery
 			{
 				while (reader.Read())
 				{
