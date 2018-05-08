@@ -36,6 +36,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -47,6 +48,7 @@
     <Compile Include="Condition.cs" />
     <Compile Include="ConditionValue.cs" />
     <Compile Include="DbQuery.cs" />
+    <Compile Include="Parsing\Lexer.cs" />
     <Compile Include="Parsing\Parser2.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>

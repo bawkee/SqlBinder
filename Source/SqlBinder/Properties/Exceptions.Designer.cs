@@ -221,5 +221,14 @@ namespace SqlBinder.Properties {
                 return ResourceManager.GetString("SqlBetweenCanOnlyBeInclusive", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to There is an unclosed scope (a {...} or [...] or a &apos;...&apos; string literal) in your script..
+        /// </summary>
+        public static string UnclosedScope {
+            get {
+                return ResourceManager.GetString("UnclosedScope", resourceCulture);
+            }
+        }
     }
 }
