@@ -21,54 +21,55 @@ namespace SqlBinder.Parsing2
 
 		protected virtual void OnRequestParameterValue(RequestParameterValueArgs e) => RequestParameterValue?.Invoke(this, e);
 
-		public string Process(NestedElement lexerRoot) => ConstructSql(ParseElement(lexerRoot)).ToString();
+		public string Process(NestedElement lexerRoot) => ConstructSql(ParseElement(lexerRoot)).ToString().Trim();
 
-		private ParsedElement ParseElement(Element lexerElement, ParsedElement parsedElement = null)
+		public string Process(string sqlBinderScript) => Process(new Lexer().Process(sqlBinderScript));
+
+		private ParsedElement ParseElement(Element lexerElement, ParsedElement parentElement = null, ParsedElement previousElement = null)
 		{
-			if (parsedElement == null)
-			{
-				if (lexerElement is NestedElement)
-					parsedElement = new ParsedElement(lexerElement);
-				else
-					throw new ArgumentException(nameof(parsedElement));
-			}
+			ParsedElement newElem = null;
 
 			if (lexerElement is NestedElement nestedElement)
 			{
+				ParsedElement prevElemBuf = null;
+
 				if (nestedElement is Scope scopeElement)
 				{
-					var parsedScope = new ParsedScope(scopeElement);
-					parsedElement.Children.Add(parsedScope);
+					var parsedScope = newElem = new ParsedScope(scopeElement);
+					parentElement?.Children.Add(parsedScope);
 					foreach (var childElement in scopeElement.Children)
-						ParseElement(childElement, parsedScope);
-					parsedScope.IsValid = parsedScope.Children.OfType<ParsedScope>().Any(s => s.IsValid);
+						prevElemBuf = ParseElement(childElement, parsedScope, prevElemBuf);
+					parsedScope.IsValid = parsedScope.Children.OfType<ParsedScope>().Any(s => s.IsValid) ||
+										  parsedScope.Children.OfType<ParsedParameter>().Any();
+					if (!parsedScope.IsValid && previousElement?.LexerElement is ScopeSeparator)
+						previousElement.IsValid = false;
 				}
 				else
 				{
-					var parsedChild = new ParsedElement(nestedElement);
-					parsedElement.Children.Add(parsedChild);
+					var parsedChild = newElem = new ParsedElement(nestedElement);
+					parentElement?.Children.Add(parsedChild);
 					foreach (var childElement in nestedElement.Children)
-						ParseElement(childElement, parsedChild);
+						prevElemBuf = ParseElement(childElement, parsedChild, prevElemBuf);
 				}
 			}
+			else if (lexerElement is SqlBinderComment)
+				return previousElement;
 			else if (lexerElement is Parameter parameterElement)
 			{
-				var parsedParam = ParseParameter(parameterElement);
-				if (string.IsNullOrEmpty(parsedParam.ConditionSql))
-					((ParsedScope) parsedElement).IsValid = false;
-				else
-					parsedElement.Children.Add(parsedParam);
+				var parsedParam = (ParsedParameter) (newElem = ParseParameter(parameterElement));
+				if (!string.IsNullOrEmpty(parsedParam.ConditionSql))
+					parentElement.Children.Add(parsedParam);
 			}
 			else if (lexerElement is ContentElement contentElement)
 			{
-				var parsedContent = new ParsedElement(contentElement);
-				parsedElement.Children.Add(parsedContent);
+				var parsedContent = newElem = new ParsedElement(contentElement);
+				parentElement?.Children.Add(parsedContent);
 				ParseElement(contentElement.Content, parsedContent);
 			}
 			else
-				parsedElement.Children.Add(new ParsedElement(lexerElement));
+				parentElement?.Children.Add(newElem = new ParsedElement(lexerElement));
 
-			return parsedElement;
+			return newElem;
 		}
 
 		private ParsedParameter ParseParameter(Parameter parameter)
@@ -83,7 +84,7 @@ namespace SqlBinder.Parsing2
 			if (buffer == null)
 				buffer = new StringBuilder(BUFFER_CAPACITY);
 
-			if (element.LexerElement is SqlBinderComment)
+			if (!element.IsValid)
 				return buffer;
 			
 			if (element is ParsedParameter parsedParameter)
@@ -92,6 +93,11 @@ namespace SqlBinder.Parsing2
 			{
 				case Sql sql:
 					buffer.Append(sql.Text);
+					break;
+				case ScopeSeparator separator:
+					buffer.Append(separator.Text);
+					buffer.Append("AND");
+					buffer.Append(' ');
 					break;
 				case ContentElement contentElement:
 					buffer.Append(contentElement.OpeningTag);
@@ -116,14 +122,13 @@ namespace SqlBinder.Parsing2
 	public class ParsedElement
 	{
 		public List<ParsedElement> Children { get; } = new List<ParsedElement>();
-		//public ParsedElement Parent { get; set; }
 		public Element LexerElement { get; }		
 		public ParsedElement(Element lexerElement) => LexerElement = lexerElement;
+		public bool IsValid { get; set; } = true;
 	}
 
 	public class ParsedScope : ParsedElement
-	{
-		public bool IsValid { get; set; } = true;
+	{		
 		public ParsedScope(Scope lexerScope) : base(lexerScope) { }
 	}
 

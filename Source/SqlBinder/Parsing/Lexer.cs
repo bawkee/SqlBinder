@@ -37,12 +37,11 @@ namespace SqlBinder.Parsing2
 	{
 		public LexerHints Hints { get; set; }
 
-		private int _openScopes;
-
 		public Root Process(string script)
 		{
 			var reader = new Reader(script);
 			var root = reader.Element;
+			var openScopes = 0;
 
 			while (reader.Read())
 			{
@@ -51,10 +50,16 @@ namespace SqlBinder.Parsing2
 				var contentElement = reader.Element as ContentElement ?? reader.Element.Parent as ContentElement;
 
 				if (TryToCloseScope(reader, scopedElement))
+				{
+					openScopes--;
 					continue;
+				}
 
 				if (TryToCreateScope(reader, nestedElement, contentElement))
+				{
+					openScopes++;
 					continue;
+				}
 
 				if (reader.Element is TextElement element) // Keep writing on text elem
 					element.Append(reader.Char);
@@ -62,7 +67,7 @@ namespace SqlBinder.Parsing2
 					CreateTextElement(reader, contentElement, nestedElement);
 			}
 
-			if (_openScopes > 0)
+			if (openScopes > 0)
 				throw new LexerException(Exceptions.UnclosedScope);
 
 			return root as Root;
@@ -74,7 +79,6 @@ namespace SqlBinder.Parsing2
 				return false;
 			reader.Advance(scopedElement.ClosingTag.Length - 1);
 			reader.Element = scopedElement.Parent;
-			_openScopes--;
 			return true;
 		}
 
@@ -101,8 +105,6 @@ namespace SqlBinder.Parsing2
 			nestedElement.Children.Add(newElem);
 			reader.Advance(newElem.OpeningTag.Length - 1);
 			reader.Element = newElem;
-
-			_openScopes++;
 
 			return true;
 		}
@@ -416,9 +418,9 @@ namespace SqlBinder.Parsing2
 
 		public static bool Evaluate(Reader reader)
 		{
-			if (!(reader.Element.Parent is NestedElement nestedParent)) return false;
+			if (!(reader.Element is NestedElement nestedParent)) return false;
 			if (!char.IsWhiteSpace(reader.Char)) return false;
-			if (nestedParent.Children.LastOrDefault(e => e is Scope) == null) return false;
+			if (!(nestedParent.Children.LastOrDefault() is Scope)) return false;
 
 			var startingIdx = reader.Index;
 			try

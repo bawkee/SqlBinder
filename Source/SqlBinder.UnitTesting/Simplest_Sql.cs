@@ -12,7 +12,7 @@ namespace SqlBinder.UnitTesting
 		/// the most low level requirements work.
 		/// </summary>
 		[TestClass]
-		public class Simplest_Sql
+		public class Parser_Tests
 		{
 			private static string _expectedSql = "SELECT * FROM TABLE1";
 			private static string _expectedSqlComment = "/* Test comment */";
@@ -24,74 +24,87 @@ namespace SqlBinder.UnitTesting
 			}
 
 			[TestMethod]
-			public void Baby_Sql_1()
+			public void Basic_Sql()
 			{
 				AssertCommand(new MockQuery(_connection, "SELECT * FROM TABLE1").CreateCommand());
 			}
 
 			[TestMethod]
-			public void Baby_Sql_2()
+			public void Junk_Scopes()
 			{
-				foreach (var junkSql in new[]
-				{
-					"SELECT * FROM TABLE1 {JUNK ON THE RIGHT}",
-					"SELECT * FROM TABLE1 {JUNK ON THE RIGHT {NESTED JUNK}}",
-					"{JUNK ON THE LEFT} SELECT * FROM TABLE1",
-					"{JUNK ON THE LEFT {NESTED JUNK}} SELECT * FROM TABLE1 {JUNK ON THE RIGHT {NESTED JUNK}}",
-					"{JUNK ON THE LEFT} SELECT * {JUNK ON THE MIDDLE}FROM TABLE1 {JUNK ON THE RIGHT {NESTED JUNK}}",
-					"{JUNK ON THE LEFT} SELECT * {MIDDLE JUNK 1} {MIDDLE JUNK 2}   {MIDDLE JUNK 3}FROM TABLE1 {JUNK ON THE RIGHT {NESTED JUNK}}",
-					"{JUNK: ~!@#$%^&*()_+~<>?,./;':}SELECT * FROM TABLE1 {JUNK ON THE RIGHT}",
-				})
-					AssertCommand(new MockQuery(_connection, junkSql).CreateCommand());
+				AssertCommand(new MockQuery(_connection, "SELECT * FROM TABLE1 {JUNK ON THE RIGHT}").CreateCommand());
+				AssertCommand(new MockQuery(_connection, "SELECT * FROM TABLE1 {JUNK ON THE RIGHT {NESTED JUNK}}").CreateCommand());
+				AssertCommand(new MockQuery(_connection, "{JUNK ON THE LEFT} SELECT * FROM TABLE1").CreateCommand());
+				AssertCommand(new MockQuery(_connection, "{JUNK ON THE LEFT {NESTED JUNK}} SELECT * FROM TABLE1 {JUNK ON THE RIGHT {NESTED JUNK}}").CreateCommand());
+				AssertCommand(new MockQuery(_connection, "{JUNK ON THE LEFT} SELECT * {JUNK ON THE MIDDLE}FROM TABLE1 {JUNK ON THE RIGHT {NESTED JUNK}}").CreateCommand());
+				AssertCommand(new MockQuery(_connection, "{JUNK ON THE LEFT} SELECT * {MIDDLE JUNK 1} {MIDDLE JUNK 2}   {MIDDLE JUNK 3}FROM TABLE1 {JUNK ON THE RIGHT {NESTED JUNK}}").CreateCommand());
+				AssertCommand(new MockQuery(_connection, "{JUNK: ~!@#$%^&*()_+~<>?,./;:}SELECT * FROM TABLE1 {JUNK ON THE RIGHT}").CreateCommand());
 			}
 
 			[TestMethod]
-			public void Baby_Sql_3()
+			public void Junk_Scopes_With_Sql_Comments()
 			{
-				// Sql comments remain but should not hinder processing in any way
-				foreach (var junkSql in new[]
-				{
-					"/* Test {this will get removed}comment */SELECT * FROM TABLE1 {JUNK ON THE RIGHT}",
-					"SELECT * FROM TABLE1 {/* Test comment */JUNK ON THE RIGHT {NESTED/* Test comment */ JUNK}}",
-					"{JUNK ON THE LEFT} SELECT * FROM TABLE1",
-					"{JUNK ON THE LEFT {NESTED JUNK/* Test comment */}} SELECT * FROM TABLE1 {JUNK ON THE RIGHT {NESTED JUNK}}",
-					"{JUNK ON THE LEFT} SELECT * {/* Test comment */JUNK ON THE MIDDLE/* Test comment */}FROM TABLE1 {JUNK ON THE RIGHT {NESTED JUNK}}",
-				})
-					AssertCommand(new MockQuery(_connection, junkSql).CreateCommand());
+				// Sql comments should remain but not hinder anything
+				AssertCommand(new MockQuery(_connection, "/* Test comment */SELECT * FROM TABLE1 {JUNK ON THE RIGHT}").CreateCommand());
+				AssertCommand(new MockQuery(_connection, "SELECT * FROM TABLE1 {/* Test comment */JUNK ON THE RIGHT {NESTED/* Test comment */ JUNK}}").CreateCommand());
+				AssertCommand(new MockQuery(_connection, "{JUNK ON THE LEFT {NESTED JUNK/* Test comment */}} SELECT * FROM TABLE1 {JUNK ON THE RIGHT {NESTED JUNK}}").CreateCommand());
+				AssertCommand(new MockQuery(_connection, "{JUNK ON THE LEFT} /* Test comment */SELECT * {/* Test comment */JUNK ON THE MIDDLE/* Test comment */}FROM TABLE1 {JUNK ON THE RIGHT {NESTED JUNK}}").CreateCommand());
 			}
 
 			[TestMethod]
-			public void Baby_Sql_4()
+			public void Junk_Scopes_With_SqlBinder_Comments()
 			{
-				// SqlBinder comments should be removed. They can be nested and contain any characters.
-				foreach (var junkSql in new[]
-				{
-					"{* Test comment 1 *}SELECT * FROM TABLE1 {{* Test comment 2 *}JUNK ON THE RIGHT}",
-					"SELECT * FROM TABLE1 {JUNK ON THE RIGHT {NESTED JUNK{* Test comment 3 *}}{* Test comment 4 *}}",
-					"{JUNK ON {* Test comment *}THE LEFT} SELECT * FROM TABLE1 {* Test comment *}",
-					"{* Test comment {* Nested comment *} {Curly braces junk} *}{JUNK ON THE LEFT {NESTED JUNK}} SELECT * FROM TABLE1 {JUNK ON THE RIGHT {NESTED JUNK}}",
-					"{JUNK ON THE LEFT} {* Special characters:[asdf][[[]}}}}~@#$%^&*()_+:'<>,./? *}SELECT * {JUNK ON THE MIDDLE}FROM TABLE1 {JUNK ON THE RIGHT {NESTED JUNK}}",
-				})
-					AssertCommand(new MockQuery(_connection, junkSql).CreateCommand());
+				// SqlBinder comments should be removed. They cannot be nested. They contain any characters.
+				AssertCommand(new MockQuery(_connection, "SELECT * FROM TABLE1 {JUNK ON THE RIGHT {NESTED JUNK/*{ Test comment 3 }*/}/*{ Test comment 4 }*/}").CreateCommand());
+				AssertCommand(new MockQuery(_connection, "{JUNK ON /*{ Test comment }*/THE LEFT} SELECT * FROM TABLE1 /*{ Test comment }*/").CreateCommand());
+				AssertCommand(new MockQuery(_connection, "/*{ Test comment {Curly braces junk} }*/{JUNK ON THE LEFT {NESTED JUNK}} SELECT * FROM TABLE1 {JUNK ON THE RIGHT {NESTED JUNK}}").CreateCommand());				
+				AssertCommand(new MockQuery(_connection, "{JUNK ON THE LEFT} /*{ Special characters:[asdf][[[]}}}}~@#$%^&*()_+:'<>,./? }*/SELECT * {JUNK ON THE MIDDLE}FROM TABLE1 {JUNK ON THE RIGHT {NESTED JUNK}}").CreateCommand());				
 			}
 
 			[TestMethod]
-			public void Baby_Sql_5()
+			public void Junk_Scopes_With_Parameters()
+			{				
+				AssertCommand(new MockQuery(_connection, "SELECT * FROM TABLE1 {JUNK ON THE RIGHT}").CreateCommand());
+				AssertCommand(new MockQuery(_connection, "SELECT * FROM TABLE1 {JUNK ON THE RIGHT {NESTED JUNK [criteria1]}}").CreateCommand());
+				AssertCommand(new MockQuery(_connection, "{JUNK ON THE LEFT} SELECT * FROM TABLE1").CreateCommand());
+				AssertCommand(new MockQuery(_connection, "{JUNK ON THE LEFT {NESTED JUNK [criteria1]}} SELECT * FROM TABLE1 {JUNK ON THE RIGHT {NESTED JUNK [criteria2]}}").CreateCommand());
+				AssertCommand(new MockQuery(_connection, "{JUNK ON THE LEFT [criteria1]} SELECT * {JUNK ON THE MIDDLE}FROM TABLE1 {JUNK ON THE RIGHT {NESTED JUNK [criteria2]}}").CreateCommand());			
+			}
+
+			[TestMethod]
+			public void Basic_Literals()
 			{
-				foreach (var junkSql in new[]
-				{
-					"SELECT * FROM TABLE1 {JUNK ON THE RIGHT}",
-					"SELECT * FROM TABLE1 {JUNK ON THE RIGHT {NESTED JUNK [criteria1]}}",
-					"{JUNK ON THE LEFT} SELECT * FROM TABLE1",
-					"{JUNK ON THE LEFT {NESTED JUNK [criteria1]}} SELECT * FROM TABLE1 {JUNK ON THE RIGHT {NESTED JUNK [criteria2]}}",
-					"{JUNK ON THE LEFT [criteria1]} SELECT * {JUNK ON THE MIDDLE}FROM TABLE1 {JUNK ON THE RIGHT {NESTED JUNK [criteria2]}}",
-				})
-					AssertCommand(new MockQuery(_connection, junkSql).CreateCommand());
+				var sql = "SELECT * FROM TABLE1 WHERE COLUMN1 = 'This is some {literal text} that includes @{special characters} like [this] or [[this]] or \"{ this maybe }\".'";
+				AssertCommand(new MockQuery(_connection, sql).CreateCommand(), sql);
+			}
+
+			[TestMethod]
+			public void Basic_Comments()
+			{
+				// Escaping curly braces with dollar sign
+				var sql = "SELECT * FROM TABLE1 WHERE COLUMN1 = 123 /* This \"comment\" 'should' include {this scope} or [this]. */";
+				AssertCommand(new MockQuery(_connection, sql).CreateCommand(), sql);
+			}
+
+			[TestMethod]
+			public void Escape_Strings()
+			{
+				// Escaping square brackets with dollar sign, a potentially common scenario in OLEDB queries
+				var sql = "SELECT * FROM TABLE1 {WHERE {[[Some Column 1]] [SomeCriteria1]} {[[Some Column 2]] [SomeCriteria2]} {[[Some Column 3]] [SomeCriteria3]}}";
+				var expected = "SELECT * FROM TABLE1 WHERE [Some Column 1] = :pSomeCriteria1_1 AND [Some Column 3] = :pSomeCriteria3_1";
+
+				var query = new MockQuery(_connection, sql);
+				query.ThrowScriptErrorException = true;
+
+				query.SetCondition("SomeCriteria1", 123);
+				query.SetCondition("SomeCriteria3", 456);
+
+				AssertCommand(query.CreateCommand(), expected);
 			}
 
 			[TestMethod]
 			[ExpectedException(typeof(UnmatchedConditionsException))]
-			public void Invalid_Script_1()
+			public void Invalid_Script()
 			{
 				var query = new MockQuery(_connection, "SELECT * FROM TABLE1");
 				query.SetCondition("condition1", 0);
@@ -101,9 +114,16 @@ namespace SqlBinder.UnitTesting
 			private void AssertCommand(IDbCommand cmd)
 			{
 				Assert.IsNotNull(cmd);
-				Assert.IsTrue(cmd.CommandType == CommandType.Text);
-				Assert.IsTrue(cmd.Parameters.Count == 0);
+				Assert.AreEqual(CommandType.Text, cmd.CommandType);
+				Assert.AreEqual(0, cmd.Parameters.Count);
 				Assert.AreEqual(_expectedSql, cmd.CommandText.Replace(_expectedSqlComment, ""));
+			}
+
+			private void AssertCommand(IDbCommand cmd, string expectedSql)
+			{
+				Assert.IsNotNull(cmd);
+				Assert.IsTrue(cmd.CommandType == CommandType.Text);
+				Assert.AreEqual(expectedSql, cmd.CommandText);
 			}
 		}
 	}

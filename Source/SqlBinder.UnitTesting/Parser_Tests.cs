@@ -11,7 +11,7 @@ namespace SqlBinder.UnitTesting
 		/// Tests with parsing functionalities in mind such as comments, literals, escape characters etc.
 		/// </summary>
 		[TestClass]
-		public class Parser_Tests
+		public class Lexer_Tests
 		{			
 			[TestInitialize]
 			public void InitializeTest()
@@ -20,7 +20,7 @@ namespace SqlBinder.UnitTesting
 			}
 
 			[TestMethod]
-			public void ParserTest_Lexing()
+			public void Basic_Lexing()
 			{
 				var syntax = "SELECT * FROM TEST {WHERE SOMETHING LIKE 'Test' AND {SomethingElse [somethingElse]} {[[Something Third]] [something Third]}};";
 
@@ -95,7 +95,7 @@ namespace SqlBinder.UnitTesting
 			}
 
 			[TestMethod]
-			public void ParserTest_LexingLiterals()
+			public void Literals()
 			{
 				var syntax = "SELECT * FROM TEST {WHERE " +
 				             "'{Test}' OR " +
@@ -333,7 +333,7 @@ namespace SqlBinder.UnitTesting
 			}
 
 			[TestMethod]
-			public void ParserTest_Lexing_PostgreSQLDollarLiterals()
+			public void PostgreSQL_Dollar_Literals()
 			{
 				var syntax = "SELECT * FROM TEST {WHERE " +
 				             "$q${This is 'quoted' text}$q$ OR " +
@@ -402,49 +402,26 @@ namespace SqlBinder.UnitTesting
 			}
 
 			[TestMethod]
-			public void ParserTest_LexingComments()
+			public void Separators()
 			{
-				var syntax = "THIS IS SQL {THIS SQL IN A SCOPE " +
-							 "WHICH HAS /*{SQL BINDER COMMENT}*/ AND /*AN SQL COMMENT*/ " +
-							 "/*OR A\r\nMULTILINE\r\nSQL COMMENT*/}";
+				var syntax = "{SCOPE1} SQL1 {SCOPE2} { SQL2 }   {SCOPE3} SQL3 {SCOPE4 { SCOPE5 }}";
 
 				var root = new Lexer().Process(syntax);
 
 				var nesting = 0;
 				OutputLexerResults(root, ref nesting);
 
-				Assert.IsInstanceOfType(root.Children[0], typeof(Sql));
-				Assert.IsTrue(((Sql)root.Children[0]).Parent == root);
-				Assert.AreEqual(((Sql)root.Children[0]).Text, "THIS IS SQL ");
-
-				Assert.IsInstanceOfType(root.Children[1], typeof(Scope));
-				Assert.IsTrue(((Scope)root.Children[1]).Parent == root);
-				Assert.AreEqual("{", ((Scope)root.Children[1]).OpeningTag);
-				Assert.AreEqual("}", ((Scope)root.Children[1]).ClosingTag);
-
-				Assert.IsInstanceOfType(((Scope)root.Children[1]).Children[0], typeof(Sql));
-				Assert.IsTrue(((Scope)root.Children[1]).Children[0].Parent == root.Children[1]);
-				Assert.AreEqual("THIS SQL IN A SCOPE WHICH HAS ", ((Sql)((Scope)root.Children[1]).Children[0]).Text);
-
-				Assert.IsInstanceOfType(((Scope)root.Children[1]).Children[1], typeof(SqlBinderComment));
-				Assert.IsTrue(((Scope)root.Children[1]).Children[1].Parent == root.Children[1]);
-				Assert.IsInstanceOfType(((ContentElement)((Scope)root.Children[1]).Children[1]).Content, typeof(ContentText));
-				Assert.AreEqual("SQL BINDER COMMENT", ((ContentText)((ContentElement)((Scope)root.Children[1]).Children[1]).Content).Text);
-
-				Assert.IsInstanceOfType(((Scope)root.Children[1]).Children[2], typeof(Sql));
-				Assert.IsTrue(((Scope)root.Children[1]).Children[2].Parent == root.Children[1]);
-				Assert.AreEqual(" AND ", ((Sql)((Scope)root.Children[1]).Children[2]).Text);
-
-				Assert.IsInstanceOfType(((Scope)root.Children[1]).Children[3], typeof(SqlComment));
-				Assert.IsTrue(((Scope)root.Children[1]).Children[3].Parent == root.Children[1]);
-				Assert.IsInstanceOfType(((ContentElement)((Scope)root.Children[1]).Children[3]).Content, typeof(ContentText));
-				Assert.AreEqual("AN SQL COMMENT", ((ContentText)((ContentElement)((Scope)root.Children[1]).Children[3]).Content).Text);
-
-				Assert.IsInstanceOfType(((Scope)root.Children[1]).Children[5], typeof(SqlComment));
-				Assert.IsTrue(((Scope)root.Children[1]).Children[5].Parent == root.Children[1]);
-				Assert.IsInstanceOfType(((ContentElement)((Scope)root.Children[1]).Children[5]).Content, typeof(ContentText));
-				Assert.AreEqual("OR A\r\nMULTILINE\r\nSQL COMMENT", ((ContentText)((ContentElement)((Scope)root.Children[1]).Children[5]).Content).Text);
-
+				Assert.IsInstanceOfType(root.Children[0], typeof(Scope));
+				Assert.IsInstanceOfType(root.Children[1], typeof(Sql));
+				Assert.IsInstanceOfType(root.Children[2], typeof(Scope));
+				Assert.IsInstanceOfType(root.Children[3], typeof(ScopeSeparator));
+				Assert.IsInstanceOfType(root.Children[4], typeof(Scope));
+				Assert.IsInstanceOfType(root.Children[5], typeof(ScopeSeparator));
+				Assert.IsInstanceOfType(root.Children[6], typeof(Scope));
+				Assert.IsInstanceOfType(root.Children[7], typeof(Sql));
+				Assert.IsInstanceOfType(root.Children[8], typeof(Scope));
+				Assert.IsInstanceOfType(((NestedElement)root.Children[8]).Children[0], typeof(Sql));
+				Assert.IsInstanceOfType(((NestedElement)root.Children[8]).Children[1], typeof(Scope));
 			}
 
 			[TestMethod]
@@ -531,90 +508,66 @@ namespace SqlBinder.UnitTesting
 			public TestContext TestContext { get; set; }
 
 			[TestMethod]
-			public void PerformanceTest_1()
+			public void PerformanceTest()
 			{
 				var syntax = "SELECT * FROM TEST {WHERE SOMETHING LIKE 'Test' AND {SomethingElse [somethingElse]} {SomethingThird [somethingThird]}};";
-				var parser2 = new Lexer();
+				var lexer = new Lexer();
 
-				parser2.Process(syntax);
+				lexer.Process(syntax);
+
 				var sw = new Stopwatch();
 				sw.Start();
+
 				for (var i = 0; i < 1000; i++)
-					parser2.Process(syntax);
+					lexer.Process(syntax);
+
 				sw.Stop();
-				TestContext.WriteLine("Elap1: " + sw.Elapsed.TotalMilliseconds);
-
-				Parsing.Parser parser = new Parsing.Parser();
-				parser.Parse(syntax);				
-				sw.Restart();
-				for (var i = 0; i < 1000; i++)
-					parser.Parse(syntax);
-				sw.Stop();
-				TestContext.WriteLine("Elap2: " + sw.Elapsed.TotalMilliseconds);				
-			}
-
-
-			[TestMethod]
-			public void Comments_1()
-			{
-				var withoutComments = "SELECT * FROM TABLE1 WHERE TABLE1.COLUMN1 = 123";
-				var withComments = "SELECT * FROM TABLE1/*{, TABLE2}*/ WHERE TABLE1.COLUMN1 = 123/*{ AND TABLE2.COLUMN1 = TABLE1.COLUMN1 {AND {TABLE1.COLUMN1 [SomeCriteria]}}}*/";
-
-				AssertCommand(new MockQuery(_connection, withComments).CreateCommand(), withoutComments);
+				TestContext.WriteLine("Lexer Performance Test: " + sw.Elapsed.TotalMilliseconds);
 			}
 
 			[TestMethod]
-			public void Comments_2()
+			public void Comments_3()
 			{
-				var withoutComments = "SELECT * FROM TABLE1";
-				var withComments = "/*{ We're testing multiline \n" +
-				                   " * comments here. \n" +
-				                   " * They should work fine }*/ \n" +
-				                   "SELECT * FROM TABLE1";
+				var syntax = "THIS IS SQL {THIS SQL IN A SCOPE " +
+							 "WHICH HAS /*{SQL BINDER COMMENT}*/ AND /*AN SQL COMMENT*/ " +
+							 "/*OR A\r\nMULTILINE\r\nSQL COMMENT*/}";
 
-				AssertCommand(new MockQuery(_connection, withComments).CreateCommand(), withoutComments);
-			}
+				var root = new Lexer().Process(syntax);
 
-			[TestMethod]
-			public void Escape_Strings_1()
-			{
-				// Literals should be ignored entirely
-				var sql = "SELECT * FROM TABLE1 WHERE COLUMN1 = 'This is some {literal text} that includes @{special characters} like [this] or [[this]] or \"{ this maybe }\".'";
+				var nesting = 0;
+				OutputLexerResults(root, ref nesting);
 
-				AssertCommand(new MockQuery(_connection, sql).CreateCommand(), sql);
-			}
+				Assert.IsInstanceOfType(root.Children[0], typeof(Sql));
+				Assert.IsTrue(((Sql)root.Children[0]).Parent == root);
+				Assert.AreEqual(((Sql)root.Children[0]).Text, "THIS IS SQL ");
 
-			[TestMethod]
-			public void Escape_Strings_2()
-			{
-				// Escaping curly braces with dollar sign
-				var sql = "SELECT * FROM TABLE1 WHERE COLUMN1 = 123 /* This comment should include {this scope}. */";
-				var expected = "SELECT * FROM TABLE1 WHERE COLUMN1 = 123 /* This comment should include {this scope}. */";
+				Assert.IsInstanceOfType(root.Children[1], typeof(Scope));
+				Assert.IsTrue(((Scope)root.Children[1]).Parent == root);
+				Assert.AreEqual("{", ((Scope)root.Children[1]).OpeningTag);
+				Assert.AreEqual("}", ((Scope)root.Children[1]).ClosingTag);
 
-				AssertCommand(new MockQuery(_connection, sql).CreateCommand(), expected);
-			}
+				Assert.IsInstanceOfType(((Scope)root.Children[1]).Children[0], typeof(Sql));
+				Assert.IsTrue(((Scope)root.Children[1]).Children[0].Parent == root.Children[1]);
+				Assert.AreEqual("THIS SQL IN A SCOPE WHICH HAS ", ((Sql)((Scope)root.Children[1]).Children[0]).Text);
 
-			[TestMethod]
-			public void Escape_Strings_3()
-			{
-				// Escaping square brackets with dollar sign, a potentially common scenario in OLEDB queries
-				var sql = "SELECT * FROM TABLE1 {WHERE {[[Some Column 1]] [SomeCriteria1]} {[[Some Column 2]] [SomeCriteria2]} {[[Some Column 3]] [SomeCriteria3]}}";
-				var expected = "SELECT * FROM TABLE1 WHERE [Some Column 1] = :pSomeCriteria1_1 AND [Some Column 3] = :pSomeCriteria3_1";
-				
-				var query = new MockQuery(_connection, sql);
-				query.ThrowScriptErrorException = true;
+				Assert.IsInstanceOfType(((Scope)root.Children[1]).Children[1], typeof(SqlBinderComment));
+				Assert.IsTrue(((Scope)root.Children[1]).Children[1].Parent == root.Children[1]);
+				Assert.IsInstanceOfType(((ContentElement)((Scope)root.Children[1]).Children[1]).Content, typeof(ContentText));
+				Assert.AreEqual("SQL BINDER COMMENT", ((ContentText)((ContentElement)((Scope)root.Children[1]).Children[1]).Content).Text);
 
-				query.SetCondition("SomeCriteria1", 123);
-				query.SetCondition("SomeCriteria3", 456);
+				Assert.IsInstanceOfType(((Scope)root.Children[1]).Children[2], typeof(Sql));
+				Assert.IsTrue(((Scope)root.Children[1]).Children[2].Parent == root.Children[1]);
+				Assert.AreEqual(" AND ", ((Sql)((Scope)root.Children[1]).Children[2]).Text);
 
-				AssertCommand(query.CreateCommand(), expected);
-			}
+				Assert.IsInstanceOfType(((Scope)root.Children[1]).Children[3], typeof(SqlComment));
+				Assert.IsTrue(((Scope)root.Children[1]).Children[3].Parent == root.Children[1]);
+				Assert.IsInstanceOfType(((ContentElement)((Scope)root.Children[1]).Children[3]).Content, typeof(ContentText));
+				Assert.AreEqual("AN SQL COMMENT", ((ContentText)((ContentElement)((Scope)root.Children[1]).Children[3]).Content).Text);
 
-			private void AssertCommand(IDbCommand cmd, string expectedSql)
-			{
-				Assert.IsNotNull(cmd);
-				Assert.IsTrue(cmd.CommandType == CommandType.Text);
-				Assert.AreEqual(expectedSql, cmd.CommandText);
+				Assert.IsInstanceOfType(((Scope)root.Children[1]).Children[5], typeof(SqlComment));
+				Assert.IsTrue(((Scope)root.Children[1]).Children[5].Parent == root.Children[1]);
+				Assert.IsInstanceOfType(((ContentElement)((Scope)root.Children[1]).Children[5]).Content, typeof(ContentText));
+				Assert.AreEqual("OR A\r\nMULTILINE\r\nSQL COMMENT", ((ContentText)((ContentElement)((Scope)root.Children[1]).Children[5]).Content).Text);
 			}
 		}
 	}
