@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using SqlBinder.ConditionValues;
-using SqlBinder.Parsing2;
+using SqlBinder.Parsing;
 using SqlBinder.Properties;
 
 namespace SqlBinder
@@ -77,16 +77,6 @@ namespace SqlBinder
 		/// Fires an event which can be used to format parameter names.
 		/// </summary>
 		protected virtual void OnFormatParameterName(object sender, FormatParameterEventArgs e) => FormatParameterName?.Invoke(sender, e);
-
-		/// <summary>
-		/// Gets or sets a value indicating whether script parser exceptions and errors should be thrown. True by default.
-		/// </summary>
-		public bool ThrowScriptErrorException { get; set; } = true;
-
-		/// <summary>
-		/// Gets or sets a value indicating whether script parser exceptions and errors should be logged to debug output (True by default).
-		/// </summary>
-		public bool LogScriptErrorException { get; set; } = true;
 
 		/// <summary>
 		/// Gets or sets an SqlBinder script that was passed to this query.
@@ -330,7 +320,7 @@ namespace SqlBinder
 
 			parser.RequestParameterValue += Parser_RequestParameterValue;
 
-			OutputSql = parser.Process(SqlBinderScript);
+			OutputSql = parser.Parse(SqlBinderScript);
 
 			var unprocessedConditions = Conditions.Except(_processedConditions).ToArray();
 			if (unprocessedConditions.Any())

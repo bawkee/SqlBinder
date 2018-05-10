@@ -120,9 +120,6 @@
   <data name="InvalidCondition" xml:space="preserve">
     <value>Sql formatting for value of type '{0}' and operator '{1}' is not possible. {2}</value>
   </data>
-  <data name="ParamDoesNotExist" xml:space="preserve">
-    <value>Parameter {0} does not exist.</value>
-  </data>
   <data name="EmptySqlReturned" xml:space="preserve">
     <value>Empty sql was returned.</value>
   </data>
@@ -132,46 +129,19 @@
   <data name="IllegalComboOfValueAndOperator" xml:space="preserve">
     <value>Illegal combination of value type and operator.</value>
   </data>
-  <data name="MissingRightCurlyBraces" xml:space="preserve">
-    <value>There is a missing '}' in the script.</value>
-  </data>
-  <data name="MissingLeftCurlyBraces" xml:space="preserve">
-    <value>There is a missing '{' in the script.</value>
-  </data>
-  <data name="MissingRightSquareBrackets" xml:space="preserve">
-    <value>There is a missing ']' in the script.</value>
-  </data>
-  <data name="MissingLeftSquareBrackets" xml:space="preserve">
-    <value>There is a missing '[' in the script.</value>
-  </data>
-  <data name="MultipleChildScopesInCompound" xml:space="preserve">
-    <value>More than one scopes were found in a scope containing a compound parameter.</value>
-  </data>
-  <data name="CouldNotFindGlobalVariable" xml:space="preserve">
-    <value>Could not find a global variable {0}.</value>
-  </data>
-  <data name="ParameterNotProcessed" xml:space="preserve">
-    <value>Parameter {0} was not processed.</value>
-  </data>
-  <data name="CompoundParameterWithNoSeparator" xml:space="preserve">
-    <value>Compound parameter {0} does not have a separator defined.</value>
-  </data>
   <data name="ParserFailure" xml:space="preserve">
     <value>An exception has occurred in the SqlBinder template parser engine.</value>
   </data>
   <data name="NoMatchingParams" xml:space="preserve">
     <value>Following conditions had no matching parameters in the script: {0}.</value>
   </data>
-	<data name="ScriptNotValid" xml:space="preserve">
+  <data name="ScriptNotValid" xml:space="preserve">
     <value>Your SqlBinder script is not valid: {0}</value>
   </data>
-	<data name="ParserWarning" xml:space="preserve">
-    <value>SqlBinder parser warning: {0}</value>
-  </data>
-	<data name="SqlBetweenCanOnlyBeInclusive" xml:space="preserve">
+  <data name="SqlBetweenCanOnlyBeInclusive" xml:space="preserve">
     <value>When both 'from' and 'to' values are specified, the output SQL will always be inclusive. To specify an exclusive range you would have to alter your script to contain two parameter placeholders rather than one.</value>
   </data>
-	<data name="UnclosedScope" xml:space="preserve">
+  <data name="UnclosedScope" xml:space="preserve">
     <value>There is an unclosed scope (a {...} or [...] or a '...' string literal) in your script.</value>
   </data>
 </root>

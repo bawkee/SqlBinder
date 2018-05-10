@@ -61,24 +61,6 @@ namespace SqlBinder.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Compound parameter {0} does not have a separator defined..
-        /// </summary>
-        public static string CompoundParameterWithNoSeparator {
-            get {
-                return ResourceManager.GetString("CompoundParameterWithNoSeparator", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Could not find a global variable {0}..
-        /// </summary>
-        public static string CouldNotFindGlobalVariable {
-            get {
-                return ResourceManager.GetString("CouldNotFindGlobalVariable", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Empty sql was returned..
         /// </summary>
         public static string EmptySqlReturned {
@@ -106,51 +88,6 @@ namespace SqlBinder.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to There is a missing &apos;{&apos; in the script..
-        /// </summary>
-        public static string MissingLeftCurlyBraces {
-            get {
-                return ResourceManager.GetString("MissingLeftCurlyBraces", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to There is a missing &apos;[&apos; in the script..
-        /// </summary>
-        public static string MissingLeftSquareBrackets {
-            get {
-                return ResourceManager.GetString("MissingLeftSquareBrackets", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to There is a missing &apos;}&apos; in the script..
-        /// </summary>
-        public static string MissingRightCurlyBraces {
-            get {
-                return ResourceManager.GetString("MissingRightCurlyBraces", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to There is a missing &apos;]&apos; in the script..
-        /// </summary>
-        public static string MissingRightSquareBrackets {
-            get {
-                return ResourceManager.GetString("MissingRightSquareBrackets", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to More than one scopes were found in a scope containing a compound parameter..
-        /// </summary>
-        public static string MultipleChildScopesInCompound {
-            get {
-                return ResourceManager.GetString("MultipleChildScopesInCompound", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Following conditions had no matching parameters in the script: {0}..
         /// </summary>
         public static string NoMatchingParams {
@@ -160,38 +97,11 @@ namespace SqlBinder.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Parameter {0} does not exist..
-        /// </summary>
-        public static string ParamDoesNotExist {
-            get {
-                return ResourceManager.GetString("ParamDoesNotExist", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Parameter {0} was not processed..
-        /// </summary>
-        public static string ParameterNotProcessed {
-            get {
-                return ResourceManager.GetString("ParameterNotProcessed", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to An exception has occurred in the SqlBinder template parser engine..
         /// </summary>
         public static string ParserFailure {
             get {
                 return ResourceManager.GetString("ParserFailure", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to SqlBinder parser warning: {0}.
-        /// </summary>
-        public static string ParserWarning {
-            get {
-                return ResourceManager.GetString("ParserWarning", resourceCulture);
             }
         }
         

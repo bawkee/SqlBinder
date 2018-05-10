@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SqlBinder.ConditionValues;
+using SqlBinder.Parsing;
 
 namespace SqlBinder.UnitTesting
 {
@@ -27,7 +28,6 @@ namespace SqlBinder.UnitTesting
 			public void Negative_Test_1()
 			{
 				var query = new MockQuery(_connection, "SELECT * FROM TABLE1 {WHERE {COLUMN1 [Criteria1]}}");
-				query.ThrowScriptErrorException = true;
 
 				// Set the condition
 				query.SetCondition("Criteria1", new StringValue(new [] { null, "A", "B" } ));
@@ -39,9 +39,7 @@ namespace SqlBinder.UnitTesting
 				}
 				catch (Exception ex)
 				{
-					Assert.IsInstanceOfType(ex, typeof(ParserException));
-					Assert.IsNotNull(ex.InnerException);
-					Assert.IsInstanceOfType(ex.InnerException, typeof(InvalidConditionException));
+					Assert.IsInstanceOfType(ex, typeof(InvalidConditionException));
 				}
 
 				// Set the condition
@@ -54,9 +52,7 @@ namespace SqlBinder.UnitTesting
 				}
 				catch (Exception ex)
 				{
-					Assert.IsInstanceOfType(ex, typeof(ParserException));
-					Assert.IsNotNull(ex.InnerException);
-					Assert.IsInstanceOfType(ex.InnerException, typeof(InvalidConditionException));
+					Assert.IsInstanceOfType(ex, typeof(InvalidConditionException));
 				}
 			}
 
@@ -64,7 +60,6 @@ namespace SqlBinder.UnitTesting
 			public void Negative_Test_2()
 			{
 				var query = new MockQuery(_connection, "SELECT * FROM TABLE1 {WHERE {COLUMN1 [Criteria1]}}");
-				query.ThrowScriptErrorException = true;
 
 				// Set the condition
 				try
@@ -87,9 +82,7 @@ namespace SqlBinder.UnitTesting
 				}
 				catch (Exception ex)
 				{
-					Assert.IsInstanceOfType(ex, typeof(ParserException));
-					Assert.IsNotNull(ex.InnerException);
-					Assert.IsInstanceOfType(ex.InnerException, typeof(InvalidConditionException));
+					Assert.IsInstanceOfType(ex, typeof(InvalidConditionException));
 				}
 
 
@@ -104,6 +97,32 @@ namespace SqlBinder.UnitTesting
 				{
 					Assert.IsInstanceOfType(ex, typeof(ArgumentException));
 				}
+			}
+
+			[TestMethod]
+			public void Negative_Test_3()
+			{
+				AssertLexerException("SELECT * FROM TABLE1 {WHERE {COLUMN1 [Criteria1]}");			
+				AssertLexerException("SELECT * FROM TABLE1 {WHERE {COLUMN1 [Criteria1}}");
+				AssertLexerException("SELECT * FROM TABLE1 {WHERE {COLUMN1 [Criteria1");
+				AssertLexerException("SELECT * FROM TABLE1 WHERE {COLUMN1 [Test [Criteria1}}");
+			}
+
+			private void AssertLexerException(string script)
+			{
+				var query = new MockQuery(_connection, script);
+
+				// Set the condition
+				try
+				{
+					query.CreateCommand();					
+				}
+				catch (Exception ex)
+				{
+					Assert.IsInstanceOfType(ex, typeof(LexerException));
+					return;
+				}
+				Assert.Fail();
 			}
 		}
 	}

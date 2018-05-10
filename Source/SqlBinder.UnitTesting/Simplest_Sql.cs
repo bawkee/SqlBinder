@@ -94,7 +94,6 @@ namespace SqlBinder.UnitTesting
 				var expected = "SELECT * FROM TABLE1 WHERE [Some Column 1] = :pSomeCriteria1_1 AND [Some Column 3] = :pSomeCriteria3_1";
 
 				var query = new MockQuery(_connection, sql);
-				query.ThrowScriptErrorException = true;
 
 				query.SetCondition("SomeCriteria1", 123);
 				query.SetCondition("SomeCriteria3", 456);

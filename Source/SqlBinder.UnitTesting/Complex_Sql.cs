@@ -26,9 +26,8 @@ namespace SqlBinder.UnitTesting
 					"{Orders.OrderID [OrderID]}" +
 				    "@{({Orders.OrderDate [OrderDate]} {Orders.ShippedDate [ShippedDate]} {Orders.RequiredDate [RequiredDate]})}\n" +
 				    "{Orders.EmployeeID IN (SELECT EmployeeID FROM Employees WHERE {FirstName [EmployeeFirstName]} {LastName [EmployeeLastName]})}\n" +
-					"{Orders.OrderID IN (SELECT OrderID FROM $[Order Details]$ WHERE ProductID IN (SELECT ProductID FROM Products WHERE {ProductName [ProductName]} {SupplierID IN (SELECT SupplierID FROM Suppliers WHERE {CompanyName [SupplierCompanyName]})}))}\n" +
+					"{Orders.OrderID IN (SELECT OrderID FROM [[Order Details]] WHERE ProductID IN (SELECT ProductID FROM Products WHERE {ProductName [ProductName]} {SupplierID IN (SELECT SupplierID FROM Suppliers WHERE {CompanyName [SupplierCompanyName]})}))}\n" +
 				    "{Orders.Freight [Freight]}}");
-				_query.ThrowScriptErrorException = true;
 			}
 
 			/// <summary>
@@ -47,11 +46,10 @@ namespace SqlBinder.UnitTesting
 					"SELECT Orders.OrderID, Customers.ContactName, Orders.OrderDate, Orders.ShippedDate\n" +
 					"FROM Orders, Customers\n" +
 					"WHERE Customers.CustomerID = Orders.CustomerID\n" +
-					"AND\n" +
-					"Orders.OrderID = :pOrderID_1",
+					"AND Orders.OrderID = :pOrderID_1",
 					cmd.CommandText);
 
-				Assert.IsTrue(cmd.Parameters.Count == 1);
+				Assert.AreEqual(1, cmd.Parameters.Count);
 
 				Assert.AreEqual(10, cmd.Parameters[0].Value);
 			}
@@ -72,11 +70,10 @@ namespace SqlBinder.UnitTesting
 					"SELECT Orders.OrderID, Customers.ContactName, Orders.OrderDate, Orders.ShippedDate\n" +
 					"FROM Orders, Customers\n" +
 					"WHERE Customers.CustomerID = Orders.CustomerID\n" +
-					"AND\n" +
-					"Orders.Freight NOT BETWEEN :pFreight_1 AND :pFreight_2",
+					"AND Orders.Freight NOT BETWEEN :pFreight_1 AND :pFreight_2",
 					cmd.CommandText);
 
-				Assert.IsTrue(cmd.Parameters.Count == 2);
+				Assert.AreEqual(2, cmd.Parameters.Count);
 
 				Assert.AreEqual(50, cmd.Parameters[0].Value);
 				Assert.AreEqual(100, cmd.Parameters[1].Value);
@@ -106,13 +103,12 @@ namespace SqlBinder.UnitTesting
 					"SELECT Orders.OrderID, Customers.ContactName, Orders.OrderDate, Orders.ShippedDate\n" +
 					"FROM Orders, Customers\n" +
 					"WHERE Customers.CustomerID = Orders.CustomerID\n" +
-					"AND\n" +
-					"( Orders.ShippedDate <= :pShippedDate_1 OR Orders.RequiredDate BETWEEN :pRequiredDate_1 AND :pRequiredDate_2)\n" +
-					"AND Orders.OrderID IN (SELECT OrderID FROM [Order Details] WHERE ProductID IN (SELECT ProductID FROM Products WHERE ProductName = :pProductName_1 ))\n" +
+					"AND (Orders.ShippedDate <= :pShippedDate_1 OR Orders.RequiredDate BETWEEN :pRequiredDate_1 AND :pRequiredDate_2)\n" +
+					"AND Orders.OrderID IN (SELECT OrderID FROM [Order Details] WHERE ProductID IN (SELECT ProductID FROM Products WHERE ProductName = :pProductName_1))\n" +
 					"AND Orders.Freight < :pFreight_1",
 					cmd.CommandText);
 
-				Assert.IsTrue(cmd.Parameters.Count == 5);
+				Assert.AreEqual(5, cmd.Parameters.Count);
 
 				Assert.AreEqual(DateTime.Parse("12/30/1995", System.Globalization.CultureInfo.InvariantCulture), cmd.Parameters[0].Value);
 				Assert.AreEqual(DateTime.Parse("9/1/1995", System.Globalization.CultureInfo.InvariantCulture), cmd.Parameters[1].Value);
@@ -148,13 +144,12 @@ namespace SqlBinder.UnitTesting
 					"SELECT Orders.OrderID, Customers.ContactName, Orders.OrderDate, Orders.ShippedDate\n" +
 					"FROM Orders, Customers\n" +
 					"WHERE Customers.CustomerID = Orders.CustomerID\n" +
-					"AND\n" +
-					"(Orders.OrderDate <= :pOrderDate_1 OR Orders.ShippedDate IN (:pShippedDate_1, :pShippedDate_2, :pShippedDate_3) )\n" +
-					"AND Orders.OrderID IN (SELECT OrderID FROM [Order Details] WHERE ProductID IN (SELECT ProductID FROM Products WHERE ProductName IN (:pProductName_1, :pProductName_2, :pProductName_3) ))\n" +
+					"AND (Orders.OrderDate <= :pOrderDate_1 OR Orders.ShippedDate IN (:pShippedDate_1, :pShippedDate_2, :pShippedDate_3))\n" +
+					"AND Orders.OrderID IN (SELECT OrderID FROM [Order Details] WHERE ProductID IN (SELECT ProductID FROM Products WHERE ProductName IN (:pProductName_1, :pProductName_2, :pProductName_3)))\n" +
 					"AND Orders.Freight >= :pFreight_1",
 					cmd.CommandText);
 
-				Assert.IsTrue(cmd.Parameters.Count == 8);
+				Assert.AreEqual(8, cmd.Parameters.Count);
 
 				Assert.AreEqual(DateTime.Parse("12/30/1995", System.Globalization.CultureInfo.InvariantCulture), cmd.Parameters[0].Value);
 				Assert.AreEqual(DateTime.Parse("11/20/1995", System.Globalization.CultureInfo.InvariantCulture), cmd.Parameters[1].Value);
@@ -177,13 +172,12 @@ namespace SqlBinder.UnitTesting
 					"SELECT Orders.OrderID, Customers.ContactName, Orders.OrderDate, Orders.ShippedDate\n" +
 					"FROM Orders, Customers\n" +
 					"WHERE Customers.CustomerID = Orders.CustomerID\n" +
-					"AND\n" +
-					"(Orders.OrderDate <= :pOrderDate_1 OR Orders.ShippedDate IN (:pShippedDate_1, :pShippedDate_2, :pShippedDate_3) )\n" +
+					"AND (Orders.OrderDate <= :pOrderDate_1 OR Orders.ShippedDate IN (:pShippedDate_1, :pShippedDate_2, :pShippedDate_3))\n" +
 					"AND Orders.OrderID IN (SELECT OrderID FROM [Order Details] WHERE ProductID IN (SELECT ProductID FROM Products WHERE ProductName IN (:pProductName_1, :pProductName_2, :pProductName_3) AND SupplierID IN (SELECT SupplierID FROM Suppliers WHERE CompanyName = :pSupplierCompanyName_1)))\n" +
 					"AND Orders.Freight >= :pFreight_1",
 					cmd.CommandText);
 
-				Assert.IsTrue(cmd.Parameters.Count == 9);
+				Assert.AreEqual(9, cmd.Parameters.Count);
 
 				Assert.AreEqual(DateTime.Parse("12/30/1995", System.Globalization.CultureInfo.InvariantCulture), cmd.Parameters[0].Value);
 				Assert.AreEqual(DateTime.Parse("11/20/1995", System.Globalization.CultureInfo.InvariantCulture), cmd.Parameters[1].Value);
@@ -208,13 +202,12 @@ namespace SqlBinder.UnitTesting
 					"SELECT Orders.OrderID, Customers.ContactName, Orders.OrderDate, Orders.ShippedDate\n" +
 					"FROM Orders, Customers\n" +
 					"WHERE Customers.CustomerID = Orders.CustomerID\n" +
-					"AND\n" +
-					"( Orders.ShippedDate IN (:pShippedDate_1, :pShippedDate_2, :pShippedDate_3) )\n" +
+					"AND (Orders.ShippedDate IN (:pShippedDate_1, :pShippedDate_2, :pShippedDate_3))\n" +
 					"AND Orders.OrderID IN (SELECT OrderID FROM [Order Details] WHERE ProductID IN (SELECT ProductID FROM Products WHERE SupplierID IN (SELECT SupplierID FROM Suppliers WHERE CompanyName = :pSupplierCompanyName_1)))\n" +
 					"AND Orders.Freight >= :pFreight_1",
 					cmd.CommandText);
 
-				Assert.IsTrue(cmd.Parameters.Count == 5);
+				Assert.AreEqual(5, cmd.Parameters.Count);
 
 				Assert.AreEqual(DateTime.Parse("11/20/1995", System.Globalization.CultureInfo.InvariantCulture), cmd.Parameters[0].Value);
 				Assert.AreEqual(DateTime.Parse("11/21/1995", System.Globalization.CultureInfo.InvariantCulture), cmd.Parameters[1].Value);
@@ -226,7 +219,7 @@ namespace SqlBinder.UnitTesting
 			private void AssertCommand(IDbCommand cmd)
 			{
 				Assert.IsNotNull(cmd);
-				Assert.IsTrue(cmd.CommandType == CommandType.Text);
+				Assert.AreEqual(CommandType.Text, cmd.CommandType);
 				Assert.IsTrue(cmd.Parameters.Count != 0);
 			}
 		}

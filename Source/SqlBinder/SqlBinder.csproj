@@ -49,7 +49,19 @@
     <Compile Include="ConditionValue.cs" />
     <Compile Include="DbQuery.cs" />
     <Compile Include="Parsing\Lexer.cs" />
-    <Compile Include="Parsing\Parser2.cs" />
+    <Compile Include="Parsing\Parser.cs" />
+    <Compile Include="Parsing\Tokens\BaseTokens.cs" />
+    <Compile Include="Parsing\Tokens\BindVariableParameter.cs" />
+    <Compile Include="Parsing\Tokens\DoubleQuoteLiteral.cs" />
+    <Compile Include="Parsing\Tokens\OracleAQMLiteral.cs" />
+    <Compile Include="Parsing\Tokens\PostgreDoubleDollarLiteral.cs" />
+    <Compile Include="Parsing\Tokens\Scope.cs" />
+    <Compile Include="Parsing\Tokens\ScopeSeparator.cs" />
+    <Compile Include="Parsing\Tokens\SingleQuoteLiteral.cs" />
+    <Compile Include="Parsing\Tokens\Sql.cs" />
+    <Compile Include="Parsing\Tokens\SqlBinderComment.cs" />
+    <Compile Include="Parsing\Tokens\SqlBinderParameter.cs" />
+    <Compile Include="Parsing\Tokens\SqlComment.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -57,7 +69,6 @@
     </Compile>
     <Compile Include="Query.cs" />
     <Compile Include="Operators.cs" />
-    <Compile Include="Parsing\Parser.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Exceptions.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -81,5 +92,6 @@
       <SubType>Designer</SubType>
     </EmbeddedResource>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
