@@ -35,7 +35,10 @@ namespace SqlBinder.Parsing
 	}
 
 	/// <summary>
-	/// A tokenizer that scans through a raw SqlBinder script and creates an object/token tree representing the SQL expression.
+	/// Scans through a raw SqlBinder script and creates an object/token tree representing the SQL expression. It's a more than just a 
+	/// tokenizer since it builds a hierarchy while scanning. This provides flexibility when facing various custom SQL syntaxes that SqlBinder
+	/// shouldn't scan, like PostgreSQL, MySQL or Oracle AQM literals. The lexer will be aware of the context it's in and not do redundant
+	/// scans that would later have to be thrown out by the parser. 
 	/// </summary>
 	public class Lexer
 	{
