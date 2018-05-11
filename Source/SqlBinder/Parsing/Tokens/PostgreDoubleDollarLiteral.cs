@@ -5,7 +5,11 @@ using System.Text;
 
 namespace SqlBinder.Parsing.Tokens
 {
-	public class PostgreDoubleDollarLiteral : ContentToken // Can conflict with Informix EXEC SQL keyword
+	/// <summary>
+	/// PostgreSQL literal, i.e. $$ ... $$ or $anyTag$ ... $anyTag$. It can contain any other characters inside. Note that dollar symbol
+	/// may conflict with Informix EXEC keyword in which case you should optimize-away this token via Lexer Hints.
+	/// </summary>
+	public class PostgreDoubleDollarLiteral : ContentToken
 	{
 		public const char SYMBOL = '$';
 		public const int MAX_TAG = 256;

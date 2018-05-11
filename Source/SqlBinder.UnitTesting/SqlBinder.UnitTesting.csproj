@@ -61,7 +61,7 @@
     <Compile Include="Negative_Tests.cs" />
     <Compile Include="Lexer_Tests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Simplest_Sql.cs" />
+    <Compile Include="Parser_Tests.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

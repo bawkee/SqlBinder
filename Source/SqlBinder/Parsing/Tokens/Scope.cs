@@ -5,6 +5,9 @@ using System.Text;
 
 namespace SqlBinder.Parsing.Tokens
 {
+	/// <summary>
+	/// An SqlBinder scope, i.e. { ... }. 
+	/// </summary>
 	public class Scope : NestedToken
 	{
 		public const string OPENING_TAG = "{";

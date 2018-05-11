@@ -1,4 +1,5 @@
 ﻿using System.Data;
+using System.Diagnostics;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace SqlBinder.UnitTesting
@@ -16,6 +17,8 @@ namespace SqlBinder.UnitTesting
 		{
 			private static string _expectedSql = "SELECT * FROM TABLE1";
 			private static string _expectedSqlComment = "/* Test comment */";
+
+			public TestContext TestContext { get; set; }
 
 			[TestInitialize]
 			public void InitializeTest()
@@ -108,6 +111,110 @@ namespace SqlBinder.UnitTesting
 				var query = new MockQuery(_connection, "SELECT * FROM TABLE1");
 				query.SetCondition("condition1", 0);
 				AssertCommand(query.CreateCommand());
+			}
+
+			[TestMethod]
+			public void Performance_Tests()
+			{
+				var query = new Query("SELECT * FROM TABLE1 {WHERE {COLUMN1 :Criteria1} {COLUMN2 :Criteria2} {COLUMN3 :Criteria3} " + 
+				                      "{COLUMN4 :Criteria4} {COLUMN5 :Criteria5} {COLUMN6 :Criteria6}}");
+				query.LexerHints = Parsing.LexerHints.None;
+
+				var sw = new Stopwatch();
+
+				var c = 1000;
+
+				sw.Start();
+				for (var i = 0; i < c; i++)
+				{
+					query.SqlBinderScript = query.SqlBinderScript; // Reset the cache
+					query.GetSql();
+				}
+				sw.Stop();
+				TestContext.WriteLine($"Cold start: {sw.Elapsed.TotalMilliseconds}");
+
+				sw.Restart();
+				for (var i = 0; i < c; i++)
+				{
+					query.GetSql();
+				}
+				sw.Stop();
+				TestContext.WriteLine($"Warm parsing, no condition setters: {sw.Elapsed.TotalMilliseconds}");
+
+				query.Conditions.Clear();
+				sw.Restart();
+				for (var i = 0; i < c; i++)
+				{
+					query.SetCondition("Criteria1", new ConditionValues.BoolValue(true));
+					query.GetSql();
+				}
+				sw.Stop();
+				TestContext.WriteLine($"Warm parsing, 1 condition: {sw.Elapsed.TotalMilliseconds}");
+
+				query.Conditions.Clear();
+				sw.Restart();
+				for (var i = 0; i < c; i++)
+				{
+					query.SetCondition("Criteria1", new ConditionValues.BoolValue(true));
+					query.SetCondition("Criteria2", new ConditionValues.BoolValue(true));
+					query.GetSql();
+				}
+				sw.Stop();
+				TestContext.WriteLine($"Warm parsing, 2 conditions: {sw.Elapsed.TotalMilliseconds}");
+
+				query.Conditions.Clear();
+				sw.Restart();
+				for (var i = 0; i < c; i++)
+				{
+					query.SetCondition("Criteria1", new ConditionValues.BoolValue(true));
+					query.SetCondition("Criteria2", new ConditionValues.BoolValue(true));
+					query.SetCondition("Criteria3", new ConditionValues.BoolValue(true));
+					query.GetSql();
+				}
+				sw.Stop();
+				TestContext.WriteLine($"Warm parsing, 3 conditions: {sw.Elapsed.TotalMilliseconds}");
+
+				query.Conditions.Clear();
+				sw.Restart();
+				for (var i = 0; i < c; i++)
+				{
+					query.SetCondition("Criteria1", new ConditionValues.BoolValue(true));
+					query.SetCondition("Criteria2", new ConditionValues.BoolValue(true));
+					query.SetCondition("Criteria3", new ConditionValues.BoolValue(true));
+					query.SetCondition("Criteria4", new ConditionValues.BoolValue(true));
+					query.GetSql();
+				}
+				sw.Stop();
+				TestContext.WriteLine($"Warm parsing, 4 conditions: {sw.Elapsed.TotalMilliseconds}");
+
+				query.Conditions.Clear();
+				sw.Restart();
+				for (var i = 0; i < c; i++)
+				{
+					query.SetCondition("Criteria1", new ConditionValues.BoolValue(true));
+					query.SetCondition("Criteria2", new ConditionValues.BoolValue(true));
+					query.SetCondition("Criteria3", new ConditionValues.BoolValue(true));
+					query.SetCondition("Criteria4", new ConditionValues.BoolValue(true));
+					query.SetCondition("Criteria5", new ConditionValues.BoolValue(true));
+					query.GetSql();
+				}
+				sw.Stop();
+				TestContext.WriteLine($"Warm parsing, 5 conditions: {sw.Elapsed.TotalMilliseconds}");
+
+				query.Conditions.Clear();
+				sw.Restart();
+				for (var i = 0; i < c; i++)
+				{
+					query.SetCondition("Criteria1", new ConditionValues.BoolValue(true));
+					query.SetCondition("Criteria2", new ConditionValues.BoolValue(true));
+					query.SetCondition("Criteria3", new ConditionValues.BoolValue(true));
+					query.SetCondition("Criteria4", new ConditionValues.BoolValue(true));
+					query.SetCondition("Criteria5", new ConditionValues.BoolValue(true));
+					query.SetCondition("Criteria6", new ConditionValues.BoolValue(true));
+					query.GetSql();
+				}
+				sw.Stop();
+				TestContext.WriteLine($"Warm parsing, 6 conditions: {sw.Elapsed.TotalMilliseconds}");
 			}
 
 			private void AssertCommand(IDbCommand cmd)

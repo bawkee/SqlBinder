@@ -6,6 +6,11 @@ using System.Threading.Tasks;
 
 namespace SqlBinder.Parsing.Tokens
 {
+	/// <summary>
+	/// Sql is any text that was not translated into any other token. Sql can also support escape characters 
+	/// which can be replaced with their associated character preventing the other token from being recognized,
+	/// e.g. [[parameter]] may be converted into '[parameter]' sql due to '[[' and ']]'.
+	/// </summary>
 	public class Sql : TextToken
 	{
 		public string EscapableSymbols { get; }

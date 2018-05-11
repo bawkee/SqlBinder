@@ -26,19 +26,21 @@ namespace SqlBinder.Parsing
 		/// Improves performance slightly if you never plan on using the parser for Oracle.
 		/// </summary>
 		DisableOracleFlavors = 2,
+
 		/// <summary>
-		/// If you enable this hint, Lexer will use standard bind variable syntax (:param, @param or ?param) to recognize SqlBinder parameters 
-		/// (which is NOT the same thing as bind variables). This also lets you use square brackets [param] syntax in your SQL without having 
-		/// to escape them (i.e. [[My Table]].[[My Column]]).
+		/// Instead of using standard parameter syntax (:param, @param or ?param) as SqlBinder condition placeholders, custom syntax will be used,
+		/// (i.e. [Parameter Name]). This allows you to mix Ado.Net parameters with SqlBinder conditions or use special characters for parameter 
+		/// names. If you set this and want to use the [...] syntax in MSSQL you will have to escape the brackets (i.e. [[...]]).
 		/// </summary>
-		UseBindVarSyntaxForParams = 4,
+		UseCustomSyntaxForParams = 4
 	}
 
 	/// <summary>
 	/// Scans through a raw SqlBinder script and creates an object/token tree representing the SQL expression. It's a more than just a 
 	/// tokenizer since it builds a hierarchy while scanning. This provides flexibility when facing various custom SQL syntaxes that SqlBinder
 	/// shouldn't scan, like PostgreSQL, MySQL or Oracle AQM literals. The lexer will be aware of the context it's in and not do redundant
-	/// scans that would later have to be thrown out by the parser. 
+	/// scans that would later have to be thrown out by the parser. The idea is to do as much as possible at this point and cache it for
+	/// many later uses.
 	/// </summary>
 	public class Lexer
 	{
@@ -46,6 +48,10 @@ namespace SqlBinder.Parsing
 		/// Various options that can be used to customize or optimize the lexer.
 		/// </summary>
 		public LexerHints Hints { get; set; }
+
+		public Lexer() { }
+
+		public Lexer(LexerHints hints) => Hints = hints;
 
 		/// <summary>
 		/// Tokenize the given SqlBinder script.
@@ -112,10 +118,10 @@ namespace SqlBinder.Parsing
 			else if (!Hints.HasFlag(LexerHints.DisablePostgreSqlFlavors) && PostgreDoubleDollarLiteral.Evaluate(reader))
 				newElem = new PostgreDoubleDollarLiteral(nestedToken, reader);
 			else if (Scope.Evaluate(reader)) newElem = new Scope(nestedToken, reader);
-			else if (Hints.HasFlag(LexerHints.UseBindVarSyntaxForParams) ? 
-				BindVariableParameter.Evaluate(reader) : SqlBinderParameter.Evaluate(reader))
-				newElem = Hints.HasFlag(LexerHints.UseBindVarSyntaxForParams) ? 
-					new BindVariableParameter(nestedToken, reader) : new SqlBinderParameter(nestedToken) as Parameter;
+			else if (Hints.HasFlag(LexerHints.UseCustomSyntaxForParams) ? 
+				SqlBinderParameter.Evaluate(reader) : BindVariableParameter.Evaluate(reader))
+				newElem = Hints.HasFlag(LexerHints.UseCustomSyntaxForParams) ? 
+					new SqlBinderParameter(nestedToken) as Parameter : new BindVariableParameter(nestedToken, reader);
 			else return false;
 
 			nestedToken.Children.Add(newElem);
@@ -133,7 +139,7 @@ namespace SqlBinder.Parsing
 			else if (ScopeSeparator.Evaluate(reader)) newElem = new ScopeSeparator(reader.Token);
 			else if (Sql.Evaluate(reader))
 			{
-				if (Hints.HasFlag(LexerHints.UseBindVarSyntaxForParams))
+				if (!Hints.HasFlag(LexerHints.UseCustomSyntaxForParams))
 					newElem = new Sql(reader.Token);
 				else
 				{

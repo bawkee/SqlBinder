@@ -5,6 +5,9 @@ using System.Text;
 
 namespace SqlBinder.Parsing.Tokens
 {
+	/// <summary>
+	/// Any white-space text between SqlBinder scopes is considered a Separator. Note that comments are not considered white-space.
+	/// </summary>
 	public class ScopeSeparator : TextToken
 	{
 		internal ScopeSeparator(Token parent) : base(parent) { }

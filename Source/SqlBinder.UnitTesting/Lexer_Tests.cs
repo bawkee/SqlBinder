@@ -13,7 +13,9 @@ namespace SqlBinder.UnitTesting
 		/// </summary>
 		[TestClass]
 		public class Lexer_Tests
-		{			
+		{
+			public TestContext TestContext { get; set; }
+
 			[TestInitialize]
 			public void InitializeTest()
 			{
@@ -25,7 +27,7 @@ namespace SqlBinder.UnitTesting
 			{
 				var syntax = "SELECT * FROM TEST {WHERE SOMETHING LIKE 'Test' AND {SomethingElse [somethingElse]} @{[[Something Third]] [something Third]}};";
 
-				var root = new Lexer().Tokenize(syntax);
+				var root = new Lexer(LexerHints.UseCustomSyntaxForParams).Tokenize(syntax);
 
 				var nesting = 0;
 				OutputLexerResults(root, ref nesting);
@@ -119,8 +121,7 @@ namespace SqlBinder.UnitTesting
 							 "q'\"This has alternative \"\" quotes\"' OR " +
 				             "q'\"This has alternative \\\" quotes\"' OR " +				             
 							 "'''This''' OR " +
-				             "\"\"\"This\"\"\" OR " +
-				             "testq'[This]'}";
+				             "\"\"\"This\"\"\"}";
 
 				/* 
 				 '{Test}'
@@ -325,13 +326,6 @@ namespace SqlBinder.UnitTesting
 				Assert.AreEqual("\"", ((ScopedToken)((Scope)root.Children[1]).Children[39]).OpeningTag);
 				Assert.AreEqual("\"", ((ScopedToken)((Scope)root.Children[1]).Children[39]).ClosingTag);
 				Assert.AreEqual("\"\"This\"\"", ((ContentText)((ContentToken)((Scope)root.Children[1]).Children[39]).Content).Text);
-
-				Assert.IsInstanceOfType(((Scope)root.Children[1]).Children[41], typeof(SingleQuoteLiteral));
-				Assert.IsTrue(((Scope)root.Children[1]).Children[41].Parent == root.Children[1]);
-				Assert.IsInstanceOfType(((ContentToken)((Scope)root.Children[1]).Children[41]).Content, typeof(ContentText));
-				Assert.AreEqual("'", ((ScopedToken)((Scope)root.Children[1]).Children[41]).OpeningTag);
-				Assert.AreEqual("'", ((ScopedToken)((Scope)root.Children[1]).Children[41]).ClosingTag);
-				Assert.AreEqual("[This]", ((ContentText)((ContentToken)((Scope)root.Children[1]).Children[41]).Content).Text);
 			}
 
 			[TestMethod]
@@ -431,7 +425,7 @@ namespace SqlBinder.UnitTesting
 			{
 				var syntax = "SELECT * FROM [My Table] {WHERE {Column1 :someParameter} {Column2 @some_Parameter2} {Column3 ?some_Parameter3 AND [My Table].Column2 > 1}}";			
 
-				var root = new Lexer { Hints = LexerHints.UseBindVarSyntaxForParams }.Tokenize(syntax);
+				var root = new Lexer().Tokenize(syntax);
 
 				var nesting = 0;
 				OutputLexerResults(root, ref nesting);
@@ -505,15 +499,13 @@ namespace SqlBinder.UnitTesting
 						OutputLexerResults(childToken, ref nesting);
 					nesting--;
 				}
-			}
-
-			public TestContext TestContext { get; set; }
+			}			
 
 			[TestMethod]
 			public void Performance_Test()
 			{
 				var syntax = "SELECT * FROM TEST {WHERE SOMETHING LIKE 'Test' AND {SomethingElse [somethingElse]} {SomethingThird [somethingThird]}};";
-				var lexer = new Lexer();
+				var lexer = new Lexer(LexerHints.UseCustomSyntaxForParams);
 
 				lexer.Tokenize(syntax);
 

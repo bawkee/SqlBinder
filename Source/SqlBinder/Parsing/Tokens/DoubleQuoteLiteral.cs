@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 
 namespace SqlBinder.Parsing.Tokens
 {
+	/// <summary>
+	/// Sql literal, i.e. " ... ". It can contain other literals inside. It is also escapable, i.e. "" and \" will be conveerted to ".
+	/// </summary>
 	public class DoubleQuoteLiteral : EscapableStringLiteral
 	{
 		public const string SYMBOL = "\"";

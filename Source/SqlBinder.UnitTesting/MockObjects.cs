@@ -10,21 +10,19 @@ namespace SqlBinder.UnitTesting
 	public class MockQuery : DbQuery
 	{
 		public MockQuery(MockDbConnection connection) 
-			: base(connection)
-		{
-		}
+			: base(connection) => LexerHints = Parsing.LexerHints.UseCustomSyntaxForParams;
 
 		public MockQuery(MockDbConnection connection, string script) 
-			: base(connection, script)
+			: base(connection, script) => LexerHints = Parsing.LexerHints.UseCustomSyntaxForParams;
+
+		protected override void OnFormatParameterName(object sender, FormatParameterEventArgs e)
 		{
+			if (e.FormattedForSqlPlaceholder[0] != ':')
+				e.FormattedForSqlPlaceholder = $":{e.FormattedName}";
+			base.OnFormatParameterName(sender, e);
 		}
 
-		protected override string DefaultParameterFormat => ":{0}";
-
-	    public new MockDbCommand CreateCommand()
-	    {
-	        return base.CreateCommand() as MockDbCommand;
-	    }
+	    public new MockDbCommand CreateCommand() => base.CreateCommand() as MockDbCommand;
 	}
 
 	public class MockDbConnection : DbConnection

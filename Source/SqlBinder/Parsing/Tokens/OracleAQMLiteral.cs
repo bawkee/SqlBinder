@@ -5,13 +5,15 @@ using System.Text;
 
 namespace SqlBinder.Parsing.Tokens
 {
-	public class OracleAQMLiteral : ContentToken // Oracle alternative quoting mechanism
+	/// <summary>
+	/// Oracle Alternative Quoting Mechanism (AQM) literal, i.e. q'" ... "' or q'{test}'.  
+	/// </summary>
+	public class OracleAQMLiteral : ContentToken 
 	{
 		public const string OPENING_TAG = "q'";
 		public const string CLOSING_TAG = "'";
 		public const string STANDARD_PAIRS = "[]{}()<>";
-		public const string ILLEGAL_CHARACTERS = "\r\n\t '";
-		public const string WHITE_SPACE = "\r\n\t \0";
+		public const string ILLEGAL_CHARACTERS = "\r\n\t '";		
 
 		public override string OpeningTag { get; }
 		public override string ClosingTag { get; }
@@ -38,8 +40,6 @@ namespace SqlBinder.Parsing.Tokens
 			if (!Evaluate(reader, OPENING_TAG))
 				return false;
 			if (ILLEGAL_CHARACTERS.Contains(reader.Peek(2)))
-				return false;
-			if (!WHITE_SPACE.Contains(reader.Peek(-1)))
 				return false;
 			var standardPair = STANDARD_PAIRS.IndexOf(reader.Peek(2));
 			return standardPair < 0 || standardPair % 2 == 0;

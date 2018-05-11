@@ -5,6 +5,9 @@ using System.Text;
 
 namespace SqlBinder.Parsing.Tokens
 {
+	/// <summary>
+	/// SqlBinder comment, i.e. /*{ ... }*/. Note that these comments will be eliminated by the parser.
+	/// </summary>
 	public class SqlBinderComment : ContentToken
 	{
 		private const string OPENING_TAG = "/*{";

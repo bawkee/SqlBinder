@@ -5,6 +5,9 @@ using System.Text;
 
 namespace SqlBinder.Parsing.Tokens
 {
+	/// <summary>
+	/// SqlBinder parameter syntax, i.e. [parameterName] or [Parameter Name]. Supports any character.
+	/// </summary>
 	public class SqlBinderParameter : Parameter
 	{
 		public const string OPENING_SYMBOL = "[";

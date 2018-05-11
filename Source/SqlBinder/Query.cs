@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using SqlBinder.ConditionValues;
 using SqlBinder.Parsing;
+using SqlBinder.Parsing.Tokens;
 using SqlBinder.Properties;
 
 namespace SqlBinder
@@ -18,8 +19,8 @@ namespace SqlBinder
 	[Serializable]
 	public class UnmatchedConditionsException : Exception
 	{
-		public UnmatchedConditionsException(IEnumerable<Condition> conditions) : base(string.Format(Exceptions.NoMatchingParams,
-			string.Join(", ", conditions.Select(c => c.Parameter).ToArray())))
+		public UnmatchedConditionsException(string[] conditions) : base(string.Format(Exceptions.NoMatchingParams,
+			string.Join(", ", conditions)))
 		{ }
 	}
 
@@ -34,8 +35,20 @@ namespace SqlBinder
 
 	public class FormatParameterEventArgs : EventArgs
 	{
+		/// <summary>
+		/// Gets parameter name as it appears in the SqlBinder script.
+		/// </summary>
 		public string ParameterName { get; internal set; }
+
+		/// <summary>
+		/// Gets or sets parameter name formatted for passing to the <see cref="Query.SqlParameters"/> collection.
+		/// </summary>
 		public string FormattedName { get; set; }
+
+		/// <summary>
+		/// Gets or sets parameter name formatted for inserting into the output SQL string.
+		/// </summary>
+		public string FormattedForSqlPlaceholder { get; set; }
 	}
 
 	public delegate void FormatParameterEventHandler(object sender, FormatParameterEventArgs e);
@@ -45,32 +58,49 @@ namespace SqlBinder
 	/// </summary>
 	public class Query
 	{
-	    public Query() { }
+		private RootToken _lexerResult;
+		private LexerHints _lexerHints;
+		private string _sqlBinderScript;
+
+		public Query() { }
 
 	    public Query(string script)
 	    {
             SqlBinderScript = script;
 	    }
 
-        /// <summary>
-        /// Occurs when parameter is to be formatted for the SQL ouput. Use this to specify custom parameter tags.
-        /// </summary>
-        public event FormatParameterEventHandler FormatParameterName;
+		/// <summary>
+		/// Occurs when parameter is to be formatted for the SQL ouput. You can use this to specify custom parameter tags.
+		/// </summary>
+		public event FormatParameterEventHandler FormatParameterName;
 
 		/// <summary>
-		/// Gets or sets default parameter format string. See <see cref="FormatParameterName"/> event.
+		/// Gets or sets default parameter format string for SQL placeholders, i.e. '@{0}'. See <see cref="FormatParameterName"/> event. The
+		/// {0} placeholder will be name already formatted with <see cref="DefaultParameterFormat"/>.
 		/// </summary>
-		protected virtual string DefaultParameterFormat { get; } = "{0}";
+		protected virtual string DefaultParameterSqlPlaceholderFormat { get; } = "{0}";
 
-		private string FormatParameterNameInternal(string parameterName)
+		/// <summary>
+		/// Gets or sets the default parameter format string e.g. 'param_{0}_{1}'. The {0} placeholder is the parameter name from the 
+		/// SqlBinder script whereas {1} is parameter ordinal.
+		/// </summary>
+		protected virtual string DefaultParameterFormat { get; } = "p{0}_{1}";
+
+		private FormatParameterEventArgs FormatParameterNameInternal(Parameter parameter, int ordinal)
 		{
+			var paramName = string.Format(DefaultParameterFormat, parameter.Name, ordinal);
+			var sqlParamName = string.Format(DefaultParameterSqlPlaceholderFormat, ((parameter as BindVariableParameter)?.OpeningTag ?? "") + paramName);
+
 			var e = new FormatParameterEventArgs
 			{
-				ParameterName = parameterName,
-				FormattedName = string.Format(DefaultParameterFormat, parameterName)
+				ParameterName = parameter.Name,
+				FormattedName = paramName,
+				FormattedForSqlPlaceholder = sqlParamName,
 			};
+
 			OnFormatParameterName(this, e);
-			return e.FormattedName;
+
+			return e;
 		}
 
 		/// <summary>
@@ -81,7 +111,28 @@ namespace SqlBinder
 		/// <summary>
 		/// Gets or sets an SqlBinder script that was passed to this query.
 		/// </summary>
-		public string SqlBinderScript { get; set; }
+		public string SqlBinderScript
+		{
+			get => _sqlBinderScript;
+			set
+			{
+				_sqlBinderScript = value;
+				_lexerResult = null;
+			}
+		}
+
+		/// <summary>
+		/// Various options that can be used to customize or optimize the lexer.
+		/// </summary>
+		public LexerHints LexerHints
+		{
+			get => _lexerHints;
+			set
+			{
+				_lexerHints = value;
+				_lexerResult = null;
+			}
+		}
 
 		/// <summary>
 		/// Gets the conditions which are required in order to build a valid query. There must be a parameter placeholder in your script for each condition.
@@ -295,7 +346,7 @@ namespace SqlBinder
 		/// <param name="value">The value.</param>
 		public virtual void DefineVariable(string name, object value) => Variables[name] = value;
 
-		private readonly HashSet<Condition> _processedConditions = new HashSet<Condition>();
+		private readonly HashSet<string> _processedConditions = new HashSet<string>();
 
 	    /// <summary>
 	    /// A collection of SQL parameters that were produced after processing conditions.
@@ -303,7 +354,7 @@ namespace SqlBinder
 	    public Dictionary<string, object> SqlParameters { get; set; } = new Dictionary<string, object>();
 
 		/// <summary>
-		/// A resulting SQL produced by calling the method <see cref="GetSql"/>.
+		/// A resulting SQL produced by the last call to the method <see cref="GetSql"/>.
 		/// </summary>
 		public string OutputSql { get; set; }
 
@@ -315,18 +366,25 @@ namespace SqlBinder
 		/// placeholders or condition names as they must be matched.</exception>
 		/// <exception cref="InvalidConditionException">Thrown when some <see cref="ConditionValue"/> instance fails to generate the SQL.</exception>
 		public string GetSql()
-		{
+		{			
 			var parser = new Parser();
 
 			parser.RequestParameterValue += Parser_RequestParameterValue;
 
-			OutputSql = parser.Parse(SqlBinderScript);
+			OutputSql = parser.Parse(Tokenize());
 
-			var unprocessedConditions = Conditions.Except(_processedConditions).ToArray();
+			var unprocessedConditions = Conditions.Select(c => c.Parameter).Except(_processedConditions).ToArray();
 			if (unprocessedConditions.Any())
 				throw new UnmatchedConditionsException(unprocessedConditions);
 
 			return OutputSql;
+		}
+
+		private RootToken Tokenize()
+		{
+			if (_lexerResult != null)
+				return _lexerResult;			
+			return _lexerResult ?? (_lexerResult = new Lexer (LexerHints).Tokenize(SqlBinderScript));
 		}
 
 		/// <summary>
@@ -340,14 +398,12 @@ namespace SqlBinder
 
 		private void Parser_RequestParameterValue(object sender, RequestParameterValueArgs e)
 		{
-			var cond = Conditions.FirstOrDefault(c => string.CompareOrdinal(c.Parameter, e.Parameter.Name) == 0);
-
-			if (cond != null)
+			var condition = Conditions.FirstOrDefault(c => string.CompareOrdinal(c.Parameter, e.Parameter.Name) == 0);		
+			
+			if (condition != null)
 			{
-				_processedConditions.Add(cond);
-
-				var sql = ConstructParameterSql(cond.Operator, cond.Value, cond.Parameter);
-				e.Value = sql;
+				_processedConditions.Add(condition.Parameter);
+				e.Value = ConstructParameterSql(condition, e.Parameter);
 			}
 			else
 			{
@@ -360,8 +416,11 @@ namespace SqlBinder
 		/// <summary>
 		/// Compiles a parameter sql based on query parameter, operator and value.
 		/// </summary>
-		protected virtual string ConstructParameterSql(Operator sqlOperator, ConditionValue conditionValue, string parameterName)
+		protected virtual string ConstructParameterSql(Condition condition, Parameter parameter)
 		{
+			var sqlOperator = condition.Operator;
+			var conditionValue = condition.Value;
+
 			try
 			{
 				var sql = conditionValue.GetSql(sqlOperator);
@@ -375,7 +434,7 @@ namespace SqlBinder
 					return sql;
 
 				var paramsSql = new object[values.Length];
-				var paramCnt = 1;
+				var paramCnt = 1;				
 
 				// Create parameter(s) for each value
 				for (var i = 0; i < values.Length; i++)
@@ -390,10 +449,10 @@ namespace SqlBinder
 							var sqlParamNames = new List<string>();
 							foreach (var subValue in valueEnumerable)
 							{
-								var sqlParamName = $"p{parameterName}_{paramCnt}";
-								AddSqlParameter(sqlParamName, subValue);
-								conditionValue.ProcessParameter(sqlParamName, subValue);
-								sqlParamNames.Add(FormatParameterNameInternal(sqlParamName));
+								var formatResults = FormatParameterNameInternal(parameter, paramCnt);
+								AddSqlParameter(formatResults.FormattedName, subValue);
+								conditionValue.ProcessParameter(parameter.Name, subValue);
+								sqlParamNames.Add(formatResults.FormattedForSqlPlaceholder);
 								paramCnt++;
 							}
 
@@ -406,10 +465,10 @@ namespace SqlBinder
 					{
 						if (conditionValue.UseBindVariables)
 						{
-							var sqlParamName = $"p{parameterName}_{paramCnt}";
-							AddSqlParameter(sqlParamName, value);
-							conditionValue.ProcessParameter(sqlParamName, value);
-							paramsSql[i] = FormatParameterNameInternal(sqlParamName);
+							var formatResults = FormatParameterNameInternal(parameter, paramCnt);
+							AddSqlParameter(formatResults.FormattedName, value);
+							conditionValue.ProcessParameter(parameter.Name, value);
+							paramsSql[i] = formatResults.FormattedForSqlPlaceholder;
 						}
 						else
 							paramsSql[i] = value;

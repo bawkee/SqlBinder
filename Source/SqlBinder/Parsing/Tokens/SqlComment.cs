@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 
 namespace SqlBinder.Parsing.Tokens
 {
+	/// <summary>
+	/// Sql comments, i.e. /* ... */.
+	/// </summary>
 	public class SqlComment : ContentToken
 	{
 		private const string OPENING_TAG = "/*";
