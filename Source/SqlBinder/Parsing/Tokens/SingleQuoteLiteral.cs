@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace SqlBinder.Parsing.Tokens
 {
 	/// <summary>
-	/// Sql literal, i.e. ' ... '. It can contain other literals inside. It is also escapable, i.e. '' and \' will be conveerted to '.
+	/// Sql string literal, i.e. ' ... '. It can contain other literals inside. It is also escapable, i.e. '' and \' are acceptable.
 	/// </summary>
 	public class SingleQuoteLiteral : EscapableStringLiteral
 	{
@@ -21,5 +21,7 @@ namespace SqlBinder.Parsing.Tokens
 		internal SingleQuoteLiteral(Token parent) : base(parent) { }
 
 		internal static bool Evaluate(Reader reader) => Evaluate(reader, SYMBOL[0]);
+
+		public override TextToken CreateContent() => new EscapableContentText(this, SYMBOL[0]);
 	}
 }

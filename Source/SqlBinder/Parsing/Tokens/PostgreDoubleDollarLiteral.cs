@@ -17,8 +17,6 @@ namespace SqlBinder.Parsing.Tokens
 		public override string OpeningTag { get; }
 		public override string ClosingTag { get; }
 
-		public const string WHITE_SPACE = "\r\n\t \0";
-
 		internal PostgreDoubleDollarLiteral(Token parent, Reader reader) 
 			: base(parent)
 		{
@@ -28,8 +26,6 @@ namespace SqlBinder.Parsing.Tokens
 		internal static bool Evaluate(Reader reader)
 		{
 			if (reader.Char != SYMBOL)
-				return false;
-			if (!WHITE_SPACE.Contains(reader.Peek(-1)))
 				return false;
 			return DetermineTag(reader) != null;
 		}

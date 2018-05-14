@@ -5,15 +5,15 @@ using System.Text;
 
 namespace SqlBinder.Parsing.Tokens
 {
-	//* ----------------------- */
+	//* ---------------------------------- */
 	// Basic token types:
 	// 
-	// Token
-	//		TextToken
-	//		ScopedToken
-	//			ContentToken
-	//			NestedToken
-	//* ----------------------- */
+	// Token 
+	//		TextToken : Token
+	//		ScopedToken : Token
+	//			ContentToken : ScopedToken
+	//			NestedToken : ScopedToken
+	//* ---------------------------------- */
 
 	/// <summary>
 	/// Token base class.
@@ -37,9 +37,9 @@ namespace SqlBinder.Parsing.Tokens
 		private string _text;
 		public string Text => _text ?? (_text = Buffer.ToString());
 
-		internal virtual void Append(char c)
+		internal virtual void Append(Reader reader)
 		{
-			Buffer.Append(c);
+			Buffer.Append(reader.Char);
 			_text = null;
 		}
 
@@ -57,7 +57,7 @@ namespace SqlBinder.Parsing.Tokens
 		public abstract string OpeningTag { get; }
 		public abstract string ClosingTag { get; }
 
-		internal static bool Evaluate(Reader reader, string tag) => reader.TestString(tag);
+		internal static bool Evaluate(Reader reader, string tag) => reader.ScanFor(tag);
 		internal static bool Evaluate(Reader reader, char tag) => reader.Peek() == tag;
 		internal virtual bool EvaluateClosingTag(Reader reader) => Evaluate(reader, ClosingTag);
 	}
@@ -67,7 +67,9 @@ namespace SqlBinder.Parsing.Tokens
 	/// </summary>
 	public abstract class ContentToken : ScopedToken
 	{
-		public Token Content { get; internal set; }
+		public virtual TextToken Content { get; internal set; }
+
+		public virtual TextToken CreateContent() => new ContentText(this);
 
 		protected ContentToken(Token parent) : base(parent) { }
 
@@ -108,27 +110,36 @@ namespace SqlBinder.Parsing.Tokens
 	}
 
 	/// <summary>
-	/// Token representing other string literal tokens which can be escaped by backslash (\) or by repeating their tags.
+	/// Token representing <see cref="EscapableStringLiteral"/> token's content.
+	/// </summary>
+	public class EscapableContentText : ContentText
+	{
+		public char EscapableSymbol { get; }
+
+		internal EscapableContentText(Token parent, char symbol)
+			: base(parent) => EscapableSymbol = symbol;
+
+		internal override void Append(Reader reader)
+		{
+			if (reader.Char == EscapableSymbol && reader.Peek(1) == EscapableSymbol ||
+			    reader.Char == '\\' && reader.Peek(1) == EscapableSymbol)
+			{
+				base.Append(reader);
+				reader.Consume();
+			}
+			base.Append(reader);
+		}
+	}
+
+	/// <summary>
+	/// Content Token representing string literals which can be escaped by backslash (\) or by repeating their tags.
 	/// </summary>
 	public abstract class EscapableStringLiteral : ContentToken
 	{
 		protected EscapableStringLiteral(Token parent) : base(parent) { }
 
-		private bool _skip;
-
-		internal override bool EvaluateClosingTag(Reader reader)
-		{
-			if (_skip)
-				return _skip = false;
-			if (!base.EvaluateClosingTag(reader))
-				return false;
-			if (Content != null && reader.Peek(-1) == '\\')
-				return false;
-			if (reader.Peek(1) != LiteralTag)
-				return true;
-			_skip = true;
-			return false;
-		}
+		internal override bool EvaluateClosingTag(Reader reader) =>
+			base.EvaluateClosingTag(reader) && reader.Peek(1) != LiteralTag;
 
 		public abstract char LiteralTag { get; }
 	}

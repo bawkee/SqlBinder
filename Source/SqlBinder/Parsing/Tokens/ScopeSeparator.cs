@@ -21,18 +21,20 @@ namespace SqlBinder.Parsing.Tokens
 			if (!(nestedParent.Children.LastOrDefault() is Scope))
 				return false;
 
-			var startingIdx = reader.Index;
-
+			reader.StartSnapshot();
 			try
 			{
-				while (reader.Read())
+				while (reader.TryConsume())
 				{
 					if (char.IsWhiteSpace(reader.Char))
 						continue;
 					return Scope.Evaluate(reader);
 				}
 			}
-			finally { reader.Index = startingIdx; }
+			finally
+			{
+				reader.FinishSnapshot();
+			}
 
 			return false;
 		}

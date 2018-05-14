@@ -130,7 +130,6 @@ namespace SqlBinder.Parsing
 		public List<ParsedToken> Children { get; } = new List<ParsedToken>();
 		public Token LexerToken { get; }
 		internal ParsedToken(Token lexerToken) => LexerToken = lexerToken;
-
 		public bool IsValid { get; set; } = true;
 	}
 
