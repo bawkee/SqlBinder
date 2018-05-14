@@ -6,7 +6,7 @@ using System.Text;
 namespace SqlBinder.Parsing.Tokens
 {
 	/// <summary>
-	/// SqlBinder comment, i.e. /*{ ... }*/. Note that these comments will be eliminated by the parser.
+	/// SqlBinder comment, i.e. /*{ ... }*/. Note that these comments will be eliminated by the template processor.
 	/// </summary>
 	public class SqlBinderComment : ContentToken
 	{

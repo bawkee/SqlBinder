@@ -48,8 +48,8 @@
     <Compile Include="Condition.cs" />
     <Compile Include="ConditionValue.cs" />
     <Compile Include="DbQuery.cs" />
-    <Compile Include="Parsing\Lexer.cs" />
-    <Compile Include="Parsing\Parser.cs" />
+    <Compile Include="Parsing\SqlBinderParser.cs" />
+    <Compile Include="Parsing\SqlBinderProcessor.cs" />
     <Compile Include="Parsing\Tokens\BaseTokens.cs" />
     <Compile Include="Parsing\Tokens\BindVariableParameter.cs" />
     <Compile Include="Parsing\Tokens\DoubleQuoteLiteral.cs" />

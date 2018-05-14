@@ -10,6 +10,8 @@ namespace SqlBinder.Parsing.Tokens
 	/// </summary>
 	public class ScopeSeparator : TextToken
 	{
+		// This is a dubious token. Should be removed as parser or template processor should be in charge of determining what can 
+		// stand between two scopes.
 		internal ScopeSeparator(Token parent) : base(parent) { }
 
 		internal static bool Evaluate(Reader reader)

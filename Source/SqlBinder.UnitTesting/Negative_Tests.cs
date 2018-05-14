@@ -102,13 +102,13 @@ namespace SqlBinder.UnitTesting
 			[TestMethod]
 			public void Negative_Test_3()
 			{
-				AssertLexerException("SELECT * FROM TABLE1 {WHERE {COLUMN1 [Criteria1]}");			
-				AssertLexerException("SELECT * FROM TABLE1 {WHERE {COLUMN1 [Criteria1}}");
-				AssertLexerException("SELECT * FROM TABLE1 {WHERE {COLUMN1 [Criteria1");
-				AssertLexerException("SELECT * FROM TABLE1 WHERE {COLUMN1 [Test [Criteria1}}");
+				AssertParserException("SELECT * FROM TABLE1 {WHERE {COLUMN1 [Criteria1]}");			
+				AssertParserException("SELECT * FROM TABLE1 {WHERE {COLUMN1 [Criteria1}}");
+				AssertParserException("SELECT * FROM TABLE1 {WHERE {COLUMN1 [Criteria1");
+				AssertParserException("SELECT * FROM TABLE1 WHERE {COLUMN1 [Test [Criteria1}}");
 			}
 
-			private void AssertLexerException(string script)
+			private void AssertParserException(string script)
 			{
 				var query = new MockQuery(_connection, script);
 
@@ -119,7 +119,7 @@ namespace SqlBinder.UnitTesting
 				}
 				catch (Exception ex)
 				{
-					Assert.IsInstanceOfType(ex, typeof(LexerException));
+					Assert.IsInstanceOfType(ex, typeof(Parsing.ParserException));
 					return;
 				}
 				Assert.Fail();

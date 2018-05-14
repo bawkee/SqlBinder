@@ -58,7 +58,7 @@ namespace SqlBinder.UnitTesting
 			public void Common_Sql_3()
 			{
 				var query = new MockQuery(_connection, "SELECT * FROM TABLE1 {WHERE {COLUMN1 :Criteria1} {COLUMN2 :Criteria2}}");
-				query.LexerHints = Parsing.LexerHints.None;				
+				query.ParserHints = Parsing.ParserHints.None;				
 
 				// No columns
 				var cmd = query.CreateCommand();

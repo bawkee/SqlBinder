@@ -2,13 +2,10 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Data;
-using System.Data.Common;
 using System.Data.OleDb;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 using SqlBinder.DemoNorthwindDal.Entities;
 
 namespace SqlBinder.DemoNorthwindDal.OleDb
@@ -205,7 +202,7 @@ namespace SqlBinder.DemoNorthwindDal.OleDb
 
 		public IEnumerable<string> GetShippingCities(string shippingCountry = null)
 		{
-			var query = new DbQuery(_connection, "SELECT ShipCity FROM Orders {WHERE {ShipCountry [shippingCountry]}} GROUP BY ShipCity");
+			var query = new DbQuery(_connection, "SELECT ShipCity FROM Orders {WHERE {ShipCountry ?shippingCountry}} GROUP BY ShipCity");
 
 			if (shippingCountry != null)
 				query.SetCondition("shippingCountry", shippingCountry);

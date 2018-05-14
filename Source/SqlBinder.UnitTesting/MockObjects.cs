@@ -10,10 +10,10 @@ namespace SqlBinder.UnitTesting
 	public class MockQuery : DbQuery
 	{
 		public MockQuery(MockDbConnection connection) 
-			: base(connection) => LexerHints = Parsing.LexerHints.UseCustomSyntaxForParams;
+			: base(connection) => ParserHints = Parsing.ParserHints.UseCustomSyntaxForParams;
 
 		public MockQuery(MockDbConnection connection, string script) 
-			: base(connection, script) => LexerHints = Parsing.LexerHints.UseCustomSyntaxForParams;
+			: base(connection, script) => ParserHints = Parsing.ParserHints.UseCustomSyntaxForParams;
 
 		protected override void OnFormatParameterName(object sender, FormatParameterEventArgs e)
 		{

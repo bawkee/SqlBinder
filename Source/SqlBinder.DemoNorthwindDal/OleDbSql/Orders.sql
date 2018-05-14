@@ -4,14 +4,14 @@
 	(SELECT CompanyName FROM Shippers WHERE ShipperID = O.ShipVia) AS ShippedVia
 FROM Orders O 
 {WHERE 
-{OrderID [orderId]} 
-{CustomerID [customerIds]} 
-{EmployeeID [employeeIds]} 
-{ShipVia [shipperIds]} 
-{OrderDate [orderDate]} 
-{RequiredDate [reqDate]} 
-{ShippedDate [shipDate]} 
-{Freight [freight]} 
-{ShipCity [shipCity]} 
-{ShipCountry [shipCountry]}
-{OrderID IN (SELECT OrderID FROM OrderDetails WHERE {ProductID [productIds]})}}
+{OrderID :orderId} 
+{CustomerID :customerIds} 
+{EmployeeID :employeeIds} 
+{ShipVia :shipperIds} 
+{OrderDate :orderDate} 
+{RequiredDate :reqDate} 
+{ShippedDate :shipDate} 
+{Freight :freight} 
+{ShipCity :shipCity} 
+{ShipCountry :shipCountry}
+{OrderID IN (SELECT OrderID FROM OrderDetails WHERE {ProductID :productIds})}}

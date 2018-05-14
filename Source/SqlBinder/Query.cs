@@ -58,8 +58,8 @@ namespace SqlBinder
 	/// </summary>
 	public class Query
 	{
-		private RootToken _lexerResult;
-		private LexerHints _lexerHints;
+		private RootToken _parserResult;
+		private ParserHints _parserHints;
 		private string _sqlBinderScript;
 
 		public Query() { }
@@ -117,20 +117,20 @@ namespace SqlBinder
 			set
 			{
 				_sqlBinderScript = value;
-				_lexerResult = null;
+				_parserResult = null;
 			}
 		}
 
 		/// <summary>
-		/// Various options that can be used to customize or optimize the lexer.
+		/// Various options that can be used to customize or optimize the parser.
 		/// </summary>
-		public LexerHints LexerHints
+		public ParserHints ParserHints
 		{
-			get => _lexerHints;
+			get => _parserHints;
 			set
 			{
-				_lexerHints = value;
-				_lexerResult = null;
+				_parserHints = value;
+				_parserResult = null;
 			}
 		}
 
@@ -367,11 +367,11 @@ namespace SqlBinder
 		/// <exception cref="InvalidConditionException">Thrown when some <see cref="ConditionValue"/> instance fails to generate the SQL.</exception>
 		public string GetSql()
 		{			
-			var parser = new Parser();
+			var parser = new SqlBinderProcessor();
 
 			parser.RequestParameterValue += Parser_RequestParameterValue;
 
-			OutputSql = parser.Parse(Tokenize());
+			OutputSql = parser.ProcessTemplate(Tokenize());
 
 			var unprocessedConditions = Conditions.Select(c => c.Parameter).Except(_processedConditions).ToArray();
 			if (unprocessedConditions.Any())
@@ -382,9 +382,9 @@ namespace SqlBinder
 
 		private RootToken Tokenize()
 		{
-			if (_lexerResult != null)
-				return _lexerResult;			
-			return _lexerResult ?? (_lexerResult = new Lexer (LexerHints).Tokenize(SqlBinderScript));
+			if (_parserResult != null)
+				return _parserResult;			
+			return _parserResult ?? (_parserResult = new SqlBinderParser (ParserHints).Parse(SqlBinderScript));
 		}
 
 		/// <summary>

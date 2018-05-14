@@ -8,14 +8,14 @@ using SqlBinder.Parsing.Tokens;
 namespace SqlBinder.Parsing
 {
 	[Serializable]
-	public class LexerException : Exception
+	public class ParserException : Exception
 	{
-		public LexerException(Exception innerException) : base(Exceptions.ParserFailure, innerException) { }
-		public LexerException(string errorMessage) : base(string.Format(Exceptions.ScriptNotValid, errorMessage)) { }
+		public ParserException(Exception innerException) : base(Exceptions.ParserFailure, innerException) { }
+		public ParserException(string errorMessage) : base(string.Format(Exceptions.ScriptNotValid, errorMessage)) { }
 	}
 
 	[Flags]
-	public enum LexerHints
+	public enum ParserHints
 	{
 		None = 0,
 		/// <summary>
@@ -36,39 +36,41 @@ namespace SqlBinder.Parsing
 	}
 
 	/// <summary>
-	/// Scans through a raw SqlBinder script and creates an token tree representing the SQL expression. It's a more than just a 
-	/// tokenizer since it builds a hierarchy while scanning. This provides flexibility when facing various custom SQL syntaxes that SqlBinder
-	/// shouldn't scan, like PostgreSQL or Oracle AQM literals. The lexer will be aware of the context it's in and not do redundant
-	/// scans that would later have to be thrown out by the parser. The idea is to do as much as possible at this point and cache it for
-	/// many later uses. 
+	/// Scans through a raw SqlBinder script and returns a parsed token tree representing the SQL expression. This tree can later be re-used by the
+	/// template processor to produce many different queries. This is not context-free parser due to complex syntaxes like the Oracle AQM. Still, it has
+	/// a rather simple implementation. It is supported by a set of <see cref="Token"/> classes which themselves check the current character,  
+	/// perform look-aheads when needed and save the context information when needed (such as opening tags). Any new trick in any future or existing SQL 
+	/// syntax which may interfere with the SqlBinder syntax may be supported by simply adding another Token class. The SqlBinder itself has a very simple 
+	/// syntax which could be processed by a surprisingly simply recursive Regex, the only reason we need a parser at all is to single out the various
+	/// different forms of string literals and comments.
 	/// </summary>
-	public class Lexer
+	public class SqlBinderParser
 	{
 		/// <summary>
-		/// Various options that can be used to customize or optimize the lexer.
+		/// Various options that can be used to customize or optimize the parser.
 		/// </summary>
-		public LexerHints Hints { get; set; }
+		public ParserHints Hints { get; set; }
 
 		private bool _doOracle;
 		private bool _doPostgre;
 		private bool _customParams;
 
-		public Lexer() { }
+		public SqlBinderParser() { }
 
-		public Lexer(LexerHints hints) => Hints = hints;
+		public SqlBinderParser(ParserHints hints) => Hints = hints;
 
 		/// <summary>
-		/// Tokenize the given SqlBinder script.
+		/// Parse the given SqlBinder script.
 		/// </summary>
-		public RootToken Tokenize(string script)
+		public RootToken Parse(string sqlBinderTemplateScript)
 		{
-			var reader = new Reader(script);
+			var reader = new Reader(sqlBinderTemplateScript);
 			var root = reader.Token;
 			var openScopes = 0;
 
-			_doOracle = !Hints.HasFlag(LexerHints.DisableOracleFlavors);
-			_doPostgre = !Hints.HasFlag(LexerHints.DisablePostgreSqlFlavors);
-			_customParams = Hints.HasFlag(LexerHints.UseCustomSyntaxForParams);
+			_doOracle = !Hints.HasFlag(ParserHints.DisableOracleFlavors);
+			_doPostgre = !Hints.HasFlag(ParserHints.DisablePostgreSqlFlavors);
+			_customParams = Hints.HasFlag(ParserHints.UseCustomSyntaxForParams);
 
 			while (reader.TryConsume())
 			{
@@ -96,7 +98,7 @@ namespace SqlBinder.Parsing
 			}
 
 			if (openScopes > 0)
-				throw new LexerException(Exceptions.UnclosedScope);
+				throw new ParserException(Exceptions.UnclosedScope);
 
 			return root as RootToken;
 		}
@@ -155,7 +157,7 @@ namespace SqlBinder.Parsing
 					textToken = new ScopeSeparator(reader.Token);
 				else if (Sql.Evaluate(reader))
 				{
-					if (!Hints.HasFlag(LexerHints.UseCustomSyntaxForParams))
+					if (!Hints.HasFlag(ParserHints.UseCustomSyntaxForParams))
 						textToken = new Sql(reader.Token);
 					else
 						textToken = new Sql(reader.Token, "[]");

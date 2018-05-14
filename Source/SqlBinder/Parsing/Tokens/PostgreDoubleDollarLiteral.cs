@@ -7,7 +7,7 @@ namespace SqlBinder.Parsing.Tokens
 {
 	/// <summary>
 	/// PostgreSQL literal, i.e. $$ ... $$ or $anyTag$ ... $anyTag$. It can contain any other characters inside. Note that dollar symbol
-	/// may conflict with Informix EXEC keyword in which case you should optimize-away this token via Lexer Hints.
+	/// may conflict with Informix EXEC keyword in which case you should optimize-away this token via Parser Hints.
 	/// </summary>
 	public class PostgreDoubleDollarLiteral : ContentToken
 	{
