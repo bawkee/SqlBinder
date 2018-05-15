@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.OleDb;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -17,19 +18,129 @@ namespace SqlBinder.DapperExample
 	{
 		static void Main(string[] args)
 		{
-			var whichExample = 1;
+			var whichExample = 0;
 
 			// Set the tutorial you want to play with. You can browse contents of the database from within Visual Studio 
 			// (double click on the Northwind Traders.mdb item in the project) and experiment.
-
+			
 			switch (whichExample)
 			{
+				case 0: PerfTest2(); break;
 				case 1: Example1(); break;
 				case 2: Example2(); break;
 				case 3: Example3(); break;
 			}
 
 			Console.ReadKey();
+		}
+
+		static void PerfTest()
+		{
+			var sw = new Stopwatch();
+
+			using (var connection = OpenConnection())
+			{
+				// Dapper
+				sw.Start();
+				for (var i = 0; i < 1000; i++)
+				{
+					connection.Query<Employee>(
+						"SELECT * FROM Employees WHERE City IN :city",
+						new Dictionary<string, object> {["city"] = new[] {"London", "Seattle"}}, buffered: true);
+				}
+				sw.Stop();
+				Console.WriteLine("Elap1: " + sw.Elapsed.TotalMilliseconds);
+
+				// SqlBinder + Dapper
+				sw.Restart();
+				var query = new Query("SELECT * FROM Employees {WHERE {City :city}}");
+				for (var i = 0; i < 1000; i++)
+				{
+					query.SetCondition("city", new[] { "London", "Seattle" });
+					query.GetSql();
+					connection.Query<Employee>(query.OutputSql, query.SqlParameters, buffered: true);
+				}
+				sw.Stop();
+				Console.WriteLine("Elap2: " + sw.Elapsed.TotalMilliseconds);
+				
+				// Dapper
+				sw.Restart();
+				for (var i = 0; i < 1000; i++)
+				{
+					connection.Query<Employee>(
+						"SELECT * FROM Employees WHERE City IN :city",
+						new Dictionary<string, object> { ["city"] = new[] { "London", "Seattle" } }, buffered: true);
+				}
+				sw.Stop();
+				Console.WriteLine("Elap3: " + sw.Elapsed.TotalMilliseconds);
+
+				// SqlBinder + Dapper
+				sw.Restart();
+				query = new Query("SELECT * FROM Employees {WHERE {City :city}}");
+				for (var i = 0; i < 1000; i++)
+				{
+					query.SetCondition("city", new[] { "London", "Seattle" });
+					query.GetSql();
+					var cmdDef = new CommandDefinition(query.OutputSql, query.SqlParameters, commandType: CommandType.Text);
+					connection.Query<Employee>(cmdDef);
+				}
+				sw.Stop();
+				Console.WriteLine("Elap4: " + sw.Elapsed.TotalMilliseconds);
+			}
+		}
+
+		static void PerfTest2()
+		{
+			var sw = new Stopwatch();
+
+			using (var connection = OpenConnection())
+			{
+				// Dapper
+				sw.Start();
+				for (var i = 0; i < 1000; i++)
+				{
+					connection.Query<Employee>(
+						"SELECT E.*, 'Test' AS Test FROM Employees E WHERE City IN :city",
+						new Dictionary<string, object> { ["city"] = new[] { "London", "Seattle" } }, buffered: true);
+				}
+				sw.Stop();
+				Console.WriteLine("Elap1: " + sw.Elapsed.TotalMilliseconds);
+
+				// SqlBinder + Dapper
+				sw.Restart();
+				var query = new Query("SELECT * FROM Employees {WHERE {City :city}}");
+				for (var i = 0; i < 1000; i++)
+				{
+					query.SetCondition("city", new[] { "London", "Seattle" });
+					query.GetSql();
+					connection.Query<Employee>(query.OutputSql, query.SqlParameters, buffered: true);
+				}
+				sw.Stop();
+				Console.WriteLine("Elap2: " + sw.Elapsed.TotalMilliseconds);
+
+				// Dapper
+				sw.Restart();
+				for (var i = 0; i < 1000; i++)
+				{
+					connection.Query<Employee>(
+						"SELECT * FROM Employees WHERE City IN :city",
+						new Dictionary<string, object> { ["city"] = new[] { "London", "Seattle" } }, buffered: true);
+				}
+				sw.Stop();
+				Console.WriteLine("Elap3: " + sw.Elapsed.TotalMilliseconds);
+
+				// SqlBinder + Dapper
+				sw.Restart();
+				query = new Query("SELECT * FROM Employees {WHERE {City :city}}");
+				for (var i = 0; i < 1000; i++)
+				{
+					query.SetCondition("city", new[] { "London", "Seattle" });
+					query.GetSql();
+					connection.Query<Employee>(query.OutputSql, query.SqlParameters, buffered: true);
+				}
+				sw.Stop();
+				Console.WriteLine("Elap4: " + sw.Elapsed.TotalMilliseconds);
+			}
 		}
 
 		static void Example1()

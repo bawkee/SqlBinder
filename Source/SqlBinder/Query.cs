@@ -367,11 +367,11 @@ namespace SqlBinder
 		/// <exception cref="InvalidConditionException">Thrown when some <see cref="ConditionValue"/> instance fails to generate the SQL.</exception>
 		public string GetSql()
 		{			
-			var parser = new SqlBinderProcessor();
+			var processor = new SqlBinderProcessor();
 
-			parser.RequestParameterValue += Parser_RequestParameterValue;
+			processor.RequestParameterValue += Parser_RequestParameterValue;
 
-			OutputSql = parser.ProcessTemplate(Tokenize());
+			OutputSql = processor.ProcessTemplate(Tokenize());
 
 			var unprocessedConditions = Conditions.Select(c => c.Parameter).Except(_processedConditions).ToArray();
 			if (unprocessedConditions.Any())
