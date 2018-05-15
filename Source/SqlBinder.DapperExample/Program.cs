@@ -9,7 +9,6 @@ using System.Text;
 using System.Threading.Tasks;
 
 using SqlBinder.DapperExample.Entities;
-
 using Dapper;
 
 namespace SqlBinder.DapperExample
@@ -18,59 +17,100 @@ namespace SqlBinder.DapperExample
 	{
 		static void Main(string[] args)
 		{
-			Test4();
+			var whichExample = 1;
+
+			// Set the tutorial you want to play with. You can browse contents of the database from within Visual Studio 
+			// (double click on the Northwind Traders.mdb item in the project) and experiment.
+
+			switch (whichExample)
+			{
+				case 1: Example1(); break;
+				case 2: Example2(); break;
+				case 3: Example3(); break;
+			}
 
 			Console.ReadKey();
 		}
 
-		static void TestSimplestDapperQuery()
+		static void Example1()
 		{
 			using (var connection = OpenConnection())
 			{
+				Console.WriteLine("### Example 1, Just Dapper");
+
+				Console.WriteLine("-- All Employees --");
 				PrintEmployees(connection.Query<Employee>("SELECT * FROM Employees"));
+
+				Console.WriteLine("-- Employees From London --");
+				PrintEmployees(connection.Query<Employee>(
+					"SELECT * FROM Employees WHERE City = :city", 
+					new Dictionary<string, object> { ["city"] = "London" }));
+
+				Console.WriteLine("-- Employees From London or Seattle --");
+				PrintEmployees(connection.Query<Employee>(
+					"SELECT * FROM Employees WHERE City IN :city",
+					new Dictionary<string, object> { ["city"] = new [] { "London", "Seattle" } }));
 			}
 		}
 
-		static void Test2()
+		static void Example2()
 		{
+			// With SqlBinder, you don't have to recreate the SQL. You just manipulate the list of conditions you
+			// need for every new query, SqlBinder will adapt the SQL for you. 
+
 			using (var connection = OpenConnection())
 			{
-				PrintEmployees(connection.Query<Employee>("SELECT * FROM Employees WHERE City = @city", new Dictionary<string, object> { ["city"] = "London" }));
-			}
-		}
+				var query = new Query("SELECT * FROM Employees {WHERE {City :city}}");
 
-		static void Test3()
-		{
-			using (var connection = OpenConnection())
-			{
-				var query = new Query("SELECT * FROM Employees {WHERE {City [city]}}");
+				Console.WriteLine("### Example 2, Dapper with SqlBinder");
+				Console.WriteLine(query.SqlBinderScript);
+				Console.WriteLine();
 
+				Console.WriteLine("-- All Employees --");
+				PrintEmployees(connection.Query<Employee>(query.GetSql(), query.SqlParameters));
+
+				Console.WriteLine("-- Employees From London --");
+				query.SetCondition("city", "London");
+				PrintEmployees(connection.Query<Employee>(query.GetSql(), query.SqlParameters));
+
+				Console.WriteLine("-- Employees From London or Seattle --");
+				query.SetCondition("city", new [] { "London", "Seattle" });
 				PrintEmployees(connection.Query<Employee>(query.GetSql(), query.SqlParameters));
 			}
 		}
 
-		static void Test4()
+		static void Example3()
 		{
 			using (var connection = OpenConnection())
 			{
-				var query = new Query(GetSqlBinderScript("Orders.sql"));
+				Console.WriteLine("### Example 3, Dapper with SqlBinder");
+
+				var query = new Query(GetSqlBinderScript("CategorySales.sql"));
+
+				Console.WriteLine("-- Category Sales --");
 				var sql = query.GetSql();
+				var categorySales = connection.Query<CategorySale>(sql);				
+				PrintSales();
 
-				var orders = connection.Query<Order, OrderDetail, Order>(
-					sql,
-					(order, orderDetail) =>
-					{
-						order.OrderDetails.Add(orderDetail);
-						return order;
-					},
-					query.SqlParameters, splitOn: "OrderID");
+				Console.WriteLine("-- Category Sales After July 1996 --");
+				query.SetCondition("shippingDates", new DateTime(1995, 7, 1), NumericOperator.IsGreaterThanOrEqualTo);
+				sql = query.GetSql();
+				categorySales = connection.Query<CategorySale>(sql, query.SqlParameters);
+				PrintSales();
 
-				Console.WriteLine("Orders:");
-				foreach (var order in orders)
+				Console.WriteLine("-- Category Sales for Beverages and Seafood After July 1996 --");
+				query.SetCondition("categoryIds", new [] { 1, 8 });
+				sql = query.GetSql();
+				categorySales = connection.Query<CategorySale>(sql, query.SqlParameters);
+				PrintSales();
+
+				void PrintSales()
 				{
-					//Console.WriteLine($"\t{order.OrderID.ToString().PadRight(30)} {order.CustomerId.PadRight(30)}");
-				//	foreach(var orderDetail in order.OrderDetails)
-					//	Console.WriteLine($"\t\t{orderDetail.ProductId.ToString().PadRight(30)} {orderDetail.UnitPrice.ToString("C").PadRight(30)}");
+					foreach (var sale in categorySales)
+						Console.WriteLine("\t" +
+						                  $"{sale.CategoryId.ToString().PadRight(3)} " +
+						                  $"{sale.CategoryName.PadRight(20)} " +
+						                  $"{sale.TotalSales.ToString("C").PadRight(20)}");
 				}
 			}
 		}
@@ -86,7 +126,7 @@ namespace SqlBinder.DapperExample
 
 		static IDbConnection OpenConnection()
 		{
-			var connection = new OleDbConnection($"Provider=Microsoft.Jet.OLEDB.4.0;Data Source=Northwind Traders.mdb;");
+			var connection = new OleDbConnection("Provider=Microsoft.Jet.OLEDB.4.0;Data Source=Northwind Traders.mdb;");
 			connection.Open();
 			return connection;
 		}

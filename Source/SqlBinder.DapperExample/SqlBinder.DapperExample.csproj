@@ -45,13 +45,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DapperQuery.cs" />
-    <Compile Include="Entities\Category.cs" />
     <Compile Include="Entities\CategorySale.cs" />
     <Compile Include="Entities\Customer.cs" />
     <Compile Include="Entities\Employee.cs" />
-    <Compile Include="Entities\Order.cs" />
-    <Compile Include="Entities\OrderDetail.cs" />
     <Compile Include="Entities\Product.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -65,7 +61,6 @@
       <Link>Northwind Traders.mdb</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <EmbeddedResource Include="OleDbSql\Orders.sql" />
     <EmbeddedResource Include="OleDbSql\CategorySales.sql" />
   </ItemGroup>
   <ItemGroup>
