@@ -6,7 +6,11 @@ using System.Text;
 namespace SqlBinder.Parsing.Tokens
 {
 	/// <summary>
-	/// Oracle Alternative Quoting Mechanism (AQM) literal, i.e. q'" ... "' or q'{test}'.  
+	/// Oracle Alternative Quoting Mechanism (AQM) literal, i.e. q'" ... "' or q'{test}'. For more information check out 
+	/// this guide: 
+	/// https://livesql.oracle.com/apex/livesql/file/content_CIREYU9EA54EOKQ7LAMZKRF6P.html
+	/// Or this reference:
+	/// https://docs.oracle.com/cd/B19306_01/server.102/b14200/sql_elements003.htm
 	/// </summary>
 	public class OracleAQMLiteral : ContentToken 
 	{

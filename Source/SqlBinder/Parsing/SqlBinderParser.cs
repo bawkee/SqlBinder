@@ -36,13 +36,14 @@ namespace SqlBinder.Parsing
 	}
 
 	/// <summary>
-	/// Scans through a raw SqlBinder script and returns a parsed token tree representing the SQL expression. This tree can later be re-used by the
-	/// template processor to produce many different queries. This is not context-free parser due to complex syntaxes like the Oracle AQM. Still, it has
-	/// a rather simple implementation. It is supported by a set of <see cref="Token"/> classes which themselves check the current character,  
-	/// perform look-aheads when needed and save the context information when needed (such as opening tags). Any new trick in any future or existing SQL 
-	/// syntax which may interfere with the SqlBinder syntax may be supported by simply adding another Token class. The SqlBinder itself has a very simple 
-	/// syntax which could be processed by a surprisingly simply recursive Regex, the only reason we need a parser at all is to single out the various
-	/// different forms of string literals and comments.
+	/// Context-sensitive lookahead parser for T-SQL supporting custom MSSQL, MySql, PostgreSQL, Oracle etc. flavors. It scans through a raw SqlBinder script and 
+	/// returns a parsed token tree representing the SQL expression. 
+	/// This tree can later be re-used by the template processor to produce many different queries. This is not context-free parser due to complex syntaxes like 
+	/// the Oracle AQM. Still, it has a rather simple implementation. It is supported by a set of <see cref="Token"/> classes which themselves check the current 
+	/// character, perform look-aheads when needed and save the context information when needed (such as opening tags). Any new trick in any future or existing SQL 
+	/// syntax which may interfere with the SqlBinder syntax may be supported by simply adding another Token class. The SqlBinder itself has a very small and simple 
+	/// syntax which could be processed by a surprisingly simply recursive Regex, the only reason we need a parser at all is to single out the various different forms 
+	/// of string literals and comments so that SqlBinder doesn't conflict with them.
 	/// </summary>
 	public class SqlBinderParser
 	{
