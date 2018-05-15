@@ -4,7 +4,7 @@ Is a free, open-source library that helps you transform a given SQL template and
 
 It is *not* an ORM solution - instead, it is DBMS-independent, SQL-centric **templating engine**. All it does is it removes the hassle of writing code that generates SQLs and bind variables . It does *not* generate the SQL itself, it transforms an existing SQL template instead.
 
-So with one template you can create multiple different queries.
+Essentially, with one template you can create multiple different queries.
 
 ## Example 1: Query employees 
 
@@ -182,7 +182,7 @@ This library comes with a very nice, interactive Demo App developed in WPF which
 You can browse the Northwind database using example queries which come as *.sql files which you can alter any way you like and watch SqlBinder work its magic in the Debug Log.
 
 ## The Syntax
-Can be defined by the following simple examples:
+Can be explained by the following set of examples:
 ```SQL
 ... { ... :placeholder  ... } ...
 
@@ -196,7 +196,7 @@ Can be defined by the following simple examples:
 ```
 
 Where:
-* Curly braces, `{ ... }` define a scope. Scope can contain either one or more child scopes or a single parameter placeholder. Scope that does not contain either will always be removed as it's considered pointless. Otherwise, the scope is removed only if all its child scopes are removed or its parameter placeholder is removed which in turn is removed if no matching *condition* was found for it (continue below for more information). 
+* Curly braces `{ ... }` define a scope. Scope can contain either one or more child scopes or a single parameter placeholder. Scope that does not contain either will always be removed as it's considered pointless. Otherwise, the scope is removed only if all its child scopes are removed or its parameter placeholder is removed which in turn is removed if no matching *condition* was found for it (continue below for more information). 
 * `:placeholder` can be any alphanumeric name that will be matched against `Query.Conditions` collection. This is referred to as *parameter* in the SqlBinder objects (e.g. `Condition.ParameterName`). If a parameter doesn't match any condition it will be removed along with its entire parent scope. The output SQL bind variable will be formatted with the same prefix as the parameter (acceptable prefixes are `:` or `@` or `?`). Note that there can only be one placeholder in given scope. When you need multiple placeholders put each one in its own separate scope.
 * `[place holder xy]` works the same way as above except any character is allowed and you must provide the parameter prefix manually (in C#) by overriding the `Query` class, `DbQuery` class or setting the appropriate property. Also, this syntax doesn't work by default, you have to enable a special hint via `Query.ParserHints` property since `[]` characters are used by some SQL flavors. With all that said, you can still escape these tags into the output SQL `[[like this]]`.
 * The `@` character before the scope (i.e. `@{`) tells the SqlBinder to connect scopes with an `OR` rather than default `AND` operator. 
@@ -229,12 +229,10 @@ None of these are processed against SqlBinder syntax. If you encounter an SQL fl
 
 
 ## The Performance
-SqlBinder is quite fast but most importantly it has the ability to re-use compiled templates as it completely separates the parsing and template processing concerns. You may create a SqlBinder query once and then build all the subsequent SQL queries from the same pre-parsed template. Either way, it relies on hand coded look-ahead parser which is well optimized.
+SqlBinder is quite fast but most importantly it has the ability to re-use compiled templates as it completely separates the parsing and template processing concerns. You may create a SqlBinder query once and then build all the subsequent SQL queries from the same pre-parsed template. Either way, it relies on hand coded look-ahead parser which is well optimized. Simple performance tests are available in the unit testing project where you can benchmark SqlBinder on your machine.
 
 ## The Purpose
 I originally wrote the first version of this library back in 2009 to make my life easier. The projects I had worked on relied on large and very complex Oracle databases with all the business logic in them so I used SQL to access anything I needed which really worked great. I was in charge of developing the front-end which involved great many filters and buttons which helped the user customize the data he can see. Fetching thousands of records and then filtering them on client machines was a no-go, we had both our own and business client DBAs keeping a close eye on performance and bandwidth. Therefore, with some help of DBAs, PLSQL devs etc. we were able to muster up some very performant, complex and crafty SQLs which for reasons I won't go into here would not be optimal as DB views. 
 
 This however, resulted in some pretty awkward SQL-generating and variable-binding code that was hard to maintain, optimize and alter. Tools like Hibernate and Dapper solved a lot of problems we didn't have but didn't entirely solve the one we had (but of the two, Dapper, along with its flexible license was a best fit). This is where my SqlBinder-like set of classes came to rescue, all that mess was converted into a `string.Format`-like code where I could write the whole script and then pass the variables (or don't pass them). From a proof of concept and experiment it eventually grew up to be SqlBinder as I used my free time to tweak and improve it. It helped me greatly and I'm releasing it here so it may help someone else too.
 
-## Issues... ?
-SqlBinder entirely relies on Regex - it might be faster if it was processed by tools like ANTLR but my idea was to keep it small and simple and so far had no issues with performance. There is some minor performance penalty for first-time use of each script as it uses a *compiled* Regex which is statically declared and will remain active as long as your app or app pool lives. You can of course change this to work any way you like.
