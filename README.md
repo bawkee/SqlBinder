@@ -1,36 +1,23 @@
 # SqlBinder
 
-Is a free, open-source library that helps you transform a given SQL template and a set of conditions into an `IDbCommand`.
+Is a free, open-source library that helps you transform a given SQL template and a set of conditions into any number of valid SQL statements along with their associated parameters.
 
-It is *not* an ORM solution - instead, it is DBMS-independent, SQL-centric **templating engine**. All it does is it removes the hassle of writing SQL and bind variable generating code. It does *not* generate the SQL itself, it lets you re-format an existing SQL instead.
+It is *not* an ORM solution - instead, it is DBMS-independent, SQL-centric **templating engine**. All it does is it removes the hassle of writing code that generates SQLs and bind variables . It does *not* generate the SQL itself, it transforms an existing SQL template instead.
 
-So with one template you can create multiple different (but similar) queries.
+So with one template you can create multiple different queries.
 
 ## Example 1: Query employees 
 
-At the heart of SqlBinder is an abstract class called `QueryBase`, we will use it to define our OleDbQuery class:
-
-```C#
-public class OleDbQuery : QueryBase<OleDbConnection, OleDbCommand>
-{
-	protected override string DefaultParameterFormat => "@{0}";
-
-	public OleDbQuery(OleDbConnection connection, string script)
-		: base(connection, script) { }
-}
-```
-
-Done. Now let's connect to Northwind demo database: 
+Let's connect to Northwind demo database: 
 
 ```C#
 var connection = new OleDbConnection("Provider=Microsoft.Jet.OLEDB.4.0;Data Source=Northwind Traders.mdb")
 ```
 
-
 And then write a simple OleDB SQL query which will retreive the list of employees.
 
 ```C#
-var query = new OleDbQuery(connection, @"SELECT * FROM Employees {WHERE EmployeeID [employeeId]}");
+var query = new DbQuery(connection, @"SELECT * FROM Employees {WHERE EmployeeID :employeeId}");
 ```
 
 As you can see this is not typical SQL, there is some *formatting* syntax in it which is later processed by the SqlBinder. It's an *SQL template* which will be used to create the actual SQL.
@@ -48,7 +35,7 @@ Output:
 SELECT * FROM Employees
 ```
 
-Now let's single out an **employee by his ID**:
+Notice how the initial SQL enclosed in the `{...}` tags is not present in the output SQL. Now let's single out an **employee by his ID**:
 
 ```C#
 query.SetCondition("employeeId", 1);
@@ -61,10 +48,10 @@ Console.WriteLine(cmd.CommandText); // Output the passed SQL
 This is the output:
 
 ```SQL
-SELECT * FROM Employees WHERE EmployeeID = @pemployeeId_1
+SELECT * FROM Employees WHERE EmployeeID = :pemployeeId_1
 ```
 
-Notice that we're using the same query to create two entirely different commands.
+Notice that we're using the same query to create two entirely different commands. This time, the `{WHERE EmployeeID :employeeId}` part wasn't eliminated.
 
 Let's go further and retrieve **employees by IDs 1 and 2**. Again, we use the same query but different parameters are supplied to the crucial `SetCondition` method.
 
@@ -79,25 +66,23 @@ Console.WriteLine(cmd.CommandText); // Output the passed SQL
 Output:
 
 ```SQL
-SELECT * FROM Employees WHERE EmployeeID IN (@pemployeeId_1, @pemployeeId_2)
+SELECT * FROM Employees WHERE EmployeeID IN (:pemployeeId_1, :pemployeeId_2)
 ```
 
 **So what happened?** Let's first go back to our SQL *template*:
 
 ```SQL
-SELECT * FROM Employees {WHERE EmployeeID [employeeId]}
+SELECT * FROM Employees {WHERE EmployeeID :employeeId}
 ```
 
-This was passed to the `OleDbQuery`, a class we previously created that inherits from `SqlBinder.QueryBase`.
-
-**In the first example**, `OleDbQuery` was not provided any conditions, so, it removed all the magical syntax that begins with `{` and ends with `}` as it served no purpose. 
+**In the first example**, the `query` object was not provided any conditions, so, it removed all the magical syntax that begins with `{` and ends with `}` as it served no purpose. 
 
 **In the second example**, we called `SetCondition("employeeId", 1);` so now the magical syntax comes into play.
 
 So, this template:
 
 ```SQL
-... {WHERE EmployeeID [employeeId]} ...
+... {WHERE EmployeeID :employeeId} ...
 ```
 Plus this method:
 ```C#
@@ -105,38 +90,40 @@ SetCondition("employeeId", 1);
 ```
 Produced this SQL:
 ```SQL
-... WHERE EmployeeID = @pemployeeId_1 ...
+... WHERE EmployeeID = :pemployeeId_1 ...
 ```
 
-The `[employeeId]` placeholder was simply replaced by `= @pemployeeId_1`. SqlBinder also automatically takes care of the command parameters (bind variables) that will be passed to `IDbCommand`.
+The `:employeeId` placeholder was simply replaced by `= :pemployeeId_1`. SqlBinder also automatically takes care of the command parameters (bind variables) that will be passed to `IDbCommand`.
 
 **In the third example**, we called `SetCondition("employeeId", new[] { 1, 2 });` which means we would like two employees this time. 
 
 This caused the query:
 ```SQL
-... {WHERE EmployeeID [employeeId]} ...
+... {WHERE EmployeeID :employeeId} ...
 ```
-To be translated into this:
+To be transformed into this:
 ```SQL
-... WHERE EmployeeID IN (@pemployeeId_1, @pemployeeId_2) ...
+... WHERE EmployeeID IN (:pemployeeId_1, :pemployeeId_2) ...
 ```
 
-There are great many things into which `[employeeId]` can be translated into.
+There are great many things into which `:employeeId` can be transformed but for now we'll just cover the basic concepts. 
 
-## Example 2: Query employees even more
+## Example 2: Query yet some more employees
 Let's do a different query this time:
 ```SQL
-SELECT * FROM Employees {WHERE {City [city]} {HireDate [hireDate]} {YEAR(HireDate) [hireDateYear]}}
+SELECT * FROM Employees {WHERE {City @city} {HireDate @hireDate} {YEAR(HireDate) @hireDateYear}}
 ```
-This time we have nested *scopes* `{...{...}...}`. First of, note that this syntax can be put anywhere in the SQL and that the `WHERE` clause means nothing to SqlBinder, it's just plain text that will be removed if its parent *scope* is removed. The scope is removed only if all its child scopes *and* all its child `[...]` placeholders (if any) are removed. A placeholder will be removed if no matching *condition* was found for it.
+This time we have nested *scopes* `{...{...}...}`. First and foremost, note that this syntax can be put anywhere in the SQL and that the `WHERE` clause means nothing to SqlBinder, it's just plain text that will be removed if its parent *scope* is removed. As a side note, we're using the `@` parameter prefix this time - because we can.
 
-Again, if we don't pass any *conditions*, all the magical stuff is removed and you end up with:
+**Remember:** the scope is removed only if all its child scopes are removed or its child placeholder (i.e. `:param`, `@param` or `?param`) is removed which in turn is removed if no matching *condition* was found for it.
+
+For example, if we don't pass any *conditions* at all, all the magical stuff is removed and you end up with:
 
 ```SQL
 SELECT * FROM Employees
 ```
 
-But let’s pass some conditions, **let’s try and get employees hired in 1993**:
+But if we do pass some condition, for example, **let’s try and get employees hired in 1993**:
 
 ```C#
 query.SetCondition("hireDateYear", 1993);
@@ -148,20 +135,20 @@ This will produce the following SQL:
 SELECT * FROM Employees WHERE YEAR(HireDate) = @phireDateYear_1
 ```
 
-Again, don't worry about values, they are already passed to command parameters.
+By the way, don't worry about command parameter values, they are already passed to the command.
 
-As you can see, the scopes `{City [city]}` and `{HireDate [hireDate]}` were eliminated as SqlBinder did not find any matching conditions for those.
+As you can see, the scopes `{City @city}` and `{HireDate @hireDate}` were eliminated as SqlBinder did not find any matching conditions for them.
 
-**Now let's get employees hired after July 1993!** 
+**Now let's try and get employees hired after July 1993** 
 
 ```C#
-query.Conditions.Clear();
+query.Conditions.Clear(); // Remove any previous conditions
 query.SetCondition("hireDate", from: new DateTime(1993, 6, 1));
 ```
 
-This is just regular C# syntax, the `from:` part helps compiler find the right overload as there are many. Also, this time we're clearing the conditions collection as we don't want `hireDateYear` as well, we just want `hireDate` right now - if you look at the SQL again you'll see that they are different placeholders.
+This time we're clearing the conditions collection as we don't want `hireDateYear`, we just want `hireDate` right now - if you take a look at the SQL template again you'll see that they are different placeholders.
 
-The resulting SQL:
+The resulting SQL will be:
 
 ```SQL
 SELECT * FROM Employees WHERE HireDate >= @phireDate_1
@@ -175,7 +162,7 @@ query.SetCondition("hireDateYear", 1993, 1994);
 query.SetCondition("city", "London");
 ```
 
-Now we have two conditions that will be automatically connected with an `AND` operator in the output SQL. All *consecutive* scopes will automatically be connected with an operator (e.g. AND, OR). 
+Now we have two conditions that will be automatically connected with an `AND` operator in the output SQL. All *consecutive* (i.e. separated by white-space) scopes will automatically be connected with an operator (e.g. AND, OR). 
 
 The resulting SQL:
 ```SQL
@@ -188,67 +175,61 @@ For complete source code of these examples refer to the `Source/SqlBinder.Consol
 
 ## The Demo App
 
-This library comes with a very nice, interactive Demo App developed in WPF which serves as a more complex example of the SqlBinder usage. It's still actually quite basic but offers a quite solid insight into the core features. 
+This library comes with a very nice, interactive Demo App developed in WPF which serves as a more complex example of the SqlBinder capabilities. It's still actually quite basic (it's just a MDB after all) but offers a deeper insight into the core features. 
 
 ![screenshot1](https://raw.githubusercontent.com/bawkee/SqlBinder/master/Source/SqlBinder.DemoApp/screenshot1.png "Demo Screenshot")
 
-You can browse the Northwind database using some relatively complex queries which come as *.sql files you can alter any way you like and watch SqlBinder work its magic in the Debug Log.
+You can browse the Northwind database using example queries which come as *.sql files which you can alter any way you like and watch SqlBinder work its magic in the Debug Log.
 
 ## The Syntax
-The syntax looks like this:
+Can be defined by the following simple examples:
 ```SQL
-... <tag>{ ... [placeholderName] ... } ...
+... { ... :placeholder  ... } ...
+
+... { ... { ... @placeholder  ... } ... } ...
+
+... { ... { ... :placeholder1  ... } ... { ... :placeholder2 ... } ... } ...
+
+... @{ ... { ... :placeholder1  ... } ... { ... :placeholder2 ... } ... } ...
+
+... @{ ... { ... [place holder 1]  ... } ... { ... [place holder 2] ... } ... } ...
 ```
 
 Where:
-* `<tag>` can currently only be `@` character which tells the SqlBinder to connect scopes with an `OR` text rather than default `AND`. 
-* `placeholderName` can be any name that will be matched against `Query.Conditions` collection. This name is referred to as *parameter* in the SqlBinder objects (e.g. `Condition.ParameterName`).
-* The `...` can be any SQL from any DBMS or just about any text.
-
-**Following things should be kept in mind:**
-* A scope is defined by curly braces `{}` while a placeholder is defined with square brackets `[]`.
-* Scopes can be nested (i.e. contain child scopes), placeholders cannot.
-* Scopes that do not contain at least one child scope or a placeholder with a matching condition will be removed along with its entire contents and other child scopes.
-* Placeholders that haven't been matched by any `Query.Condition` will cause its parent scope to be removed.
-* There can only be one placeholder in given scope. When you need multiple placeholders put each one in its own scope.
+* Curly braces, `{ ... }` define a scope. Scope can contain either one or more child scopes or a single parameter placeholder. Scope that does not contain either will always be removed as it's considered pointless. Otherwise, the scope is removed only if all its child scopes are removed or its parameter placeholder is removed which in turn is removed if no matching *condition* was found for it (continue below for more information). 
+* `:placeholder` can be any alphanumeric name that will be matched against `Query.Conditions` collection. This is referred to as *parameter* in the SqlBinder objects (e.g. `Condition.ParameterName`). If a parameter doesn't match any condition it will be removed along with its entire parent scope. The output SQL bind variable will be formatted with the same prefix as the parameter (acceptable prefixes are `:` or `@` or `?`). Note that there can only be one placeholder in given scope. When you need multiple placeholders put each one in its own separate scope.
+* `[place holder xy]` works the same way as above except any character is allowed and you must provide the parameter prefix manually (in C#) by overriding the `Query` class, `DbQuery` class or setting the appropriate property. Also, this syntax doesn't work by default, you have to enable a special hint via `Query.ParserHints` property since `[]` characters are used by some SQL flavors. With all that said, you can still escape these tags into the output SQL `[[like this]]`.
+* The `@` character before the scope (i.e. `@{`) tells the SqlBinder to connect scopes with an `OR` rather than default `AND` operator. 
+* The `...` can be any SQL from any DBMS or just about any text. The string literals won't be processed by the SqlBinder which means they can safely contain SqlBinder syntax. The special flavors of literals such as PostgreSQL dollar literals or Oracle AQM literals are recognized as well and can safely contain any special character used by the SqlBinder. The same goes for SQL comments.
 
 **The comment syntax** looks like this:
 ```SQL
-{* ...comment... *}
+/*{ ...sql binder comment... }*/
 
-{*
-	...comment...
-*}
+/*{
+	...sql binder comment...
+}*/
 ```
-SqlBinder comments will be entirely removed from the output SQL. The SQL comments will remain intact.
+SqlBinder comments will be removed entirely from the output SQL while the SQL comments will remain intact.
 
-**The SQL literals** can contain anything:
+**The SQL literals** are respected and may contain SqlBinder syntax which won't be processed:
 ```SQL
-'Anything can be here: [] {}...' 
+'Anything can be here: [] {} ...' 
 
-"My Table Name?" -- preferred over [My Table Name]
+"Or here {} [] ..."
+
+'Or in ''escaped literal {} [] ...'''
+
+q'{Or in this Oracle literal {} [] which can get very creative ...}'
+
+$myTag$Or in this PostgreSQL literal {} [] ...$myTag$
 ```
-They are not processed against SqlBinder syntax.
+None of these are processed against SqlBinder syntax. If you encounter an SQL flavor which SqlBinder doesn't properly respect, log an issue.
 
-**The escape strings** can be used, in case you do need any of the SqlBinder's special characters:
-```SQL
-$[Some Table]$ -> [Some Table]
 
-${Something}$ -> {Something}
-```
 
-## The Regex
-The script is processed with the following Microsoft's Regex recursive script:
-```Regex
-(?<tag>[\@])*(?<symbol>[\[{])(?<content>(?>[^{}\[\]]+|[{\[](?<depth>)|[}\]](?<-depth>))*(?(depth)(?!)))[}\]]
-```
-
-If you are unfamiliar with recursive regex you can find many tutorials on the web. The `<symbol>` group contains the type of braces used (square or curly).
-
-The regex is doing recursive search against both [] and {} which isn't *very* optimal but if I were to further optimize this I'd rather not use Regex at all. 
-
-Also, there's a *hidden* syntax here (the pipe character) which you can also see in the source code - there is support for 'compound' parameter placeholders, for some rare and extremely complicated queries. It's undocumented and doesn't have unit tests so I'm not releasing it yet, especially if nobody else needs it. They are useful in scenarios where you want to query a, say, Project table to find a project on which both John AND Mike employees worked on through an EmployeeProject connecting table (intersection of John's and Mike's projects). It's something you'll very rarely find on production because DBAs hate it and no one really ever needs it. Current plan is to remove this feature altogether.
-
+## The Performance
+SqlBinder is quite fast but most importantly it has the ability to re-use compiled templates as it completely separates the parsing and template processing concerns. You may create a SqlBinder query once and then build all the subsequent SQL queries from the same pre-parsed template. Either way, it relies on hand coded look-ahead parser which is well optimized.
 
 ## The Purpose
 I originally wrote the first version of this library back in 2009 to make my life easier. The projects I had worked on relied on large and very complex Oracle databases with all the business logic in them so I used SQL to access anything I needed which really worked great. I was in charge of developing the front-end which involved great many filters and buttons which helped the user customize the data he can see. Fetching thousands of records and then filtering them on client machines was a no-go, we had both our own and business client DBAs keeping a close eye on performance and bandwidth. Therefore, with some help of DBAs, PLSQL devs etc. we were able to muster up some very performant, complex and crafty SQLs which for reasons I won't go into here would not be optimal as DB views. 
