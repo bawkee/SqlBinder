@@ -61,6 +61,9 @@ namespace SqlBinder
 		private RootToken _parserResult;
 		private ParserHints _parserHints;
 		private string _sqlBinderScript;
+		private static readonly Dictionary<string, RootToken> _parserCache = new Dictionary<string, RootToken>(MAX_CACHED_QUERIES);
+		private static readonly Stack<string> _parserCacheUsage = new Stack<string>(MAX_CACHED_QUERIES);
+		private const int MAX_CACHED_QUERIES = 50;
 
 		public Query() { }
 
@@ -133,6 +136,11 @@ namespace SqlBinder
 				_parserResult = null;
 			}
 		}
+
+		/// <summary>
+		/// Disables static caching of parser output which is indexed by the SqlBinder template query script.
+		/// </summary>
+		public bool DisableParserCache { get; set; }
 
 		/// <summary>
 		/// Gets the conditions which are required in order to build a valid query. There must be a parameter placeholder in your script for each condition.
@@ -371,7 +379,7 @@ namespace SqlBinder
 
 			processor.RequestParameterValue += Parser_RequestParameterValue;
 
-			OutputSql = processor.ProcessTemplate(Tokenize());
+			OutputSql = processor.ProcessTemplate(GetRecycledParse());
 
 			var unprocessedConditions = Conditions.Select(c => c.Parameter).Except(_processedConditions).ToArray();
 			if (unprocessedConditions.Any())
@@ -380,11 +388,26 @@ namespace SqlBinder
 			return OutputSql;
 		}
 
-		private RootToken Tokenize()
+		private RootToken GetRecycledParse()
 		{
-			if (_parserResult != null)
-				return _parserResult;			
-			return _parserResult ?? (_parserResult = new SqlBinderParser (ParserHints).Parse(SqlBinderScript));
+			if (DisableParserCache)
+			{
+				if (_parserResult != null)
+					return _parserResult;
+				return _parserResult ?? (_parserResult = new SqlBinderParser(ParserHints).Parse(SqlBinderScript));
+			}			
+			if (_parserCache.TryGetValue(SqlBinderScript, out var cachedResult))
+				return cachedResult;
+			return _parserCache[SqlBinderScript] = new SqlBinderParser(ParserHints).Parse(SqlBinderScript);
+		}
+
+		private void MaintainParserCache()
+		{
+			if (_parserCache.Count > MAX_CACHED_QUERIES)
+			{
+
+				
+			}
 		}
 
 		/// <summary>

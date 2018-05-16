@@ -2,11 +2,13 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.OleDb;
+using System.Data.SqlClient;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 using SqlBinder.DapperExample.Entities;
@@ -18,14 +20,15 @@ namespace SqlBinder.DapperExample
 	{
 		static void Main(string[] args)
 		{
-			var whichExample = 0;
+			var whichExample = 0.0;
 
 			// Set the tutorial you want to play with. You can browse contents of the database from within Visual Studio 
 			// (double click on the Northwind Traders.mdb item in the project) and experiment.
 			
 			switch (whichExample)
 			{
-				case 0: PerfTest2(); break;
+				case 0.0: PerfTestSqlServer(); break;
+				case 0.1: PerfTestAccess(); break;
 				case 1: Example1(); break;
 				case 2: Example2(); break;
 				case 3: Example3(); break;
@@ -34,118 +37,119 @@ namespace SqlBinder.DapperExample
 			Console.ReadKey();
 		}
 
-		static void PerfTest()
+		static void PerfTestAccess()
 		{
 			var sw = new Stopwatch();
 
-			using (var connection = OpenConnection())
+			Console.WriteLine("Dapper".PadLeft(10) + " " + "+SqlBinder".PadLeft(10));
+			Console.WriteLine(new string('-', 21));
+
+			var dapper = new List<double>();
+			var plusSqlbinder = new List<double>();
+
+			for (var n = 0; n < 10; n++)
 			{
-				// Dapper
-				sw.Start();
-				for (var i = 0; i < 1000; i++)
+				using (var connection = OpenOleDbConnection())
 				{
-					connection.Query<Employee>(
-						"SELECT * FROM Employees WHERE City IN :city",
-						new Dictionary<string, object> {["city"] = new[] {"London", "Seattle"}}, buffered: true);
-				}
-				sw.Stop();
-				Console.WriteLine("Elap1: " + sw.Elapsed.TotalMilliseconds);
+					// Dapper
+					sw.Restart();
+					for (var i = 0; i < 500; i++)
+					{
+						connection.Query<Employee>(
+							"SELECT * FROM Employees WHERE EmployeeID IN @id",
+							new Dictionary<string, object> { ["id"] = new[] { 1, 2, 3, 4 } });
+					}
+					sw.Stop();
+					Console.Write(sw.Elapsed.TotalMilliseconds.ToString("N2").PadLeft(10));
+					if (n > 0)
+						dapper.Add(sw.Elapsed.TotalMilliseconds);
 
-				// SqlBinder + Dapper
-				sw.Restart();
-				var query = new Query("SELECT * FROM Employees {WHERE {City :city}}");
-				for (var i = 0; i < 1000; i++)
-				{
-					query.SetCondition("city", new[] { "London", "Seattle" });
-					query.GetSql();
-					connection.Query<Employee>(query.OutputSql, query.SqlParameters, buffered: true);
-				}
-				sw.Stop();
-				Console.WriteLine("Elap2: " + sw.Elapsed.TotalMilliseconds);
-				
-				// Dapper
-				sw.Restart();
-				for (var i = 0; i < 1000; i++)
-				{
-					connection.Query<Employee>(
-						"SELECT * FROM Employees WHERE City IN :city",
-						new Dictionary<string, object> { ["city"] = new[] { "London", "Seattle" } }, buffered: true);
-				}
-				sw.Stop();
-				Console.WriteLine("Elap3: " + sw.Elapsed.TotalMilliseconds);
+					Console.Write(' ');
 
-				// SqlBinder + Dapper
-				sw.Restart();
-				query = new Query("SELECT * FROM Employees {WHERE {City :city}}");
-				for (var i = 0; i < 1000; i++)
-				{
-					query.SetCondition("city", new[] { "London", "Seattle" });
-					query.GetSql();
-					var cmdDef = new CommandDefinition(query.OutputSql, query.SqlParameters, commandType: CommandType.Text);
-					connection.Query<Employee>(cmdDef);
+					// SqlBinder + Dapper
+					sw.Restart();					
+					for (var i = 0; i < 500; i++)
+					{
+						var query = new Query("SELECT * FROM Employees {WHERE {EmployeeID @id}}");
+						query.SetCondition("id", new[] { 1, 2, 3, 4 });
+						query.GetSql();
+						connection.Query<Employee>(query.OutputSql, query.SqlParameters);
+					}
+					sw.Stop();
+					if (n > 0)
+						plusSqlbinder.Add(sw.Elapsed.TotalMilliseconds);
+					Console.Write(sw.Elapsed.TotalMilliseconds.ToString("N2").PadLeft(10));
+					Console.WriteLine();
 				}
-				sw.Stop();
-				Console.WriteLine("Elap4: " + sw.Elapsed.TotalMilliseconds);
 			}
+
+			Console.Write($"AVG {dapper.Average():N0}".PadLeft(10));
+			Console.Write(' ');
+			Console.Write($"AVG {plusSqlbinder.Average():N0}".PadLeft(10));
+
+			Console.WriteLine();
+			Console.WriteLine(" ^ Dapper = Just Dapper.");
+			Console.WriteLine(" ^ +SqlBinder = Dapper with SqlBinder.");
 		}
 
-		static void PerfTest2()
+		static void PerfTestSqlServer()
 		{
 			var sw = new Stopwatch();
 
-			using (var connection = OpenConnection())
+			Console.WriteLine("Dapper".PadLeft(10) + " " + "+SqlBinder".PadLeft(10));
+			Console.WriteLine(new string('-', 21));
+
+			var dapper = new List<double>();
+			var plusSqlbinder = new List<double>();
+
+			for (var n = 0; n < 10; n++)
 			{
-				// Dapper
-				sw.Start();
-				for (var i = 0; i < 1000; i++)
+				using (var connection = OpenSqlServerConnection())
 				{
-					connection.Query<Employee>(
-						"SELECT E.*, 'Test' AS Test FROM Employees E WHERE City IN :city",
-						new Dictionary<string, object> { ["city"] = new[] { "London", "Seattle" } }, buffered: true);
-				}
-				sw.Stop();
-				Console.WriteLine("Elap1: " + sw.Elapsed.TotalMilliseconds);
+					// Dapper
+					sw.Restart();
+					for (var i = 0; i < 500; i++)
+					{
+						connection.Query<Employee>(
+							"SELECT * FROM POSTS WHERE ID IN @id",
+							new Dictionary<string, object> {["id"] = new[] {i, 1 + i, 2 + i}});
+					}
+					sw.Stop();
+					Console.Write(sw.Elapsed.TotalMilliseconds.ToString("N2").PadLeft(10));
+					if (n > 0)
+						dapper.Add(sw.Elapsed.TotalMilliseconds);
 
-				// SqlBinder + Dapper
-				sw.Restart();
-				var query = new Query("SELECT * FROM Employees {WHERE {City :city}}");
-				for (var i = 0; i < 1000; i++)
-				{
-					query.SetCondition("city", new[] { "London", "Seattle" });
-					query.GetSql();
-					connection.Query<Employee>(query.OutputSql, query.SqlParameters, buffered: true);
-				}
-				sw.Stop();
-				Console.WriteLine("Elap2: " + sw.Elapsed.TotalMilliseconds);
+					Console.Write(' ');
 
-				// Dapper
-				sw.Restart();
-				for (var i = 0; i < 1000; i++)
-				{
-					connection.Query<Employee>(
-						"SELECT * FROM Employees WHERE City IN :city",
-						new Dictionary<string, object> { ["city"] = new[] { "London", "Seattle" } }, buffered: true);
+					// SqlBinder + Dapper (cached query)
+					sw.Restart();
+					var query = new Query("SELECT * FROM POSTS {WHERE {ID @id}}");
+					for (var i = 0; i < 500; i++)
+					{
+						query.SetCondition("id", new[] {i, 1 + i, 2 + i});
+						query.GetSql();
+						connection.Query<Employee>(query.OutputSql, query.SqlParameters);
+					}
+					sw.Stop();
+					if (n > 0)
+						plusSqlbinder.Add(sw.Elapsed.TotalMilliseconds);
+					Console.Write(sw.Elapsed.TotalMilliseconds.ToString("N2").PadLeft(10));
+					Console.WriteLine();
 				}
-				sw.Stop();
-				Console.WriteLine("Elap3: " + sw.Elapsed.TotalMilliseconds);
-
-				// SqlBinder + Dapper
-				sw.Restart();
-				query = new Query("SELECT * FROM Employees {WHERE {City :city}}");
-				for (var i = 0; i < 1000; i++)
-				{
-					query.SetCondition("city", new[] { "London", "Seattle" });
-					query.GetSql();
-					connection.Query<Employee>(query.OutputSql, query.SqlParameters, buffered: true);
-				}
-				sw.Stop();
-				Console.WriteLine("Elap4: " + sw.Elapsed.TotalMilliseconds);
 			}
+
+			Console.Write($"AVG {dapper.Average():N0}".PadLeft(10));
+			Console.Write(' ');
+			Console.Write($"AVG {plusSqlbinder.Average():N0}".PadLeft(10));
+
+			Console.WriteLine();
+			Console.WriteLine(" ^ Dapper = Just Dapper.");
+			Console.WriteLine(" ^ +SqlBinder = Dapper with SqlBinder.");
 		}
 
 		static void Example1()
 		{
-			using (var connection = OpenConnection())
+			using (var connection = OpenOleDbConnection())
 			{
 				Console.WriteLine("### Example 1, Just Dapper");
 
@@ -166,10 +170,10 @@ namespace SqlBinder.DapperExample
 
 		static void Example2()
 		{
-			// With SqlBinder, you don't have to recreate the SQL. You just manipulate the list of conditions you
+			// With SqlBinder, you don't have to recreate the SQL every time. You manipulate the list of conditions you
 			// need for every new query, SqlBinder will adapt the SQL for you. 
 
-			using (var connection = OpenConnection())
+			using (var connection = OpenOleDbConnection())
 			{
 				var query = new Query("SELECT * FROM Employees {WHERE {City :city}}");
 
@@ -192,7 +196,7 @@ namespace SqlBinder.DapperExample
 
 		static void Example3()
 		{
-			using (var connection = OpenConnection())
+			using (var connection = OpenOleDbConnection())
 			{
 				Console.WriteLine("### Example 3, Dapper with SqlBinder");
 
@@ -235,10 +239,51 @@ namespace SqlBinder.DapperExample
 			Console.WriteLine();
 		}
 
-		static IDbConnection OpenConnection()
+		static IDbConnection OpenOleDbConnection()
 		{
 			var connection = new OleDbConnection("Provider=Microsoft.Jet.OLEDB.4.0;Data Source=Northwind Traders.mdb;");
 			connection.Open();
+			return connection;
+		}
+
+		static IDbConnection OpenSqlServerConnection()
+		{
+			var connection = new SqlConnection(@"Data Source=(LocalDb)\v11.0;Initial Catalog=tempdb;Integrated Security=True");
+			connection.Open();
+
+			// Taken from Dapper's benchmark project
+			var cmd = connection.CreateCommand();
+			cmd.CommandText = @"
+				If (Object_Id('Posts') Is Null)
+				Begin
+					Create Table Posts
+					(
+						Id int identity primary key, 
+						[Text] varchar(max) not null, 
+						CreationDate datetime not null, 
+						LastChangeDate datetime not null,
+						Counter1 int,
+						Counter2 int,
+						Counter3 int,
+						Counter4 int,
+						Counter5 int,
+						Counter6 int,
+						Counter7 int,
+						Counter8 int,
+						Counter9 int
+					);
+	   
+					Set NoCount On;
+					Declare @i int = 0;
+
+					While @i <= 5001
+					Begin
+						Insert Posts ([Text],CreationDate, LastChangeDate) values (replicate('x', 2000), GETDATE(), GETDATE());
+						Set @i = @i + 1;
+					End
+				End";
+			cmd.ExecuteNonQuery();
+
 			return connection;
 		}
 
