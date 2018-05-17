@@ -61,9 +61,8 @@ namespace SqlBinder
 		private RootToken _parserResult;
 		private ParserHints _parserHints;
 		private string _sqlBinderScript;
-		private static readonly Dictionary<string, RootToken> _parserCache = new Dictionary<string, RootToken>(MAX_CACHED_QUERIES);
-		private static readonly Stack<string> _parserCacheUsage = new Stack<string>(MAX_CACHED_QUERIES);
-		private const int MAX_CACHED_QUERIES = 50;
+		private static Dictionary<string, RootToken> _parserCache;
+		private static int _parserCacheCapacity = 100;
 
 		public Query() { }
 
@@ -125,7 +124,8 @@ namespace SqlBinder
 		}
 
 		/// <summary>
-		/// Various options that can be used to customize or optimize the parser.
+		/// Various options that can be used to customize or optimize the parser for your specific DBMS flavor. For example, it is redundant
+		/// to scan for Oracle flavors if you're not using this specific syntax.
 		/// </summary>
 		public ParserHints ParserHints
 		{
@@ -138,9 +138,34 @@ namespace SqlBinder
 		}
 
 		/// <summary>
-		/// Disables static caching of parser output which is indexed by the SqlBinder template query script.
+		/// Disables static caching of parser output which is indexed by the SqlBinder template query script. Static caching is redundant if you are
+		/// caching queries by yourself, i.e. re-using existing, previously created instances of the <see cref="Query"/>. The last used SqlBinder template
+		/// script is always cached by default so any subsequent calls to <see cref="GetSql"/> regardless of changes in conditions will not invoke the
+		/// parser engine.
 		/// </summary>
 		public bool DisableParserCache { get; set; }
+
+		/// <summary>
+		/// Gets or sets the capacity of the static parser cache, if enabled. Once the number of cached template scripts goes beyond this capacity
+		/// the entire static cache will be purged and the process starts from the beginning. Default value is 100. Changing this value will cause
+		/// any existing cache to be re-created and thus purged.
+		/// </summary>
+		public static int ParserCacheCapacity
+		{
+			get => _parserCacheCapacity;
+			set
+			{
+				if (_parserCacheCapacity != value)
+					_parserCache = new Dictionary<string, RootToken>(value);
+				_parserCacheCapacity = value;
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets a value which which determines a minimum total number of characters within a SqlBinder template script required for the script's
+		/// parser output to be statically cached. It is zero by default meaning that all scripts will be cached.
+		/// </summary>
+		public static int ParserCacheLengthThreshold { get; set; }
 
 		/// <summary>
 		/// Gets the conditions which are required in order to build a valid query. There must be a parameter placeholder in your script for each condition.
@@ -379,7 +404,7 @@ namespace SqlBinder
 
 			processor.RequestParameterValue += Parser_RequestParameterValue;
 
-			OutputSql = processor.ProcessTemplate(GetRecycledParse());
+			OutputSql = processor.ProcessTemplate(GetRecycledParseResults());
 
 			var unprocessedConditions = Conditions.Select(c => c.Parameter).Except(_processedConditions).ToArray();
 			if (unprocessedConditions.Any())
@@ -388,26 +413,25 @@ namespace SqlBinder
 			return OutputSql;
 		}
 
-		private RootToken GetRecycledParse()
+		private RootToken GetRecycledParseResults()
 		{
 			if (DisableParserCache)
 			{
 				if (_parserResult != null)
 					return _parserResult;
 				return _parserResult ?? (_parserResult = new SqlBinderParser(ParserHints).Parse(SqlBinderScript));
-			}			
+			}
+
+			if (_parserCache == null)
+				_parserCache = new Dictionary<string, RootToken>(ParserCacheCapacity);
+			
 			if (_parserCache.TryGetValue(SqlBinderScript, out var cachedResult))
 				return cachedResult;
+
+			if (_parserCache.Count == ParserCacheCapacity)
+				_parserCache.Clear();
+
 			return _parserCache[SqlBinderScript] = new SqlBinderParser(ParserHints).Parse(SqlBinderScript);
-		}
-
-		private void MaintainParserCache()
-		{
-			if (_parserCache.Count > MAX_CACHED_QUERIES)
-			{
-
-				
-			}
 		}
 
 		/// <summary>
