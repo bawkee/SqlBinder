@@ -197,7 +197,7 @@ Can be explained by the following set of examples:
 
 Where:
 * Curly braces `{ ... }` define a scope. Scope can contain either one or more child scopes or a single parameter placeholder. Scope that does not contain either will always be removed as it's considered pointless. Otherwise, the scope is removed only if all its child scopes are removed or its parameter placeholder is removed which in turn is removed if no matching *condition* was found for it (continue below for more information). 
-* `:placeholder` can be any alphanumeric name that will be matched against `Query.Conditions` collection. This is referred to as *parameter* in the SqlBinder objects (e.g. `Condition.ParameterName`). If a parameter doesn't match any condition it will be removed along with its entire parent scope. The output SQL bind variable will be formatted with the same prefix as the parameter (acceptable prefixes are `:` or `@` or `?`). Note that there can only be one placeholder in given scope. When you need multiple placeholders put each one in its own separate scope.
+* `:placeholder` can be any alphanumeric name that will be matched against `Query.Conditions` collection. This is referred to as *parameter* in the SqlBinder objects (e.g. `Condition.ParameterName`). If a parameter doesn't match any condition it will be removed along with its entire parent scope. The output SQL bind variable will be formatted with the same prefix as the parameter (acceptable prefixes are `:` or `@` or `?`). These parameters are not bind-variables and you must respect the aforementioned syntax, i.e. the Oracle variable :"MyVariable" won't be recognized as a parameter - if you need custom formatting in your output variables which you can't accomplish with the SqlBinder syntax names there ways to do so via events and delegates (see the Query class). Note that there can only be one placeholder in given scope. When you need multiple placeholders put each one in its own separate scope.
 * `[place holder xy]` works the same way as above except any character is allowed and you must provide the parameter prefix manually (in C#) by overriding the `Query` class, `DbQuery` class or setting the appropriate property. Also, this syntax doesn't work by default, you have to enable a special hint via `Query.ParserHints` property since `[]` characters are used by some SQL flavors. With all that said, you can still escape these tags into the output SQL `[[like this]]`.
 * The `@` character before the scope (i.e. `@{`) tells the SqlBinder to connect scopes with an `OR` rather than default `AND` operator. 
 * The `...` can be any SQL from any DBMS or just about any text. The string literals won't be processed by the SqlBinder which means they can safely contain SqlBinder syntax. The special flavors of literals such as PostgreSQL dollar literals or Oracle AQM literals are recognized as well and can safely contain any special character used by the SqlBinder. The same goes for SQL comments.
@@ -229,7 +229,29 @@ None of these are processed against SqlBinder syntax. If you encounter an SQL fl
 
 
 ## The Performance
-SqlBinder is quite fast but most importantly it has the ability to re-use compiled templates as it completely separates the parsing and template processing concerns. You may create a SqlBinder query once and then build all the subsequent SQL queries from the same pre-parsed template. Either way, it relies on hand coded look-ahead parser which is well optimized. Simple performance tests are available in the unit testing project where you can benchmark SqlBinder on your machine.
+SqlBinder is *very* fast but it's pointless to compare it with other tools as I don't yet know of anything similar. However, you can combine it with micro ORM solutions like Dapper - it wouldn't make sense to compare the performance differences of SqlBinder and Dapper separately but one can measure the overhead added by utilizing both at the same time. 
+
+Consider the following table. On the left you will see performance of Dapper alone and on the right you will see Dapper doing the exact same thing but with added overhead of SqlBinder providing the SQL and command parameter values based on a given template.
+
+```
+    Dapper +SqlBinder
+---------------------
+     59.33      67.60
+     67.14      63.61
+     62.78      74.85
+     57.94      55.72
+     47.00      53.18
+     51.15      51.75
+     47.43      56.03
+     52.86      53.29
+     47.79      52.88
+    AVG 55     AVG 59
+ ^ Dapper = Just Dapper.
+ ^ +SqlBinder = Dapper with SqlBinder.
+```
+As you can observe, on top of 55ms we've had an additional overhead of 4ms which is the time it took SqlBinder to formulate a query based on different criteria.
+
+most importantly it has the ability to re-use compiled templates as it completely separates the parsing and template processing concerns. You may create a SqlBinder query once and then build all the subsequent SQL queries from the same pre-parsed template. Either way, it relies on hand coded look-ahead parser which is well optimized. Simple performance tests are available in the unit testing project where you can benchmark SqlBinder on your machine.
 
 ## The Purpose
 I originally wrote the first version of this library back in 2009 to make my life easier. The projects I had worked on relied on large and very complex Oracle databases with all the business logic in them so I used SQL to access anything I needed which really worked great. I was in charge of developing the front-end which involved great many filters and buttons which helped the user customize the data he can see. Fetching thousands of records and then filtering them on client machines was a no-go, we had both our own and business client DBAs keeping a close eye on performance and bandwidth. Therefore, with some help of DBAs, PLSQL devs etc. we were able to muster up some very performant, complex and crafty SQLs which for reasons I won't go into here would not be optimal as DB views. 

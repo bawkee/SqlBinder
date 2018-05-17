@@ -67,10 +67,10 @@ namespace SqlBinder.DapperExample
 					Console.Write(' ');
 
 					// SqlBinder + Dapper
-					sw.Restart();					
+					sw.Restart();
+					var query = new Query("SELECT * FROM Employees {WHERE {EmployeeID @id}}");
 					for (var i = 0; i < 500; i++)
 					{
-						var query = new Query("SELECT * FROM Employees {WHERE {EmployeeID @id}}");
 						query.SetCondition("id", new[] { 1, 2, 3, 4 });
 						query.GetSql();
 						connection.Query<Employee>(query.OutputSql, query.SqlParameters);
@@ -90,6 +90,7 @@ namespace SqlBinder.DapperExample
 			Console.WriteLine();
 			Console.WriteLine(" ^ Dapper = Just Dapper.");
 			Console.WriteLine(" ^ +SqlBinder = Dapper with SqlBinder.");
+			Console.WriteLine(" * First iteration is not accounted for in AVG.");
 		}
 
 		static void PerfTestSqlServer()
@@ -111,7 +112,7 @@ namespace SqlBinder.DapperExample
 					for (var i = 0; i < 500; i++)
 					{
 						connection.Query<Employee>(
-							"SELECT * FROM POSTS WHERE ID IN @id",
+							"SELECT *, q'[Test @id]' as TestID FROM Employees WHERE EmployeeID IN @id",
 							new Dictionary<string, object> {["id"] = new[] {i, 1 + i, 2 + i}});
 					}
 					sw.Stop();
@@ -125,7 +126,7 @@ namespace SqlBinder.DapperExample
 					sw.Restart();
 					var query = new Query("SELECT * FROM POSTS {WHERE {ID @id}}");
 					for (var i = 0; i < 500; i++)
-					{
+					{						
 						query.SetCondition("id", new[] {i, 1 + i, 2 + i});
 						query.GetSql();
 						connection.Query<Employee>(query.OutputSql, query.SqlParameters);
@@ -145,6 +146,7 @@ namespace SqlBinder.DapperExample
 			Console.WriteLine();
 			Console.WriteLine(" ^ Dapper = Just Dapper.");
 			Console.WriteLine(" ^ +SqlBinder = Dapper with SqlBinder.");
+			Console.WriteLine(" * First iteration is not accounted for in AVG.");
 		}
 
 		static void Example1()
@@ -248,7 +250,8 @@ namespace SqlBinder.DapperExample
 
 		static IDbConnection OpenSqlServerConnection()
 		{
-			var connection = new SqlConnection(@"Data Source=(LocalDb)\v11.0;Initial Catalog=tempdb;Integrated Security=True");
+			var dbName = "(LocalDb)\\v11.0";
+			var connection = new SqlConnection($"Data Source={dbName};Initial Catalog=tempdb;Integrated Security=True");
 			connection.Open();
 
 			// Taken from Dapper's benchmark project

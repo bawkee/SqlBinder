@@ -11,6 +11,14 @@ namespace SqlBinder.Parsing.Tokens
 	/// https://livesql.oracle.com/apex/livesql/file/content_CIREYU9EA54EOKQ7LAMZKRF6P.html
 	/// Or this reference:
 	/// https://docs.oracle.com/cd/B19306_01/server.102/b14200/sql_elements003.htm
+	/// 
+	/// I wasn't aware of the existence of this until I started reading up on all the types of literals I might encounter on my
+	/// SQL parsing endavour. I was unpleasantly surprised by this tag because if it weren't for it, this parser would be a lot
+	/// simpler and context-free. I later found that this mechanism is so unknown that not even Oracle is respecting it everywhere,
+	/// their own drivers (both managed and native) can easily be broken by it. Even their syntax highlighters get messy if you 
+	/// use it (try Oracle LiveSQL). Microsoft's driver works with it though as it doesn't attempt its own parsing. Native driver works
+	/// in a lot of cases but they do attempt parsing when you use bind variables (probably LL) and can be broken in certain cases.
+	/// Either way, once these bugs get fixed by Oracle, SqlBinder will be ready as it is.
 	/// </summary>
 	public class OracleAQMLiteral : ContentToken 
 	{
@@ -34,7 +42,6 @@ namespace SqlBinder.Parsing.Tokens
 				ClosingTag = STANDARD_PAIRS[standardPair + 1] + CLOSING_TAG;
 			else
 				ClosingTag = alternativeTag + CLOSING_TAG;
-
 		}
 
 		internal OracleAQMLiteral(Token parent) : base(parent) { }
