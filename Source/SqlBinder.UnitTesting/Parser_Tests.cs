@@ -423,7 +423,7 @@ namespace SqlBinder.UnitTesting
 			[TestMethod]
 			public void ParserTest_Lexing_BindVariables()
 			{
-				var syntax = "SELECT * FROM [My Table] {WHERE {Column1 :someParameter} {Column2 @some_Parameter2} {Column3 ?some_Parameter3 AND [My Table].Column2 > 1}}";			
+				var syntax = "SELECT * FROM [My Table] {WHERE {Column1 :someParameter} {Column2 @some_Parameter2} {Column3 ?some_Parameter3 AND [My Table].Column2 > 1}} ORDER BY :orderVariable";			
 
 				var root = new SqlBinderParser().Parse(syntax);
 
@@ -487,6 +487,11 @@ namespace SqlBinder.UnitTesting
 				Assert.IsInstanceOfType(((Scope)((Scope)root.Children[1]).Children[5]).Children[2], typeof(Sql));
 				Assert.IsTrue(((Scope)((Scope)root.Children[1]).Children[5]).Children[2].Parent == (Scope)((Scope)root.Children[1]).Children[5]);
 				Assert.AreEqual(" AND [My Table].Column2 > 1", ((Sql)((Scope)((Scope)root.Children[1]).Children[5]).Children[2]).Text);
+
+				Assert.IsInstanceOfType(root.Children[3], typeof(BindVariableParameter));
+				Assert.IsTrue(((BindVariableParameter)root.Children[3]).Parent == root);				
+				Assert.AreEqual(":", ((BindVariableParameter)root.Children[3]).OpeningTag);
+				Assert.AreEqual("orderVariable", ((BindVariableParameter)root.Children[3]).Content.Text);
 			}
 
 			private static void OutputParseTree(Token token, ref int nesting)
@@ -524,7 +529,7 @@ namespace SqlBinder.UnitTesting
 			{
 				var syntax = "THIS IS SQL {THIS SQL IN A SCOPE " +
 							 "WHICH HAS /*{SQL BINDER COMMENT}*/ AND /*AN SQL COMMENT*/ " +
-							 "/*OR A\r\nMULTILINE\r\nSQL COMMENT*/}";
+							 "/*OR A\r\nMULTILINE\r\nSQL COMMENT*/} -- Inline Comment";
 
 				var root = new SqlBinderParser().Parse(syntax);
 
@@ -562,6 +567,12 @@ namespace SqlBinder.UnitTesting
 				Assert.IsTrue(((Scope)root.Children[1]).Children[5].Parent == root.Children[1]);
 				Assert.IsInstanceOfType(((ContentToken)((Scope)root.Children[1]).Children[5]).Content, typeof(ContentText));
 				Assert.AreEqual("OR A\r\nMULTILINE\r\nSQL COMMENT", ((ContentText)((ContentToken)((Scope)root.Children[1]).Children[5]).Content).Text);
+
+				Assert.IsInstanceOfType(root.Children[3], typeof(SqlInlineComment));
+				Assert.IsTrue(((SqlInlineComment)root.Children[3]).Parent == root);
+				Assert.AreEqual("--", ((SqlInlineComment)root.Children[3]).OpeningTag);
+				Assert.AreEqual("", ((SqlInlineComment)root.Children[3]).ClosingTag);
+				Assert.AreEqual(" Inline Comment", ((SqlInlineComment)root.Children[3]).Content.Text);
 			}
 		}
 	}

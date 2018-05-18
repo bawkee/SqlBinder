@@ -38,6 +38,8 @@ namespace SqlBinder.UnitTesting
 				AssertCommand(new MockQuery(_connection, "SELECT * FROM TABLE1 {JUNK ON THE RIGHT}").CreateCommand());
 				AssertCommand(new MockQuery(_connection, "SELECT * FROM TABLE1 {JUNK ON THE RIGHT {NESTED JUNK}}").CreateCommand());
 				AssertCommand(new MockQuery(_connection, "{JUNK ON THE LEFT} SELECT * FROM TABLE1").CreateCommand());
+				AssertCommand(new MockQuery(_connection, "{} SELECT {}* FROM TABLE1 {}").CreateCommand());
+				AssertCommand(new MockQuery(_connection, "SELECT{} * FROM TABLE1").CreateCommand());
 				AssertCommand(new MockQuery(_connection, "{JUNK ON THE LEFT {NESTED JUNK}} SELECT * FROM TABLE1 {JUNK ON THE RIGHT {NESTED JUNK}}").CreateCommand());
 				AssertCommand(new MockQuery(_connection, "{JUNK ON THE LEFT} SELECT * {JUNK ON THE MIDDLE}FROM TABLE1 {JUNK ON THE RIGHT {NESTED JUNK}}").CreateCommand());
 				AssertCommand(new MockQuery(_connection, "{JUNK ON THE LEFT} SELECT * {MIDDLE JUNK 1} {MIDDLE JUNK 2}   {MIDDLE JUNK 3}FROM TABLE1 {JUNK ON THE RIGHT {NESTED JUNK}}").CreateCommand());
@@ -77,7 +79,19 @@ namespace SqlBinder.UnitTesting
 			[TestMethod]
 			public void Basic_Literals()
 			{
-				var sql = "SELECT * FROM TABLE1 WHERE COLUMN1 = 'This is some {literal text} that includes @{special characters} like [this] or [[this]] or \"{ this maybe }\".'";
+				var sql = "SELECT * FROM TABLE1 WHERE COLUMN1 = 'This is some {literal text} that includes @{special characters} like [this] or [[this]] or \"{ this maybe }\".'";				
+				AssertCommand(new MockQuery(_connection, sql).CreateCommand(), sql);
+
+				sql = "SELECT * FROM TABLE1 WHERE COLUMN1 = ''";
+				AssertCommand(new MockQuery(_connection, sql).CreateCommand(), sql);
+
+				sql = "SELECT * FROM TABLE1 WHERE COLUMN1 = '' OR COLUMN2 = ''";
+				AssertCommand(new MockQuery(_connection, sql).CreateCommand(), sql);
+
+				sql = "SELECT * FROM TABLE1 WHERE COLUMN1 = \"\" OR COLUMN2 = \"\"";
+				AssertCommand(new MockQuery(_connection, sql).CreateCommand(), sql);
+
+				sql = "SELECT * FROM TABLE1 WHERE COLUMN1 = $$$$ OR COLUMN2 = $$ $$ OR COLUMN3 = $${test}$$";
 				AssertCommand(new MockQuery(_connection, sql).CreateCommand(), sql);
 			}
 

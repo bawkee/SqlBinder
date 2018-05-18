@@ -18,135 +18,24 @@ namespace SqlBinder.DapperExample
 {
 	class Program
 	{
-		static void Main(string[] args)
+		static void Main()
 		{
 			var whichExample = 0.0;
 
-			// Set the tutorial you want to play with. You can browse contents of the database from within Visual Studio 
-			// (double click on the Northwind Traders.mdb item in the project) and experiment.
-			
+			// Set the example you want to play with. You can browse contents of the database from within Visual Studio 
+			// (double click on the Northwind Traders.mdb item in the project) and experiment.						
+
 			switch (whichExample)
 			{
 				case 0.0: PerfTestSqlServer(); break;
 				case 0.1: PerfTestAccess(); break;
+				case 0.2: PerfCompareAccess(); break;
 				case 1: Example1(); break;
 				case 2: Example2(); break;
 				case 3: Example3(); break;
 			}
 
 			Console.ReadKey();
-		}
-
-		static void PerfTestAccess()
-		{
-			var sw = new Stopwatch();
-
-			Console.WriteLine("Dapper".PadLeft(10) + " " + "+SqlBinder".PadLeft(10));
-			Console.WriteLine(new string('-', 21));
-
-			var dapper = new List<double>();
-			var plusSqlbinder = new List<double>();
-
-			for (var n = 0; n < 10; n++)
-			{
-				using (var connection = OpenOleDbConnection())
-				{
-					// Dapper
-					sw.Restart();
-					for (var i = 0; i < 500; i++)
-					{
-						connection.Query<Employee>(
-							"SELECT * FROM Employees WHERE EmployeeID IN @id",
-							new Dictionary<string, object> { ["id"] = new[] { 1, 2, 3, 4 } });
-					}
-					sw.Stop();
-					Console.Write(sw.Elapsed.TotalMilliseconds.ToString("N2").PadLeft(10));
-					if (n > 0)
-						dapper.Add(sw.Elapsed.TotalMilliseconds);
-
-					Console.Write(' ');
-
-					// SqlBinder + Dapper
-					sw.Restart();
-					var query = new Query("SELECT * FROM Employees {WHERE {EmployeeID @id}}");
-					for (var i = 0; i < 500; i++)
-					{
-						query.SetCondition("id", new[] { 1, 2, 3, 4 });
-						query.GetSql();
-						connection.Query<Employee>(query.OutputSql, query.SqlParameters);
-					}
-					sw.Stop();
-					if (n > 0)
-						plusSqlbinder.Add(sw.Elapsed.TotalMilliseconds);
-					Console.Write(sw.Elapsed.TotalMilliseconds.ToString("N2").PadLeft(10));
-					Console.WriteLine();
-				}
-			}
-
-			Console.Write($"AVG {dapper.Average():N0}".PadLeft(10));
-			Console.Write(' ');
-			Console.Write($"AVG {plusSqlbinder.Average():N0}".PadLeft(10));
-
-			Console.WriteLine();
-			Console.WriteLine(" ^ Dapper = Just Dapper.");
-			Console.WriteLine(" ^ +SqlBinder = Dapper with SqlBinder.");
-			Console.WriteLine(" * First iteration is not accounted for in AVG.");
-		}
-
-		static void PerfTestSqlServer()
-		{
-			var sw = new Stopwatch();
-
-			Console.WriteLine("Dapper".PadLeft(10) + " " + "+SqlBinder".PadLeft(10));
-			Console.WriteLine(new string('-', 21));
-
-			var dapper = new List<double>();
-			var plusSqlbinder = new List<double>();
-
-			for (var n = 0; n < 10; n++)
-			{
-				using (var connection = OpenSqlServerConnection())
-				{
-					// Dapper
-					sw.Restart();
-					for (var i = 0; i < 500; i++)
-					{
-						connection.Query<Employee>(
-							"SELECT *, q'[Test @id]' as TestID FROM Employees WHERE EmployeeID IN @id",
-							new Dictionary<string, object> {["id"] = new[] {i, 1 + i, 2 + i}});
-					}
-					sw.Stop();
-					Console.Write(sw.Elapsed.TotalMilliseconds.ToString("N2").PadLeft(10));
-					if (n > 0)
-						dapper.Add(sw.Elapsed.TotalMilliseconds);
-
-					Console.Write(' ');
-
-					// SqlBinder + Dapper (cached query)
-					sw.Restart();
-					var query = new Query("SELECT * FROM POSTS {WHERE {ID @id}}");
-					for (var i = 0; i < 500; i++)
-					{						
-						query.SetCondition("id", new[] {i, 1 + i, 2 + i});
-						query.GetSql();
-						connection.Query<Employee>(query.OutputSql, query.SqlParameters);
-					}
-					sw.Stop();
-					if (n > 0)
-						plusSqlbinder.Add(sw.Elapsed.TotalMilliseconds);
-					Console.Write(sw.Elapsed.TotalMilliseconds.ToString("N2").PadLeft(10));
-					Console.WriteLine();
-				}
-			}
-
-			Console.Write($"AVG {dapper.Average():N0}".PadLeft(10));
-			Console.Write(' ');
-			Console.Write($"AVG {plusSqlbinder.Average():N0}".PadLeft(10));
-
-			Console.WriteLine();
-			Console.WriteLine(" ^ Dapper = Just Dapper.");
-			Console.WriteLine(" ^ +SqlBinder = Dapper with SqlBinder.");
-			Console.WriteLine(" * First iteration is not accounted for in AVG.");
 		}
 
 		static void Example1()
@@ -232,13 +121,190 @@ namespace SqlBinder.DapperExample
 			}
 		}
 
-
 		static void PrintEmployees(IEnumerable<Employee> emps)
 		{
 			Console.WriteLine("Employees:");
 			foreach (var emp in emps)
 				Console.WriteLine($"\t{emp.FirstName} {emp.LastName}");
 			Console.WriteLine();
+		}
+
+		/// <summary>
+		/// Purpose of this test is to see how much overhead would be adding SqlBinder on top of Dapper. There's very little. You could probably save
+		/// that difference by forking or extending Dapper to not attempt any parsing and just do the ORM part.
+		/// </summary>
+		static void PerfTestAccess()
+		{
+			var sw = new Stopwatch();
+
+			Console.WriteLine("Dapper".PadLeft(10) + " " + "+SqlBinder".PadLeft(10));
+			Console.WriteLine(new string('-', 21));
+
+			var dapper = new List<double>();
+			var plusSqlbinder = new List<double>();
+
+			for (var n = 0; n < 10; n++)
+			{
+				using (var connection = OpenOleDbConnection())
+				{
+					// Dapper
+					sw.Restart();
+					for (var i = 0; i < 500; i++)
+					{
+						connection.Query<Employee>(
+							"SELECT * FROM Employees WHERE EmployeeID IN @id",
+							new Dictionary<string, object> { ["id"] = new[] { 1, 2, 3, 4 } });
+					}
+					sw.Stop();
+					Console.Write(sw.Elapsed.TotalMilliseconds.ToString("N2").PadLeft(10));
+					if (n > 0)
+						dapper.Add(sw.Elapsed.TotalMilliseconds);
+
+					Console.Write(' ');
+
+					// SqlBinder + Dapper
+					sw.Restart();
+					var query = new Query("SELECT * FROM Employees {WHERE {EmployeeID @id}}");
+					for (var i = 0; i < 500; i++)
+					{
+						query.SetCondition("id", new[] { 1, 2, 3, 4 });
+						query.GetSql();
+						connection.Query<Employee>(query.OutputSql, query.SqlParameters);
+					}
+					sw.Stop();
+					if (n > 0)
+						plusSqlbinder.Add(sw.Elapsed.TotalMilliseconds);
+					Console.Write(sw.Elapsed.TotalMilliseconds.ToString("N2").PadLeft(10));
+					Console.WriteLine();
+				}
+			}
+
+			Console.Write($"AVG {dapper.Average():N0}".PadLeft(10));
+			Console.Write(' ');
+			Console.Write($"AVG {plusSqlbinder.Average():N0}".PadLeft(10));
+
+			Console.WriteLine();
+			Console.WriteLine(" ^ Dapper = Just Dapper.");
+			Console.WriteLine(" ^ +SqlBinder = Dapper with SqlBinder.");
+			Console.WriteLine(" * First iteration is not accounted for in AVG.");
+		}
+
+		/// <summary>
+		/// Same as before but with LocalDB which is much faster. Both tests are polluted by the DB implementation but this at least gives 
+		/// us another perspective.
+		/// </summary>
+		static void PerfTestSqlServer()
+		{
+			var sw = new Stopwatch();
+
+			Console.WriteLine("Dapper".PadLeft(10) + " " + "+SqlBinder".PadLeft(10));
+			Console.WriteLine(new string('-', 21));
+
+			var dapper = new List<double>();
+			var plusSqlbinder = new List<double>();
+
+			for (var n = 0; n < 10; n++)
+			{
+				using (var connection = OpenSqlServerConnection())
+				{
+					// Dapper
+					sw.Restart();
+					for (var i = 0; i < 500; i++)
+					{
+						connection.Query<Employee>(
+							"SELECT * FROM POSTS WHERE ID IN @id",
+							new Dictionary<string, object> { ["id"] = new[] { i, 1 + i, 2 + i } });
+					}
+					sw.Stop();
+					Console.Write(sw.Elapsed.TotalMilliseconds.ToString("N2").PadLeft(10));
+					if (n > 0)
+						dapper.Add(sw.Elapsed.TotalMilliseconds);
+
+					Console.Write(' ');
+
+					// SqlBinder + Dapper (cached query)
+					sw.Restart();
+					var query = new Query("SELECT * FROM POSTS {WHERE {ID @id}}");
+					for (var i = 0; i < 500; i++)
+					{
+						query.SetCondition("id", new[] { i, 1 + i, 2 + i });
+						query.GetSql();
+						connection.Query<Employee>(query.OutputSql, query.SqlParameters);
+					}
+					sw.Stop();
+					if (n > 0)
+						plusSqlbinder.Add(sw.Elapsed.TotalMilliseconds);
+					Console.Write(sw.Elapsed.TotalMilliseconds.ToString("N2").PadLeft(10));
+					Console.WriteLine();
+				}
+			}
+
+			Console.Write($"AVG {dapper.Average():N0}".PadLeft(10));
+			Console.Write(' ');
+			Console.Write($"AVG {plusSqlbinder.Average():N0}".PadLeft(10));
+
+			Console.WriteLine();
+			Console.WriteLine(" ^ Dapper = Just Dapper.");
+			Console.WriteLine(" ^ +SqlBinder = Dapper with SqlBinder.");
+			Console.WriteLine(" * First iteration is not accounted for in AVG.");
+		}
+
+		/// <summary>
+		/// Compares parsing performance between Dapper and SqlBinder. There's not much point to it since the two are doing entirely different
+		/// things but I just wanted to observe how much 'slower' would using SqlBinder be. It turns out it's so fast the difference is insignificant.
+		/// I've used a relatively complex query for this test.
+		/// </summary>
+		static void PerfCompareAccess()
+		{
+			using (var connection = OpenOleDbConnection())
+			{
+				var script = GetSqlBinderScript("CategorySales.sql");
+
+				var dapperQuery = new Query(script);
+
+				dapperQuery.SetCondition("shippingDates", new DateTime(1995, 7, 1), NumericOperator.IsGreaterThanOrEqualTo);
+				dapperQuery.SetCondition("categoryIds", new[] { 1, 8 });
+
+				var sql = dapperQuery.GetSql();
+				var bindParams = dapperQuery.SqlParameters;
+
+				const int CNT = 100;
+
+				var sqlBinderTimes = new List<double>(CNT);
+				var dapperTimes = new List<double>(CNT);
+
+				var sw = new Stopwatch();
+
+				var query = new DbQuery(connection);
+				query.DisableParserCache = true;
+
+				for (var i = 0; i < CNT; i++)
+				{
+					var poke = $" OR {i} = {i}"; // Add junk to the sql so it 100% doesn't get cached somewhere by something
+					var queryPerf = sql + poke;
+					var scriptPerf = script + poke;
+
+					sw.Restart();
+
+					query.SqlBinderScript = scriptPerf;
+					query.SetCondition("shippingDates", new DateTime(1995, 7, 1), NumericOperator.IsGreaterThanOrEqualTo);
+					query.SetCondition("categoryIds", new[] { 1, 8 });
+					query.CreateCommand().ExecuteReader().Close();
+
+					sw.Stop();
+					sqlBinderTimes.Add(sw.Elapsed.TotalMilliseconds);
+
+					sw.Restart();
+
+					connection.ExecuteReader(queryPerf, bindParams).Close();
+
+					sw.Stop();
+					dapperTimes.Add(sw.Elapsed.TotalMilliseconds);
+				}
+
+				Console.WriteLine("SqlBinder:".PadRight(15) + sqlBinderTimes.Average());
+				Console.WriteLine("Dapper:".PadRight(15) + dapperTimes.Average());
+			}
 		}
 
 		static IDbConnection OpenOleDbConnection()

@@ -19,8 +19,7 @@ namespace SqlBinder.Parsing.Tokens
 		internal SqlBinderParameter(Token parent) : base(parent) { }
 
 		internal static bool Evaluate(Reader reader) => Evaluate(reader, OPENING_SYMBOL[0])
-		                                              && reader.Peek(1) != OPENING_SYMBOL[0] 
-		                                              /*&& reader.Peek(-1) != OPENING_SYMBOL[0]*/; //-1
+		                                              && reader.Peek(1) != OPENING_SYMBOL[0];
 
 		public override string Name => ((ContentText)Content).Text;
 	}

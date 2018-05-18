@@ -36,14 +36,13 @@ namespace SqlBinder.Parsing
 	}
 
 	/// <summary>
-	/// Context-sensitive lookahead parser for T-SQL supporting custom MSSQL, MySql, PostgreSQL, Oracle etc. flavors. It scans through a raw SqlBinder script and 
-	/// returns a parsed token tree representing the SQL expression. 
-	/// This tree can later be re-used by the template processor to produce many different queries. This is not context-free parser due to complex syntaxes like 
-	/// the Oracle AQM. Still, it has a rather simple implementation. It is supported by a set of <see cref="Token"/> classes which themselves check the current 
-	/// character, perform look-aheads when needed and save the context information when needed (such as opening tags). Any new trick in any future or existing SQL 
-	/// syntax which may interfere with the SqlBinder syntax may be supported by simply adding another Token class. The SqlBinder itself has a very small and simple 
-	/// syntax which could be processed by a surprisingly simply recursive Regex, the only reason we need a parser at all is to single out the various different forms 
-	/// of string literals and comments so that SqlBinder doesn't conflict with them.
+	/// Context-sensitive (back-referencing) lookahead SqlBinder script parser supporting T-SQL, MSSQL, MySql, PostgreSQL, and Oracle flavors. It scans through a 
+	/// raw SqlBinder script and returns a parsed token tree representing the SqlBinder expression. This isn't SQL parser, it's SqlBinder parser. The only and only 
+	/// aspects of SQL that it looks for are string literals and comments.
+	/// Output tree can later be re-used by the template processor to produce many different queries. This parser has a rather simple implementation. It is supported 
+	/// by a set of <see cref="Token"/> classes which themselves check the current character, perform look-aheads when needed and save the context information when 
+	/// needed (such as opening tags for back-referencing). Any new trick in any future or existing SQL syntax which may interfere with the SqlBinder syntax may be 
+	/// supported by simply adding another Token class. 
 	/// </summary>
 	public class SqlBinderParser
 	{
@@ -73,10 +72,12 @@ namespace SqlBinder.Parsing
 			_doPostgre = !Hints.HasFlag(ParserHints.DisablePostgreSqlFlavors);
 			_customParams = Hints.HasFlag(ParserHints.UseCustomSyntaxForParams);
 
+			ScopedToken scopedToken = null;
+
 			while (reader.TryConsume())
 			{
 				// Prepare often-used references so boxing/unboxing is minimized
-				var scopedToken = reader.Token as ScopedToken ?? reader.Token.Parent as ScopedToken;
+				scopedToken = reader.Token as ScopedToken ?? reader.Token.Parent as ScopedToken;
 				var nestedToken = reader.Token as NestedToken ?? reader.Token.Parent as NestedToken;
 				var contentToken = reader.Token as ContentToken ?? reader.Token.Parent as ContentToken;
 
@@ -97,6 +98,9 @@ namespace SqlBinder.Parsing
 				else
 					CreateTextToken(reader, contentToken, nestedToken);
 			}
+
+			if (TryCloseScope(reader, scopedToken))
+				openScopes--;
 
 			if (openScopes > 0)
 				throw new ParserException(Exceptions.UnclosedScope);
@@ -124,6 +128,8 @@ namespace SqlBinder.Parsing
 				newElem = new SqlBinderComment(nestedToken);
 			else if (SqlComment.Evaluate(reader))
 				newElem = new SqlComment(nestedToken);
+			else if (SqlInlineComment.Evaluate(reader))
+				newElem = new SqlInlineComment(nestedToken);
 			else if (SingleQuoteLiteral.Evaluate(reader))
 				newElem = new SingleQuoteLiteral(nestedToken);
 			else if (DoubleQuoteLiteral.Evaluate(reader))
@@ -180,26 +186,30 @@ namespace SqlBinder.Parsing
 	/// Text reader/scanner, used for basic string operations.
 	/// </summary>
 	internal class Reader
-	{		
+	{
+		private bool _eof;
+
 		public Reader(string buffer) => Buffer = buffer;
 
 		public string Buffer { get; set; }
 
 		public int Index { get; set; } = -1;
 
-		public void Consume(int n = 1) => Index += n;
+		public void Consume(int n = 1) => Index += n; // Optimistic
 
-		public char Char => Buffer[Index];
+		public bool TryConsume() => !_eof && !(_eof = !(++Index < Buffer.Length)); // Pessimistic
 
-		public Token Token { get; set; } = new RootToken();
+		public char Char => _eof ? (char)0 : Buffer[Index];
 
-		public bool TryConsume() => ++Index < Buffer.Length;
+		public Token Token { get; set; } = new RootToken();		
 
 		public char Peek(int n = 0) => Index + n < Buffer.Length ? Buffer[Index + n] : (char)0;
 
+		public bool EOF => _eof;
+
 		public bool ScanFor(string str)
 		{
-			if (string.IsNullOrEmpty(str))
+			if (string.IsNullOrEmpty(str) || _eof)
 				return false;
 			for (var i = 0; i < str.Length; i++)
 				if (Peek(i) != str[i])

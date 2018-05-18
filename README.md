@@ -226,35 +226,67 @@ $myTag$Or in this PostgreSQL literal {} [] ...$myTag$
 ```
 None of these are processed against SqlBinder syntax. If you encounter an SQL flavor which SqlBinder doesn't properly respect, log an issue.
 
-
-
 ## The Performance
-SqlBinder is *very* fast but it's pointless to compare it with other tools as I don't yet know of anything similar. However, you can combine it with micro ORM solutions like Dapper - it wouldn't make sense to compare the performance differences of SqlBinder and Dapper separately but one can measure the overhead added by utilizing both at the same time. 
+SqlBinder is *very* fast but it's pointless to compare it with other tools as they do different things. However, you can combine it with micro ORM solutions like Dapper - it wouldn't make sense to compare the performance differences of SqlBinder and Dapper separately but one can measure the overhead added by utilizing both at the same time. I took Dapper for reference as it's the fastest micro-ORM that I know of.
 
-Consider the following table. On the left you will see performance of Dapper alone and on the right you will see Dapper doing the exact same thing but with added overhead of SqlBinder providing the SQL and command parameter values based on a given template.
+Consider the following tables. On the left column you will see performance of Dapper alone and on the right column you will see Dapper doing the exact same thing but with added overhead of SqlBinder providing the SQL and command parameter values based on a given template.
 
+**LocalDB (Sql Sever Express):**
 ```
     Dapper +SqlBinder
 ---------------------
-     59.33      67.60
-     67.14      63.61
-     62.78      74.85
-     57.94      55.72
-     47.00      53.18
-     51.15      51.75
-     47.43      56.03
-     52.86      53.29
-     47.79      52.88
-    AVG 55     AVG 59
+     52.88      53.46
+     57.31      59.55
+     56.22      68.07
+     55.97      56.16
+     66.52      55.59
+     54.82      52.96
+     50.98      61.97
+     59.06      57.53
+     50.38      53.97
+    AVG 56     AVG 58
+
  ^ Dapper = Just Dapper.
  ^ +SqlBinder = Dapper with SqlBinder.
 ```
-As you can observe, on top of 55ms we've had an additional overhead of 4ms which is the time it took SqlBinder to formulate a query based on different criteria.
 
-most importantly it has the ability to re-use compiled templates as it completely separates the parsing and template processing concerns. You may create a SqlBinder query once and then build all the subsequent SQL queries from the same pre-parsed template. Either way, it relies on hand coded look-ahead parser which is well optimized. Simple performance tests are available in the unit testing project where you can benchmark SqlBinder on your machine.
+**OleDb (Access):**
+```
+    Dapper +SqlBinder
+---------------------
+    335.42     336.38
+    317.99     318.89
+    342.56     324.85
+    317.20     320.84
+    327.91     324.56
+    320.29     326.86
+    334.42     338.73
+    344.43     326.33
+    315.32     322.48
+   AVG 328    AVG 327
+
+ ^ Dapper = Just Dapper.
+ ^ +SqlBinder = Dapper with SqlBinder.
+```
+
+As you can observe, on SqlServer we've had an additional overhead of 2ms which is the time it took SqlBinder to formulate a query based on different criteria. On the OleDb Access test this difference was so insignificant it was lost entirely in deviations (most likely in interaction with the DB).
+
+Each row in the test results was a result of 500 executions of the following queries:
+
+```SQL
+SELECT * FROM POSTS WHERE ID IN @id
+```
+And
+```SQL
+SELECT * FROM POSTS {WHERE {ID @id}}
+```
+Where the latter was used in Dapper+SqlBinder combination. 
+
+It is important to note that SqlBinder has the ability to re-use compiled templates as it completely separates the parsing and templating concerns. You may create a SqlBinder query template once and then build all the subsequent SQL queries from the same pre-parsed template. Either way, it relies on hand coded look-ahead parser which is well optimized. 
+
+Simple performance tests are available in the Source folder where you can benchmark SqlBinder on your own.
 
 ## The Purpose
-I originally wrote the first version of this library back in 2009 to make my life easier. The projects I had worked on relied on large and very complex Oracle databases with all the business logic in them so I used SQL to access anything I needed which really worked great. I was in charge of developing the front-end which involved great many filters and buttons which helped the user customize the data he can see. Fetching thousands of records and then filtering them on client machines was a no-go, we had both our own and business client DBAs keeping a close eye on performance and bandwidth. Therefore, with some help of DBAs, PLSQL devs etc. we were able to muster up some very performant, complex and crafty SQLs which for reasons I won't go into here would not be optimal as DB views. 
+I originally wrote the first version of this library back in 2009 to make my life easier. The projects I had worked on relied on large and very complex Oracle databases with all the business logic in them so I used SQL to access anything I needed which worked out great. I was in charge of developing the front-end which involved great many filters and buttons which helped the user customize the data to be visualized. Fetching thousands of records and then filtering them on client side was out of the question, we had both our own and business client DBAs keeping a close eye on performance and bandwidth. Therefore, with some help of DBAs, PLSQL devs etc. we were able to muster up some very performant, complex and crafty SQLs which for reasons out of scope here would not be optimal as DB views. 
 
-This however, resulted in some pretty awkward SQL-generating and variable-binding code that was hard to maintain, optimize and alter. Tools like Hibernate and Dapper solved a lot of problems we didn't have but didn't entirely solve the one we had (but of the two, Dapper, along with its flexible license was a best fit). This is where my SqlBinder-like set of classes came to rescue, all that mess was converted into a `string.Format`-like code where I could write the whole script and then pass the variables (or don't pass them). From a proof of concept and experiment it eventually grew up to be SqlBinder as I used my free time to tweak and improve it. It helped me greatly and I'm releasing it here so it may help someone else too.
-
+This however, resulted in some pretty awkward SQL-generating and variable-binding code that was hard to maintain, optimize and alter. Tools like NHibernate solved a lot of problems we didn't have but didn't entirely solve the one we had. I wasn't aware of Dapper back then but it still wouldn't solve most of the problems. This is where my SqlBinder-like metalanguage came to rescue, all that mess was converted into a `string.Format`-like code where I could write the whole script and then pass the variables (or don't pass them). From a proof of concept and experiment it eventually grew up to be SqlBinder as I used my free time to tweak and improve it. It helped me greatly and I'm releasing it here so it may help someone else too.

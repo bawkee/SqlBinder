@@ -124,7 +124,8 @@ namespace SqlBinder.Parsing
 					break;
 				case ContentToken contentToken:
 					buffer.Append(contentToken.OpeningTag);
-					ConstructSql(token.Children.First(), buffer);
+					if (contentToken.Content != null)
+						ConstructSql(token.Children.First(), buffer);
 					buffer.Append(contentToken.ClosingTag);
 					break;
 				case TextToken textToken:
