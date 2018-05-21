@@ -182,23 +182,23 @@ This library comes with a very nice, interactive Demo App developed in WPF which
 You can browse the Northwind database using example queries which come as *.sql files which you can alter any way you like and watch SqlBinder work its magic in the Debug Log.
 
 ## The Syntax
-Can be explained by the following set of examples:
+Consists of two basic types of elements: scopes and parameter placeholders. Scopes are defined by curly braces `{ ... }` and parameter placeholders can be defined by the typical SQL syntax (i.e. `:parameter`) or by custom SqlBinder syntax (if configured so, i.e. `[parameter]`). Observe the following set of valid examples where `...` can be any SQL:
 ```SQL
-... { ... :placeholder  ... } ...
+... { ... :paramPlaceholder  ... } ...
 
-... { ... { ... @placeholder  ... } ... } ...
+... { ... { ... @paramPlaceholder  ... } ... } ...
 
-... { ... { ... :placeholder1  ... } ... { ... :placeholder2 ... } ... } ...
+... { ... { ... :paramPlaceholder1  ... } ... { ... :paramPlaceholder2 ... } ... } ...
 
-... @{ ... { ... :placeholder1  ... } ... { ... :placeholder2 ... } ... } ...
+... @{ ... { ... :paramPlaceholder1  ... } ... { ... :paramPlaceholder2 ... } ... } ...
 
 ... @{ ... { ... [place holder 1]  ... } ... { ... [place holder 2] ... } ... } ...
 ```
 
-Where:
-* Curly braces `{ ... }` define a scope. Scope can contain either one or more child scopes or a single parameter placeholder. Scope that does not contain either will always be removed as it's considered pointless. Otherwise, the scope is removed only if all its child scopes are removed or its parameter placeholder is removed which in turn is removed if no matching *condition* was found for it (continue below for more information). 
-* `:placeholder` can be any alphanumeric name that will be matched against `Query.Conditions` collection. This is referred to as *parameter* in the SqlBinder objects (e.g. `Condition.ParameterName`). If a parameter doesn't match any condition it will be removed along with its entire parent scope. The output SQL bind variable will be formatted with the same prefix as the parameter (acceptable prefixes are `:` or `@` or `?`). These parameters are not bind-variables and you must respect the aforementioned syntax, i.e. the Oracle variable :"MyVariable" won't be recognized as a parameter - if you need custom formatting in your output variables which you can't accomplish with the SqlBinder syntax names there ways to do so via events and delegates (see the Query class). Note that there can only be one placeholder in given scope. When you need multiple placeholders put each one in its own separate scope.
-* `[place holder xy]` works the same way as above except any character is allowed and you must provide the parameter prefix manually (in C#) by overriding the `Query` class, `DbQuery` class or setting the appropriate property. Also, this syntax doesn't work by default, you have to enable a special hint via `Query.ParserHints` property since `[]` characters are used by some SQL flavors. With all that said, you can still escape these tags into the output SQL `[[like this]]`.
+Further explanation of above examples:
+* Curly braces `{ ... }` define a scope. Scope can either contain child scopes or a single parameter placeholder. Scope that does not contain either of those will always be removed as that's considered pointless. Otherwise, the scope is removed only if all its child scopes are removed or its parameter placeholder is removed, *which* in turn is removed if no matching *condition* was found for it (conditions are explained further on). 
+* `:paramPlaceholder` can be any alphanumeric name that will be matched against `Query.Conditions` collection. This is referred to as *parameter* in the SqlBinder objects. If a parameter doesn't match any condition it will be removed along with its entire parent scope. The output SQL bind variable will be formatted with the same prefix as the parameter (acceptable prefixes are `:` or `@` or `?`). These parameters are not bind-variables and you must respect the aforementioned syntax, i.e. the Oracle variable `:"MyVariable"` won't be recognized as a parameter - if you need custom formatting in your output variables which you can't accomplish with the SqlBinder syntax names there ways to do so via events and delegates (see the Query class). Note that there can only be one placeholder in a given scope. When you need multiple placeholders put each one in its own separate scope.
+* `[place holder xy]` works the same way as above except any character is allowed and you must provide the parameter prefix manually (in C#) by overriding the `Query` class, `DbQuery` class or setting the appropriate property. Also, this syntax doesn't work by default, you have to enable a special hint via `Query.ParserHints` property since `[]` characters are used by some SQL flavors. With that said, you can still escape these tags into the output SQL `[[like this]]`.
 * The `@` character before the scope (i.e. `@{`) tells the SqlBinder to connect scopes with an `OR` rather than default `AND` operator. 
 * The `...` can be any SQL from any DBMS or just about any text. The string literals won't be processed by the SqlBinder which means they can safely contain SqlBinder syntax. The special flavors of literals such as PostgreSQL dollar literals or Oracle AQM literals are recognized as well and can safely contain any special character used by the SqlBinder. The same goes for SQL comments.
 
@@ -224,10 +224,10 @@ q'{Or in this Oracle literal {} [] which can get very creative ...}'
 
 $myTag$Or in this PostgreSQL literal {} [] ...$myTag$
 ```
-None of these are processed against SqlBinder syntax. If you encounter an SQL flavor which SqlBinder doesn't properly respect, log an issue.
+None of these are processed against SqlBinder syntax. You may safely put parameter placeholder or scope syntax in here and it won't be altered in any way. SqlBinder does not do simple find-replace, it parses the script and re-builds the SQL based on it.
 
 ## The Performance
-SqlBinder is *very* fast but it's pointless to compare it with other tools as they do different things. However, you can combine it with micro ORM solutions like Dapper - it wouldn't make sense to compare the performance differences of SqlBinder and Dapper separately but one can measure the overhead added by utilizing both at the same time. I took Dapper for reference as it's the fastest micro-ORM that I know of.
+SqlBinder is *very* fast but it's pointless to compare it with other tools as they do different things. However, you can combine it with micro ORM solutions like Dapper - it wouldn't make sense to compare the performance differences of SqlBinder and Dapper separately but one can measure the overhead added by utilizing both at the same time. I took Dapper for reference as it's the fastest micro-ORM that I currently know of.
 
 Consider the following tables. On the left column you will see performance of Dapper alone and on the right column you will see Dapper doing the exact same thing but with added overhead of SqlBinder providing the SQL and command parameter values based on a given template.
 
@@ -282,7 +282,7 @@ SELECT * FROM POSTS {WHERE {ID @id}}
 ```
 Where the latter was used in Dapper+SqlBinder combination. 
 
-It is important to note that SqlBinder has the ability to re-use compiled templates as it completely separates the parsing and templating concerns. You may create a SqlBinder query template once and then build all the subsequent SQL queries from the same pre-parsed template. Either way, it relies on hand coded look-ahead parser which is well optimized. 
+It is important to note that SqlBinder has the ability to re-use compiled templates as it completely separates the parsing and templating concerns. You may create a SqlBinder query template once and then build all the subsequent SQL queries from the same pre-parsed template. One of the key functionalities of SqlBinder is that it doesn't parse or generate the whole SQL *every time*. Also, it relies on hand coded parser which is well optimized. 
 
 Simple performance tests are available in the Source folder where you can benchmark SqlBinder on your own.
 
