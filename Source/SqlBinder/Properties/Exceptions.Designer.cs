@@ -97,6 +97,15 @@ namespace SqlBinder.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to It is only possible to provide NULL if it is the only value being provided..
+        /// </summary>
+        public static string NullIsMutuallyExclusiveWIthEverythingElse {
+            get {
+                return ResourceManager.GetString("NullIsMutuallyExclusiveWIthEverythingElse", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to An exception has occurred in the SqlBinder template parser engine..
         /// </summary>
         public static string ParserFailure {

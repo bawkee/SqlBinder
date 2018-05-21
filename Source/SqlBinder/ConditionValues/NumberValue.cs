@@ -71,7 +71,15 @@ namespace SqlBinder.ConditionValues
 		protected void SetValues(params object[] values)
 		{
 			if (values?.All(v => v == null) ?? true)
-				throw new ArgumentNullException(nameof(values));
+				throw new ArgumentNullException(nameof(values)); // All nulls?
+			if (values.Length == 2)
+			{
+				if (values[0] == null || values[1] == null)
+					throw new ArgumentException(Exceptions.NullIsMutuallyExclusiveWIthEverythingElse, nameof(values));
+				if (values[0].Equals(values[1]))
+					values = new [] { values[0] };
+
+			}
 			_values = values;
 		}
 
@@ -86,20 +94,32 @@ namespace SqlBinder.ConditionValues
 				case (int)Operator.Is:
 					return _values.Length == 0 ? "IS NULL" : ValidateParams("= {0}", 1);
 				case (int)Operator.IsNot:
-					return _values.Length == 0 ? "IS NOT NULL" : ValidateParams("!= {0}", 1);
+					return _values.Length == 0 ? "IS NOT NULL" : ValidateParams("<> {0}", 1);
 				case (int)Operator.IsLessThan: return ValidateParams("< {0}", 1);
 				case (int)Operator.IsLessThanOrEqualTo: return ValidateParams("<= {0}", 1);
 				case (int)Operator.IsGreaterThan: return ValidateParams("> {0}", 1);
 				case (int)Operator.IsGreaterThanOrEqualTo: return ValidateParams(">= {0}", 1);
-				case (int)Operator.IsBetween: return ValidateParams("BETWEEN {0} AND {1}", 2);
-				case (int)Operator.IsNotBetween: return ValidateParams("NOT BETWEEN {0} AND {1}", 2);
+				case (int)Operator.IsBetween:
+					switch (_values.Length)
+					{
+						case 2: return ValidateParams("BETWEEN {0} AND {1}", 2);
+						case 1: return ValidateParams("= {0}", 1);
+						default: throw new InvalidOperationException(Exceptions.PlaceholdersAndActualParamsDontMatch);
+					}
+				case (int)Operator.IsNotBetween:
+					switch (_values.Length)
+					{
+						case 2: return ValidateParams("NOT BETWEEN {0} AND {1}", 2);
+						case 1: return ValidateParams("<> {0}", 1);
+						default: throw new InvalidOperationException(Exceptions.PlaceholdersAndActualParamsDontMatch);
+					}
 				case (int)Operator.IsAnyOf:
 					if (!IsValueList())
 						return ValidateParams("= {0}", 1);
 					return ValidateParams("IN ({0})", 1, true);
 				case (int)Operator.IsNotAnyOf:
 					if (!IsValueList())
-						return ValidateParams("!= {0}", 1);
+						return ValidateParams("<> {0}", 1);
 					return ValidateParams("NOT IN ({0})", 1, true);
 				default: throw new InvalidConditionException(this, (Operator)sqlOperator, Exceptions.IllegalComboOfValueAndOperator);
 			}

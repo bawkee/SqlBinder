@@ -144,4 +144,7 @@
   <data name="UnclosedScope" xml:space="preserve">
     <value>There is an unclosed scope (a {...} or [...] or a '...' string literal) in your script.</value>
   </data>
+	<data name="NullIsMutuallyExclusiveWIthEverythingElse" xml:space="preserve">
+    <value>It is only possible to provide NULL if it is the only value being provided.</value>
+  </data>
 </root>
