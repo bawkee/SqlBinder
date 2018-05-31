@@ -6,6 +6,8 @@ It is *not* an ORM solution - instead, it is DBMS-independent, SQL-centric **tem
 
 Essentially, with one template you can create multiple different queries.
 
+[![NuGet](https://img.shields.io/nuget/v/SqlBinder.svg)](https://www.nuget.org/packages/SqlBinder/)
+
 ## Example 1: Query employees 
 
 Let's connect to Northwind demo database: 
@@ -123,7 +125,7 @@ For example, if we don't pass any *conditions* at all, all the magical stuff is 
 SELECT * FROM Employees
 ```
 
-But if we do pass some condition, for example, **let’s try and get employees hired in 1993**:
+But if we do pass some condition, for example, **letâ€™s try and get employees hired in 1993**:
 
 ```C#
 query.SetCondition("hireDateYear", 1993);
