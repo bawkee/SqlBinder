@@ -202,7 +202,7 @@ namespace SqlBinder.DemoNorthwindDal.OleDb
 
 		public IEnumerable<string> GetShippingCities(string shippingCountry = null)
 		{
-			var query = new DbQuery(_connection, "SELECT ShipCity FROM Orders {WHERE {ShipCountry ?shippingCountry}} GROUP BY ShipCity");
+			var query = new DbQuery(_connection, "SELECT ShipCity FROM Orders {WHERE {ShipCountry :shippingCountry}} GROUP BY ShipCity");
 
 			if (shippingCountry != null)
 				query.SetCondition("shippingCountry", shippingCountry);
