@@ -99,11 +99,11 @@ The `:employeeId` placeholder was simply replaced by `= :pemployeeId_1`. SqlBind
 
 **In the third test**, we called `SetCondition("employeeId", new[] { 1, 2 });` which means we would like two employees this time. 
 
-This caused the query:
+This caused the SqlBinder query template:
 ```SQL
 ... {WHERE EmployeeID :employeeId} ...
 ```
-To be transformed into this:
+To be transformed into this SQL:
 ```SQL
 ... WHERE EmployeeID IN (:pemployeeId_1, :pemployeeId_2) ...
 ```
