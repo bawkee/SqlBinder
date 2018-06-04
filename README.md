@@ -13,7 +13,7 @@ Essentially, with one template you can create multiple different queries.
 Let's connect to Northwind demo database: 
 
 ```C#
-var connection = new OleDbConnection("Provider=Microsoft.Jet.OLEDB.4.0;Data Source=Northwind Traders.mdb")
+var connection = new OleDbConnection("Provider=Microsoft.Jet.OLEDB.4.0;Data Source=Northwind Traders.mdb");
 ```
 
 And then write a simple OleDB SQL query which will retreive the list of employees.
