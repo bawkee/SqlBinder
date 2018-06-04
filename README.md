@@ -53,7 +53,7 @@ This is the output:
 SELECT * FROM Employees WHERE EmployeeID = :pemployeeId_1
 ```
 
-Notice that we're using the same query to create two entirely different commands. This time, the `{WHERE EmployeeID :employeeId}` part wasn't eliminated.
+We're using the same query to create two entirely different commands. This time, the `{WHERE EmployeeID :employeeId}` part wasn't eliminated.
 
 Let's go further and retrieve **employees by IDs 1 and 2**. Again, we use the same query but different parameters are supplied to the crucial `SetCondition` method.
 
@@ -77,9 +77,9 @@ SELECT * FROM Employees WHERE EmployeeID IN (:pemployeeId_1, :pemployeeId_2)
 SELECT * FROM Employees {WHERE EmployeeID :employeeId}
 ```
 
-**In the first example**, the `query` object was not provided any conditions, so, it removed all the magical syntax that begins with `{` and ends with `}` as it served no purpose. 
+**In the first test**, the `query` object was not provided any conditions, so, it removed all the magical syntax that begins with `{` and ends with `}` as it served no purpose. 
 
-**In the second example**, we called `SetCondition("employeeId", 1);` so now the magical syntax comes into play.
+**In the second test**, we called `SetCondition("employeeId", 1);` so now the magical syntax comes into play.
 
 So, this template:
 
@@ -97,7 +97,7 @@ Produced this SQL:
 
 The `:employeeId` placeholder was simply replaced by `= :pemployeeId_1`. SqlBinder also automatically takes care of the command parameters (bind variables) that will be passed to `IDbCommand`.
 
-**In the third example**, we called `SetCondition("employeeId", new[] { 1, 2 });` which means we would like two employees this time. 
+**In the third test**, we called `SetCondition("employeeId", new[] { 1, 2 });` which means we would like two employees this time. 
 
 This caused the query:
 ```SQL
@@ -109,6 +109,8 @@ To be transformed into this:
 ```
 
 There are great many things into which `:employeeId` can be transformed but for now we'll just cover the basic concepts. 
+
+[Try this example on DotNetFiddle!](https://dotnetfiddle.net/pa0h1H "Try it on DotNetFiddle")
 
 ## Example 2: Query yet some more employees
 Let's do a different query this time:
