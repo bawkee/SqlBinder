@@ -115,9 +115,9 @@ There are great many things into which `:employeeId` can be transformed but for 
 ## Example 2: Query yet some more employees
 Let's do a different query this time:
 ```SQL
-SELECT * FROM Employees {WHERE {City @city} {HireDate @hireDate} {YEAR(HireDate) @hireDateYear}}
+SELECT * FROM Employees {WHERE {City :city} {HireDate :hireDate} {YEAR(HireDate) :hireDateYear}}
 ```
-This time we have nested *scopes* `{...{...}...}`. First and foremost, note that this syntax can be put anywhere in the SQL and that the `WHERE` clause means nothing to SqlBinder, it's just plain text that will be removed if its parent *scope* is removed. As a side note, we're using the `@` parameter prefix this time - because we can.
+This time we have nested *scopes* `{...{...}...}`. First and foremost, note that this syntax can be put anywhere in the SQL and that the `WHERE` clause means nothing to SqlBinder, it's just plain text that will be removed if its parent *scope* is removed.
 
 **Remember:** the scope is removed only if all its child scopes are removed or its child placeholder (i.e. `:param`, `@param` or `?param`) is removed which in turn is removed if no matching *condition* was found for it.
 
@@ -136,12 +136,12 @@ query.SetCondition("hireDateYear", 1993);
 This will produce the following SQL:
 
 ```SQL
-SELECT * FROM Employees WHERE YEAR(HireDate) = @phireDateYear_1
+SELECT * FROM Employees WHERE YEAR(HireDate) = :phireDateYear_1
 ```
 
 By the way, don't worry about command parameter values, they are already passed to the command.
 
-As you can see, the scopes `{City @city}` and `{HireDate @hireDate}` were eliminated as SqlBinder did not find any matching conditions for them.
+As you can see, the scopes `{City :city}` and `{HireDate :hireDate}` were eliminated as SqlBinder did not find any matching conditions for them.
 
 **Now let's try and get employees hired after July 1993** 
 
@@ -155,7 +155,7 @@ This time we're clearing the conditions collection as we don't want `hireDateYea
 The resulting SQL will be:
 
 ```SQL
-SELECT * FROM Employees WHERE HireDate >= @phireDate_1
+SELECT * FROM Employees WHERE HireDate >= :phireDate_1
 ```
 
 **How about employees from London that were hired between 1993 and 1994?**
@@ -170,7 +170,7 @@ Now we have two conditions that will be automatically connected with an `AND` op
 
 The resulting SQL:
 ```SQL
-SELECT * FROM Employees WHERE City = @pcity_1 AND YEAR(HireDate) BETWEEN @phireDateYear_1 AND @phireDateYear_2
+SELECT * FROM Employees WHERE City = :pcity_1 AND YEAR(HireDate) BETWEEN :phireDateYear_1 AND :phireDateYear_2
 ```
 
 Neat!
