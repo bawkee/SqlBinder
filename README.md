@@ -6,12 +6,14 @@ It is *not* an ORM solution - instead, it is DBMS-independent, SQL-centric **tem
 
 Essentially, with one template you can create multiple different queries.
 
+[![NuGet](https://img.shields.io/nuget/v/SqlBinder.svg)](https://www.nuget.org/packages/SqlBinder/)
+
 ## Example 1: Query employees 
 
 Let's connect to Northwind demo database: 
 
 ```C#
-var connection = new OleDbConnection("Provider=Microsoft.Jet.OLEDB.4.0;Data Source=Northwind Traders.mdb")
+var connection = new OleDbConnection("Provider=Microsoft.Jet.OLEDB.4.0;Data Source=Northwind Traders.mdb");
 ```
 
 And then write a simple OleDB SQL query which will retreive the list of employees.
@@ -51,7 +53,7 @@ This is the output:
 SELECT * FROM Employees WHERE EmployeeID = :pemployeeId_1
 ```
 
-Notice that we're using the same query to create two entirely different commands. This time, the `{WHERE EmployeeID :employeeId}` part wasn't eliminated.
+We're using the same query to create two entirely different commands. This time, the `{WHERE EmployeeID :employeeId}` part wasn't eliminated.
 
 Let's go further and retrieve **employees by IDs 1 and 2**. Again, we use the same query but different parameters are supplied to the crucial `SetCondition` method.
 
@@ -75,9 +77,9 @@ SELECT * FROM Employees WHERE EmployeeID IN (:pemployeeId_1, :pemployeeId_2)
 SELECT * FROM Employees {WHERE EmployeeID :employeeId}
 ```
 
-**In the first example**, the `query` object was not provided any conditions, so, it removed all the magical syntax that begins with `{` and ends with `}` as it served no purpose. 
+**In the first test**, the `query` object was not provided any conditions, so, it removed all the magical syntax that begins with `{` and ends with `}` as it served no purpose. 
 
-**In the second example**, we called `SetCondition("employeeId", 1);` so now the magical syntax comes into play.
+**In the second test**, we called `SetCondition("employeeId", 1);` so now the magical syntax comes into play.
 
 So, this template:
 
@@ -95,25 +97,27 @@ Produced this SQL:
 
 The `:employeeId` placeholder was simply replaced by `= :pemployeeId_1`. SqlBinder also automatically takes care of the command parameters (bind variables) that will be passed to `IDbCommand`.
 
-**In the third example**, we called `SetCondition("employeeId", new[] { 1, 2 });` which means we would like two employees this time. 
+**In the third test**, we called `SetCondition("employeeId", new[] { 1, 2 });` which means we would like two employees this time. 
 
-This caused the query:
+This caused the SqlBinder query template:
 ```SQL
 ... {WHERE EmployeeID :employeeId} ...
 ```
-To be transformed into this:
+To be transformed into this SQL:
 ```SQL
 ... WHERE EmployeeID IN (:pemployeeId_1, :pemployeeId_2) ...
 ```
 
 There are great many things into which `:employeeId` can be transformed but for now we'll just cover the basic concepts. 
 
+[Try this example on DotNetFiddle!](https://dotnetfiddle.net/pa0h1H "Try it on DotNetFiddle")
+
 ## Example 2: Query yet some more employees
 Let's do a different query this time:
 ```SQL
-SELECT * FROM Employees {WHERE {City @city} {HireDate @hireDate} {YEAR(HireDate) @hireDateYear}}
+SELECT * FROM Employees {WHERE {City :city} {HireDate :hireDate} {YEAR(HireDate) :hireDateYear}}
 ```
-This time we have nested *scopes* `{...{...}...}`. First and foremost, note that this syntax can be put anywhere in the SQL and that the `WHERE` clause means nothing to SqlBinder, it's just plain text that will be removed if its parent *scope* is removed. As a side note, we're using the `@` parameter prefix this time - because we can.
+This time we have nested *scopes* `{...{...}...}`. First and foremost, note that this syntax can be put anywhere in the SQL and that the `WHERE` clause means nothing to SqlBinder, it's just plain text that will be removed if its parent *scope* is removed.
 
 **Remember:** the scope is removed only if all its child scopes are removed or its child placeholder (i.e. `:param`, `@param` or `?param`) is removed which in turn is removed if no matching *condition* was found for it.
 
@@ -123,7 +127,7 @@ For example, if we don't pass any *conditions* at all, all the magical stuff is 
 SELECT * FROM Employees
 ```
 
-But if we do pass some condition, for example, **let’s try and get employees hired in 1993**:
+But if we do pass some condition, for example, **letâ€™s try and get employees hired in 1993**:
 
 ```C#
 query.SetCondition("hireDateYear", 1993);
@@ -132,12 +136,12 @@ query.SetCondition("hireDateYear", 1993);
 This will produce the following SQL:
 
 ```SQL
-SELECT * FROM Employees WHERE YEAR(HireDate) = @phireDateYear_1
+SELECT * FROM Employees WHERE YEAR(HireDate) = :phireDateYear_1
 ```
 
 By the way, don't worry about command parameter values, they are already passed to the command.
 
-As you can see, the scopes `{City @city}` and `{HireDate @hireDate}` were eliminated as SqlBinder did not find any matching conditions for them.
+As you can see, the scopes `{City :city}` and `{HireDate :hireDate}` were eliminated as SqlBinder did not find any matching conditions for them.
 
 **Now let's try and get employees hired after July 1993** 
 
@@ -151,7 +155,7 @@ This time we're clearing the conditions collection as we don't want `hireDateYea
 The resulting SQL will be:
 
 ```SQL
-SELECT * FROM Employees WHERE HireDate >= @phireDate_1
+SELECT * FROM Employees WHERE HireDate >= :phireDate_1
 ```
 
 **How about employees from London that were hired between 1993 and 1994?**
@@ -166,7 +170,7 @@ Now we have two conditions that will be automatically connected with an `AND` op
 
 The resulting SQL:
 ```SQL
-SELECT * FROM Employees WHERE City = @pcity_1 AND YEAR(HireDate) BETWEEN @phireDateYear_1 AND @phireDateYear_2
+SELECT * FROM Employees WHERE City = :pcity_1 AND YEAR(HireDate) BETWEEN :phireDateYear_1 AND :phireDateYear_2
 ```
 
 Neat!
