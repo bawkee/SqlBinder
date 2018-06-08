@@ -220,11 +220,20 @@ namespace SqlBinder
 			}
 		}
 
+		protected bool MaterializeValues<T>(IEnumerable<T> values, out T[] array)
+		{
+			array = null;
+			if (values == null)
+				return false;
+			array = values.ToArray();
+			return array.Any();
+		}
+
 		/// <summary>
 		/// Creates a <see cref="Condition" /> with <see cref="NumberValue"/> for the query.
 		/// </summary>
 		public virtual void SetCondition(string parameterName, decimal? from = null, decimal? to = null, bool inclusive = true)
-		{
+		{			
 			var grthan = inclusive ? Operator.IsGreaterThanOrEqualTo : Operator.IsGreaterThan;
 			var lessthan = inclusive ? Operator.IsLessThanOrEqualTo : Operator.IsLessThan;
 
@@ -253,7 +262,9 @@ namespace SqlBinder
 		/// </summary>
 		public virtual void SetCondition(string parameterName, IEnumerable<decimal> values, bool isNot = false)
 		{
-			SetCondition(parameterName, isNot ? Operator.IsNotAnyOf : Operator.IsAnyOf, new NumberValue(values));
+			if (!MaterializeValues(values, out var valuesMaterialized))
+				return;
+			SetCondition(parameterName, isNot ? Operator.IsNotAnyOf : Operator.IsAnyOf, new NumberValue(valuesMaterialized));
 		}
 
 		/// <summary>
@@ -269,7 +280,9 @@ namespace SqlBinder
 		/// </summary>
 		public virtual void SetCondition(string parameterName, IEnumerable<int> values, bool isNot = false)
 		{
-			SetCondition(parameterName, isNot ? Operator.IsNotAnyOf : Operator.IsAnyOf, new NumberValue(values));
+			if (!MaterializeValues(values, out var valuesMaterialized))
+				return;
+			SetCondition(parameterName, isNot ? Operator.IsNotAnyOf : Operator.IsAnyOf, new NumberValue(valuesMaterialized));
 		}
 
 		/// <summary>
@@ -285,7 +298,9 @@ namespace SqlBinder
 		/// </summary>
 		public virtual void SetCondition(string parameterName, IEnumerable<long> values, bool isNot = false)
 		{
-			SetCondition(parameterName, isNot ? Operator.IsNotAnyOf : Operator.IsAnyOf, new NumberValue(values));
+			if (!MaterializeValues(values, out var valuesMaterialized))
+				return;
+			SetCondition(parameterName, isNot ? Operator.IsNotAnyOf : Operator.IsAnyOf, new NumberValue(valuesMaterialized));
 		}
 
 		/// <summary>
@@ -321,7 +336,9 @@ namespace SqlBinder
 		/// </summary>
 		public virtual void SetCondition(string parameterName, IEnumerable<DateTime> values, bool isNot = false)
 		{
-			SetCondition(parameterName, isNot ? Operator.IsNotAnyOf : Operator.IsAnyOf, new DateValue(values));
+			if (!MaterializeValues(values, out var valuesMaterialized))
+				return;
+			SetCondition(parameterName, isNot ? Operator.IsNotAnyOf : Operator.IsAnyOf, new DateValue(valuesMaterialized));
 		}
 
 		/// <summary>
@@ -359,7 +376,9 @@ namespace SqlBinder
 		/// </summary>
 		public virtual void SetCondition(string parameterName, IEnumerable<string> values, bool isNot = false)
 		{
-			SetCondition(parameterName, isNot ? Operator.IsNotAnyOf : Operator.IsAnyOf, new StringValue(values));
+			if (!MaterializeValues(values, out var valuesMaterialized))
+				return;
+			SetCondition(parameterName, isNot ? Operator.IsNotAnyOf : Operator.IsAnyOf, new StringValue(valuesMaterialized));
 		}
 
 		/// <summary>
