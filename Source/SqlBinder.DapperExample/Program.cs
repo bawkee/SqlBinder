@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 
 using SqlBinder.DapperExample.Entities;
 using Dapper;
+using SqlBinder.ConditionValues;
 
 namespace SqlBinder.DapperExample
 {
@@ -20,7 +21,7 @@ namespace SqlBinder.DapperExample
 	{
 		static void Main()
 		{
-			var whichExample = 0.0;
+			var whichExample = 4.2;
 
 			// Set the example you want to play with. You can browse contents of the database from within Visual Studio 
 			// (double click on the Northwind Traders.mdb item in the project) and experiment.						
@@ -33,6 +34,12 @@ namespace SqlBinder.DapperExample
 				case 1: Example1(); break;
 				case 2: Example2(); break;
 				case 3: Example3(); break;
+				case 4.0: Example4_SlqBuilder(); break;
+				case 4.1: Example4_SqlBinder(); break;
+				case 4.2:
+					Example4_SlqBuilder();
+					Example4_SqlBinder();
+					break;
 			}
 
 			Console.ReadKey();
@@ -95,31 +102,205 @@ namespace SqlBinder.DapperExample
 
 				Console.WriteLine("-- Category Sales --");
 				var sql = query.GetSql();
-				var categorySales = connection.Query<CategorySale>(sql);				
-				PrintSales();
+				var categorySales = connection.Query<CategorySale>(sql);
+				PrintSales(categorySales);
 
 				Console.WriteLine("-- Category Sales After July 1996 --");
 				query.SetCondition("shippingDates", new DateTime(1995, 7, 1), NumericOperator.IsGreaterThanOrEqualTo);
 				sql = query.GetSql();
 				categorySales = connection.Query<CategorySale>(sql, query.SqlParameters);
-				PrintSales();
+				PrintSales(categorySales);
 
 				Console.WriteLine("-- Category Sales for Beverages and Seafood After July 1996 --");
 				query.SetCondition("categoryIds", new [] { 1, 8 });
 				sql = query.GetSql();
 				categorySales = connection.Query<CategorySale>(sql, query.SqlParameters);
-				PrintSales();
-
-				void PrintSales()
-				{
-					foreach (var sale in categorySales)
-						Console.WriteLine("\t" +
-						                  $"{sale.CategoryId.ToString().PadRight(3)} " +
-						                  $"{sale.CategoryName.PadRight(20)} " +
-						                  $"{sale.TotalSales.ToString("C").PadRight(20)}");
-				}
+				PrintSales(categorySales);
 			}
 		}
+
+		static void Example4_SlqBuilder()
+		{
+			Console.WriteLine("### Example 4.1, Just Dapper (SqlBuilder)");
+			using (var connection = OpenOleDbConnection())
+			{
+				Console.WriteLine("Case 1");
+				PrintSales(GetCategorySales_SqlBuilder(connection,
+					categoryIds: new[] {1},
+					fromShippingDate: new DateTime(1995, 1, 1),
+					shippingCountries: new[] {"France"}));
+
+				Console.WriteLine("Case 2");
+				PrintSales(GetCategorySales_SqlBuilder(connection,
+					categoryIds: new[] { 1, 2 },
+					toShippingDate: new DateTime(1996, 1, 1),
+					shippingCountries: new[] { "Austria" }));
+
+				Console.WriteLine("Case 3");
+				PrintSales(GetCategorySales_SqlBuilder(connection,
+					categoryIds: new[] { 3, 4 },
+					fromShippingDate: new DateTime(1995, 1, 1), toShippingDate: new DateTime(1996, 1, 1),
+					shippingCountries: new[] { "Italy" }));
+
+				Console.WriteLine("Case 4");
+				PrintSales(GetCategorySales_SqlBuilder(connection,
+					categoryIds: new[] { 5, 6, 7, 8 },
+					toShippingDate: new DateTime(1995, 1, 1),
+					shippingCountries: new[] { "Spain" }));
+
+				Console.WriteLine("Case 5");
+				PrintSales(GetCategorySales_SqlBuilder(connection,
+					categoryIds: new[] { 1, 2, 3 }));
+			}
+		}
+
+		static void Example4_SqlBinder()
+		{
+			Console.WriteLine("### Example 4.2, SqlBinder + Dapper");
+			using (var connection = OpenOleDbConnection())
+			{
+				Console.WriteLine("Case 1");
+				PrintSales(GetCategorySales_SqlBinder(connection,
+					categoryIds: new[] { 1 },
+					fromShippingDate: new DateTime(1995, 1, 1),
+					shippingCountries: new[] { "France" }));
+
+				Console.WriteLine("Case 2");
+				PrintSales(GetCategorySales_SqlBinder(connection,
+					categoryIds: new[] { 1, 2 },
+					toShippingDate: new DateTime(1996, 1, 1),
+					shippingCountries: new[] { "Austria" }));
+
+				Console.WriteLine("Case 3");
+				PrintSales(GetCategorySales_SqlBinder(connection,
+					categoryIds: new[] { 3, 4 },
+					fromShippingDate: new DateTime(1995, 1, 1), toShippingDate: new DateTime(1996, 1, 1),
+					shippingCountries: new[] { "Italy" }));
+				
+				Console.WriteLine("Case 4");
+				PrintSales(GetCategorySales_SqlBinder(connection,
+					categoryIds: new[] { 5, 6, 7, 8 },
+					toShippingDate: new DateTime(1995, 1, 1),
+					shippingCountries: new[] { "Spain" }));
+
+				Console.WriteLine("Case 5");
+				PrintSales(GetCategorySales_SqlBinder(connection,
+					categoryIds: new[] { 1, 2, 3 }));
+			}
+		}
+
+		private static IEnumerable<CategorySale> GetCategorySales_SqlBuilder(
+			IDbConnection connection,
+			int[] categoryIds = null,
+			DateTime? fromShippingDate = null, DateTime? toShippingDate = null,
+			DateTime? fromOrderDate = null, DateTime? toOrderDate = null,
+			string[] shippingCountries = null)
+		{
+			var builder = new SqlBuilder();
+
+			var sql = @"SELECT
+	Categories.CategoryID, 
+	Categories.CategoryName, 
+	SUM(CCUR(OrderDetails.UnitPrice * OrderDetails.Quantity * (1 - OrderDetails.Discount) / 100) * 100) AS TotalSales
+FROM (((Categories		
+	INNER JOIN Products ON Products.CategoryID = Categories.CategoryID)
+	INNER JOIN OrderDetails ON OrderDetails.ProductID = Products.ProductID)
+	INNER JOIN Orders ON Orders.OrderID = OrderDetails.OrderID) /**where**/
+GROUP BY 
+	Categories.CategoryID, Categories.CategoryName";
+			
+			var template = builder.AddTemplate(sql);
+
+			if (fromShippingDate.HasValue && toShippingDate.HasValue)
+				builder.Where("Orders.ShippedDate BETWEEN :fromShippingDate AND :toShippingDate", new { fromShippingDate, toShippingDate });
+			else if (fromShippingDate.HasValue)
+				builder.Where("Orders.ShippedDate >= :fromShippingDate", new { fromShippingDate });
+			else if (toShippingDate.HasValue)
+				builder.Where("Orders.ShippedDate <= :toShippingDate", new { toShippingDate });
+
+			if (fromOrderDate.HasValue && toOrderDate.HasValue)
+				builder.Where("Orders.ShippedDate BETWEEN :fromOrderDate AND :toOrderDate", new { fromOrderDate, toOrderDate });
+			else if (fromOrderDate.HasValue)
+				builder.Where("Orders.ShippedDate >= :fromOrderDate", new { fromOrderDate });
+			else if (toOrderDate.HasValue)
+				builder.Where("Orders.ShippedDate <= :toOrderDate", new { toOrderDate });
+
+			if (categoryIds?.Any() ?? false)
+				builder.Where("Categories.CategoryID IN :categoryIds", new { categoryIds });
+
+			if (shippingCountries?.Any() ?? false)
+				builder.Where("Orders.ShipCountry IN :shippingCountries", new { shippingCountries }); ;
+
+			var sw = new Stopwatch();
+			sw.Start();
+
+			var ret = connection.Query<CategorySale>(template.RawSql, template.Parameters);
+
+			sw.Stop();
+			System.Diagnostics.Debug.WriteLine("ELAP1:" + sw.Elapsed.TotalMilliseconds);
+
+
+			return ret;
+		}
+
+		private static IEnumerable<CategorySale> GetCategorySales_SqlBinder(
+			IDbConnection connection, 
+			int[] categoryIds = null, 
+			DateTime? fromShippingDate = null, DateTime? toShippingDate = null,
+			DateTime? fromOrderDate = null, DateTime? toOrderDate = null,
+			string[] shippingCountries = null)
+		{
+			var query = new Query(@"SELECT
+	Categories.CategoryID, 
+	Categories.CategoryName, 
+	SUM(CCUR(OrderDetails.UnitPrice * OrderDetails.Quantity * (1 - OrderDetails.Discount) / 100) * 100) AS TotalSales
+FROM ((Categories		
+	INNER JOIN Products ON Products.CategoryID = Categories.CategoryID)
+	INNER JOIN OrderDetails ON OrderDetails.ProductID = Products.ProductID)
+{WHERE 	
+	{OrderDetails.OrderID IN (SELECT OrderID FROM Orders WHERE 
+			{Orders.ShippedDate :shippingDates} 
+			{Orders.OrderDate :orderDates}
+			{Orders.ShipCountry :shipCountry})} 
+	{Categories.CategoryID :categoryIds}}
+GROUP BY 
+	Categories.CategoryID, Categories.CategoryName");
+
+			query.SetCondition("categoryIds", categoryIds);			
+			query.SetCondition("shippingDates", fromShippingDate, toShippingDate);
+			query.SetCondition("orderDates", fromOrderDate, toOrderDate);			
+			query.SetCondition("shipCountry", shippingCountries);
+
+			var sw = new Stopwatch();
+			sw.Start();
+
+			var ret = connection.Query<CategorySale>(query.GetSql(), query.SqlParameters);
+
+			sw.Stop();
+			System.Diagnostics.Debug.WriteLine("ELAP2:" + sw.Elapsed.TotalMilliseconds);
+
+			return ret;
+		}
+
+		static void PrintSales(IEnumerable<CategorySale> categorySales)
+		{
+			foreach (var sale in categorySales)
+				Console.WriteLine("\t" +
+				                  $"{sale.CategoryId.ToString().PadRight(3)} " +
+				                  $"{sale.CategoryName.PadRight(20)} " +
+				                  $"{sale.TotalSales.ToString("C").PadRight(20)}");
+		}
+
+		//private static void BuildFromTo(SqlBuilder sqlBuilder, string column, string fromParam, string toParam, DateTime? from = null, DateTime? to = null)
+		//{
+		// Coudln't have used this due to anon types being used by dynamic params in SqlBuilder
+		//	if (from.HasValue && to.HasValue)
+		//		sqlBuilder.Where($"{column} BETWEEN :{fromParam} AND :{toParam}", new {fromParam = from, toParam = to});
+		//	else if (from.HasValue)
+		//		sqlBuilder.Where($"{column} >= :{fromParam}", new { fromParam = from });
+		//	else if (to.HasValue)
+		//		sqlBuilder.Where($"{column} <= :{toParam}", new { toParam = to });
+		//}
 
 		static void PrintEmployees(IEnumerable<Employee> emps)
 		{
