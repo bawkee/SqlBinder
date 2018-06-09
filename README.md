@@ -6,8 +6,6 @@ Is a free, open-source library that helps you transform a given SQL template and
 
 **It is more than just an 'SQL builder'** as it has a high degree of composability and is aimed at writing more complex queries. It isn't a swiss army knife either, it can be elegantly used alongside other popular tools such as Dapper, Dapper.Contrib, PetaPoco and others.
 
-Essentially, with one template you can create multiple different queries.
-
 [![NuGet](https://img.shields.io/nuget/v/SqlBinder.svg)](https://www.nuget.org/packages/SqlBinder/)
 
 ## Example 1: Query employees 
