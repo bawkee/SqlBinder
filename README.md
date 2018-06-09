@@ -2,9 +2,9 @@
 
 Is a free, open-source library that helps you transform a given SQL template and a set of conditions into any number of valid SQL statements along with their associated parameters.
 
-*It isn't an ORM solution* - instead, it is DBMS-independent, SQL-centric **templating engine**. All it does is it removes the hassle of writing code that generates SQLs and bind variables . It does *not* generate the entire SQL itself, it transforms an existing SQL template instead. 
+**It isn't an ORM solution** - instead, it is DBMS-independent, SQL-centric **templating engine**. All it does is it removes the hassle of writing code that generates SQLs and bind variables . It does *not* generate the entire SQL itself, it transforms an existing SQL template instead. 
 
-*It is more than just an 'SQL builder'* as it has a high degree of composability and is aimed at writing more complex queries. It isn't a swiss army knife either, it can be elegantly used alongside other popular tools such as Dapper, Dapper.Contrib, PetaPoco and others.
+**It is more than just an 'SQL builder'** as it has a high degree of composability and is aimed at writing more complex queries. It isn't a swiss army knife either, it can be elegantly used alongside other popular tools such as Dapper, Dapper.Contrib, PetaPoco and others.
 
 Essentially, with one template you can create multiple different queries.
 
