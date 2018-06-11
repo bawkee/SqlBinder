@@ -62,7 +62,7 @@ namespace SqlBinder.ConditionValues
 				case (int)Operator.Is:
 					return _values.Length == 0 ? "IS NULL" : ValidateParams("= {0}", 1);
 				case (int)Operator.IsNot:
-					return _values.Length == 0 ? "IS NOT NULL" : ValidateParams("!= {0}", 1);
+					return _values.Length == 0 ? "IS NOT NULL" : ValidateParams("<> {0}", 1);
 				case (int)Operator.IsBetween: return ValidateParams("BETWEEN {0} AND {1}", 2);
 				case (int)Operator.IsNotBetween: return ValidateParams("NOT BETWEEN {0} AND {1}", 2);
 				case (int)Operator.IsAnyOf:

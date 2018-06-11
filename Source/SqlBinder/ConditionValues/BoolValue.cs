@@ -20,7 +20,7 @@ namespace SqlBinder.ConditionValues
 				case (int)Operator.Is:
 					return _value == null ? "IS NULL" : "= {0}";
 				case (int)Operator.IsNot:
-					return _value == null ? "IS NOT NULL" : "!= {0}";
+					return _value == null ? "IS NOT NULL" : "<> {0}";
 				default: throw new InvalidConditionException(this, (Operator)sqlOperator, Exceptions.IllegalComboOfValueAndOperator);
 			}
 		}

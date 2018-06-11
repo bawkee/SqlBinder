@@ -65,7 +65,8 @@ namespace SqlBinder
 	/// <summary>
 	/// Basic operators for the condition shortcut overloads.
 	/// </summary>
-	public enum NumericOperator
+	
+	public enum NumericOperator : byte 
 	{
 		Is,
 		IsNot,
@@ -78,11 +79,12 @@ namespace SqlBinder
 	/// <summary>
 	/// Basic operators for string condition shortcut overloads.
 	/// </summary>
-	public enum StringOperator
+	public enum StringOperator : byte
 	{
-		Is,
-		IsNot,
+		Is,		
 		IsLike,
-		IsNotLike
+		Contains,
+		BeginsWith,
+		EndsWith
 	}
 }

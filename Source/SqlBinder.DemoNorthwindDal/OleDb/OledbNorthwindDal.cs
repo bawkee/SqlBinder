@@ -107,15 +107,15 @@ namespace SqlBinder.DemoNorthwindDal.OleDb
 			}
 		}
 
+		/// <summary>
+		/// Get Category Sales by building a dynamic SQL via SqlBinder.
+		/// </summary>
 		public IEnumerable<CategorySale> GetCategorySales(int[] categoryIds = null, DateTime? fromDate = null, DateTime? toDate = null)
 		{
 			var query = new DbQuery(_connection, GetSqlBinderScript("CategorySales.sql"));
 
-			if (categoryIds?.Any() ?? false)
-				query.SetCondition("categoryIds", categoryIds);
-
-			if (fromDate.HasValue || toDate.HasValue)
-				query.SetCondition("shippingDates", fromDate, toDate);
+			query.SetCondition("categoryIds", categoryIds);
+			query.SetConditionRange("shippingDates", fromDate, toDate);
 
 			using (var r = query.CreateCommand().ExecuteReader())
 			{
@@ -133,6 +133,9 @@ namespace SqlBinder.DemoNorthwindDal.OleDb
 			TraceQuery("Category Sales", query);
 		}
 
+		/// <summary>
+		/// Get Products by building a dynamic SQL via SqlBinder.
+		/// </summary>
 		public IEnumerable<Product> GetProducts(decimal? productId = null,
 			string productName = null,
 			int[] supplierIds = null,
@@ -148,21 +151,11 @@ namespace SqlBinder.DemoNorthwindDal.OleDb
 				query.SetCondition("productId", productId);
 			else
 			{
-				if (!string.IsNullOrEmpty(productName))
-					query.SetCondition("productName", $"%{productName}%", StringOperator.IsLike);
-
-				if (supplierIds?.Any() ?? false)
-					query.SetCondition("supplierIds", supplierIds);
-
-				if (categoryIds?.Any() ?? false)
-					query.SetCondition("categoryIds", categoryIds);
-
-				if (unitPriceFrom.HasValue || unitPriceTo.HasValue)
-					query.SetCondition("unitPrice", unitPriceFrom, unitPriceTo);
-
-				if (isDiscontinued.HasValue)
-					query.SetCondition("isDiscontinued", isDiscontinued.Value);
-
+				query.SetCondition("productName", productName, StringOperator.Contains);
+				query.SetCondition("supplierIds", supplierIds);
+				query.SetCondition("categoryIds", categoryIds);
+				query.SetConditionRange("unitPrice", unitPriceFrom, unitPriceTo);
+				query.SetCondition("isDiscontinued", isDiscontinued, ignoreIfNull: true);
 				if (priceGreaterThanAvg)
 					query.DefineVariable("priceGreaterThanAvg", "> (SELECT AVG(UnitPrice) From Products)");
 			}
@@ -214,6 +207,9 @@ namespace SqlBinder.DemoNorthwindDal.OleDb
 			}
 		}
 
+		/// <summary>
+		/// Get Orders by building a dynamic SQL via SqlBinder.
+		/// </summary>
 		public IEnumerable<Order> GetOrders(int? orderId = null,
 			int[] productIds = null,
 			string[] customerIds = null,
@@ -232,35 +228,16 @@ namespace SqlBinder.DemoNorthwindDal.OleDb
 				query.SetCondition("orderId", orderId);
 			else
 			{
-				if (productIds?.Any() ?? false)
-					query.SetCondition("productIds", productIds);
-
-				if (customerIds?.Any() ?? false)
-					query.SetCondition("customerIds", customerIds);
-
-				if (employeeIds?.Any() ?? false)
-					query.SetCondition("employeeIds", employeeIds);
-
-				if (shipperIds?.Any() ?? false)
-					query.SetCondition("shipperIds", shipperIds);
-
-				if (freightFrom.HasValue || freightTo.HasValue)
-					query.SetCondition("freight", freightFrom, freightTo);
-
-				if (orderDateFrom.HasValue || orderDateTo.HasValue)
-					query.SetCondition("orderDate", orderDateFrom, orderDateTo);
-
-				if (reqDateFrom.HasValue || reqDateTo.HasValue)
-					query.SetCondition("reqDate", reqDateFrom, reqDateTo);
-
-				if (shipDateFrom.HasValue || shipDateTo.HasValue)
-					query.SetCondition("shipDate", shipDateFrom, shipDateTo);
-
-				if (shipCity != null)
-					query.SetCondition("shipCity", shipCity);
-
-				if (shipCountry!= null)
-					query.SetCondition("shipCountry", shipCountry);
+				query.SetCondition("productIds", productIds);
+				query.SetCondition("customerIds", customerIds);
+				query.SetCondition("employeeIds", employeeIds);
+				query.SetCondition("shipperIds", shipperIds);
+				query.SetConditionRange("freight", freightFrom, freightTo);
+				query.SetConditionRange("orderDate", orderDateFrom, orderDateTo);
+				query.SetConditionRange("reqDate", reqDateFrom, reqDateTo);
+				query.SetConditionRange("shipDate", shipDateFrom, shipDateTo);
+				query.SetCondition("shipCity", shipCity, ignoreIfNull: true);
+				query.SetCondition("shipCountry", shipCountry, ignoreIfNull: true);
 			}
 
 			using (var r = query.CreateCommand().ExecuteReader())
@@ -291,7 +268,6 @@ namespace SqlBinder.DemoNorthwindDal.OleDb
 			}
 
 			TraceQuery("Orders", query);
-
 		}
 
 		private OleDbCommand CreateTextCommand(string text)

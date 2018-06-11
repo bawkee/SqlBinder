@@ -189,6 +189,9 @@ namespace SqlBinder.DapperExample
 			}
 		}
 
+		/// <summary>
+		/// CategorySales query done by Dapper.Contib (SqlBuilder)
+		/// </summary>
 		private static IEnumerable<CategorySale> GetCategorySales_SqlBuilder(
 			IDbConnection connection,
 			int[] categoryIds = null,
@@ -229,7 +232,7 @@ GROUP BY
 				builder.Where("Categories.CategoryID IN :categoryIds", new { categoryIds });
 
 			if (shippingCountries?.Any() ?? false)
-				builder.Where("Orders.ShipCountry IN :shippingCountries", new { shippingCountries }); ;
+				builder.Where("Orders.ShipCountry IN :shippingCountries", new { shippingCountries });
 
 			var sw = new Stopwatch();
 			sw.Start();
@@ -243,6 +246,9 @@ GROUP BY
 			return ret;
 		}
 
+		/// <summary>
+		/// CategorySales query done by SqlBinder + Dapper
+		/// </summary>
 		private static IEnumerable<CategorySale> GetCategorySales_SqlBinder(
 			IDbConnection connection, 
 			int[] categoryIds = null, 
@@ -267,8 +273,8 @@ GROUP BY
 	Categories.CategoryID, Categories.CategoryName");
 
 			query.SetCondition("categoryIds", categoryIds);			
-			query.SetCondition("shippingDates", fromShippingDate, toShippingDate);
-			query.SetCondition("orderDates", fromOrderDate, toOrderDate);			
+			query.SetConditionRange("shippingDates", fromShippingDate, toShippingDate);
+			query.SetConditionRange("orderDates", fromOrderDate, toOrderDate);			
 			query.SetCondition("shipCountry", shippingCountries);
 
 			var sw = new Stopwatch();

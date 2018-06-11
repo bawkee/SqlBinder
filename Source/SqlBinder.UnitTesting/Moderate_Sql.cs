@@ -211,7 +211,7 @@ namespace SqlBinder.UnitTesting
 				cmd = query.CreateCommand();
 
 				AssertCommand(cmd);
-				Assert.AreEqual("SELECT * FROM TABLE1 WHERE COLUMN1 != :pCriteria1_1", cmd.CommandText);
+				Assert.AreEqual("SELECT * FROM TABLE1 WHERE COLUMN1 <> :pCriteria1_1", cmd.CommandText);
 				Assert.AreEqual(1, cmd.Parameters.Count);
 				Assert.AreEqual("pCriteria1_1", cmd.Parameters[0].ParameterName);
 				Assert.AreEqual(123, cmd.Parameters[0].Value);
@@ -345,7 +345,7 @@ namespace SqlBinder.UnitTesting
 				Assert.AreEqual(0, cmd.Parameters.Count);
 
 				// Now try IS NOT
-				query.SetCondition("Criteria1", null, StringOperator.IsNot);
+				query.SetCondition("Criteria1", null, StringOperator.Is, isNot: true);
 
 				cmd = query.CreateCommand();
 
@@ -412,12 +412,12 @@ namespace SqlBinder.UnitTesting
 				Assert.AreEqual("", cmd.Parameters[0].Value);
 
 				// Now try IS NOT
-				query.SetCondition("Criteria1", "", StringOperator.IsNot);
+				query.SetCondition("Criteria1", "", StringOperator.Is, isNot: true);
 
 				cmd = query.CreateCommand();
 
 				AssertCommand(cmd);
-				Assert.AreEqual("SELECT * FROM TABLE1 WHERE COLUMN1 != :pCriteria1_1", cmd.CommandText);
+				Assert.AreEqual("SELECT * FROM TABLE1 WHERE COLUMN1 <> :pCriteria1_1", cmd.CommandText);
 				Assert.AreEqual(1, cmd.Parameters.Count);
 				Assert.AreEqual("", cmd.Parameters[0].Value);
 

@@ -229,19 +229,24 @@ namespace SqlBinder
 			return array.Any();
 		}
 
+		protected void TranslateGreaterLessThanOperators(out Operator lessThan, out Operator greaterThan, bool inclusive, bool isNot)
+		{
+			greaterThan = inclusive ? (isNot ? Operator.IsLessThan : Operator.IsGreaterThanOrEqualTo) : (isNot ? Operator.IsLessThanOrEqualTo : Operator.IsGreaterThan);
+			lessThan = inclusive ? (isNot ? Operator.IsGreaterThan : Operator.IsLessThanOrEqualTo) : (isNot ? Operator.IsGreaterThanOrEqualTo : Operator.IsLessThan);
+		}
+
 		/// <summary>
 		/// Creates a <see cref="Condition" /> with <see cref="NumberValue"/> for the query.
 		/// </summary>
-		public virtual void SetCondition(string parameterName, decimal? from = null, decimal? to = null, bool inclusive = true)
-		{			
-			var grthan = inclusive ? Operator.IsGreaterThanOrEqualTo : Operator.IsGreaterThan;
-			var lessthan = inclusive ? Operator.IsLessThanOrEqualTo : Operator.IsLessThan;
+		public virtual void SetConditionRange(string parameterName, decimal? from = null, decimal? to = null, bool inclusive = true, bool isNot = false)
+		{
+			TranslateGreaterLessThanOperators(out var lessthan, out var grthan, inclusive, isNot);
 
 			if (from.HasValue && to.HasValue)
 			{
 				if (!inclusive)
 					throw new ArgumentException(Exceptions.SqlBetweenCanOnlyBeInclusive, nameof(inclusive));
-				SetCondition(parameterName, Operator.IsBetween, new NumberValue(from.Value, to.Value));
+				SetCondition(parameterName, isNot ? Operator.IsNotBetween : Operator.IsBetween, new NumberValue(from.Value, to.Value));
 			}
 			else if (from.HasValue)
 				SetCondition(parameterName, grthan, new NumberValue(from.Value));
@@ -252,8 +257,10 @@ namespace SqlBinder
 		/// <summary>
 		/// Creates a <see cref="Condition" /> with <see cref="NumberValue" /> for the query.
 		/// </summary>
-		public virtual void SetCondition(string parameterName, decimal value, NumericOperator conditionOperator = NumericOperator.Is)
+		public virtual void SetCondition(string parameterName, decimal? value, NumericOperator conditionOperator = NumericOperator.Is, bool ignoreIfNull = false)
 		{
+			if (ignoreIfNull && !value.HasValue)
+				return;
 			SetCondition(parameterName, TranslateOperator(conditionOperator), new NumberValue(value));
 		}
 
@@ -268,10 +275,31 @@ namespace SqlBinder
 		}
 
 		/// <summary>
+		/// Creates a <see cref="Condition" /> with <see cref="NumberValue"/> for the query.
+		/// </summary>
+		public virtual void SetConditionRange(string parameterName, int? from = null, int? to = null, bool inclusive = true, bool isNot = false)
+		{
+			TranslateGreaterLessThanOperators(out var lessthan, out var grthan, inclusive, isNot);
+
+			if (from.HasValue && to.HasValue)
+			{
+				if (!inclusive)
+					throw new ArgumentException(Exceptions.SqlBetweenCanOnlyBeInclusive, nameof(inclusive));
+				SetCondition(parameterName, isNot ? Operator.IsNotBetween : Operator.IsBetween, new NumberValue(from.Value, to.Value));
+			}
+			else if (from.HasValue)
+				SetCondition(parameterName, grthan, new NumberValue(from.Value));
+			else if (to.HasValue)
+				SetCondition(parameterName, lessthan, new NumberValue(to.Value));
+		}
+
+		/// <summary>
 		/// Creates a <see cref="Condition" /> with <see cref="NumberValue" /> for the query.
 		/// </summary>
-		public virtual void SetCondition(string parameterName, int value, NumericOperator conditionOperator = NumericOperator.Is)
+		public virtual void SetCondition(string parameterName, int? value, NumericOperator conditionOperator = NumericOperator.Is, bool ignoreIfNull = false)
 		{
+			if (ignoreIfNull && !value.HasValue)
+				return;
 			SetCondition(parameterName, TranslateOperator(conditionOperator), new NumberValue(value));
 		}
 
@@ -288,8 +316,10 @@ namespace SqlBinder
 		/// <summary>
 		/// Creates a <see cref="Condition" /> with <see cref="NumberValue" /> for the query.
 		/// </summary>
-		public virtual void SetCondition(string parameterName, long value, NumericOperator conditionOperator = NumericOperator.Is)
+		public virtual void SetCondition(string parameterName, long? value, NumericOperator conditionOperator = NumericOperator.Is, bool ignoreIfNull = false)
 		{
+			if (ignoreIfNull && !value.HasValue)
+				return;
 			SetCondition(parameterName, TranslateOperator(conditionOperator), new NumberValue(value));
 		}
 
@@ -306,16 +336,15 @@ namespace SqlBinder
 		/// <summary>
 		/// Creates a <see cref="Condition" /> with <see cref="DateValue"/> for the query.
 		/// </summary>
-		public virtual void SetCondition(string parameterName, DateTime? from = null, DateTime? to = null, bool inclusive = true)
+		public virtual void SetConditionRange(string parameterName, DateTime? from = null, DateTime? to = null, bool inclusive = true, bool isNot = false)
 		{
-			var grthan = inclusive ? Operator.IsGreaterThanOrEqualTo : Operator.IsGreaterThan;
-			var lessthan = inclusive ? Operator.IsLessThanOrEqualTo : Operator.IsLessThan;
+			TranslateGreaterLessThanOperators(out var lessthan, out var grthan, inclusive, isNot);
 
 			if (from.HasValue && to.HasValue)
 			{
 				if (!inclusive)
 					throw new ArgumentException(Exceptions.SqlBetweenCanOnlyBeInclusive, nameof(inclusive));
-				SetCondition(parameterName, Operator.IsBetween, new DateValue(from.Value, to.Value));
+				SetCondition(parameterName, isNot ? Operator.IsNotBetween : Operator.IsBetween, new DateValue(from.Value, to.Value));
 			}
 			else if (from.HasValue)
 				SetCondition(parameterName, grthan, new DateValue(from.Value));
@@ -326,8 +355,10 @@ namespace SqlBinder
 		/// <summary>
 		/// Creates a <see cref="Condition" /> with <see cref="DateValue" /> for the query.
 		/// </summary>
-		public virtual void SetCondition(string parameterName, DateTime? value, NumericOperator conditionOperator = NumericOperator.Is)
+		public virtual void SetCondition(string parameterName, DateTime? value, NumericOperator conditionOperator = NumericOperator.Is, bool ignoreIfNull = false)
 		{
+			if (ignoreIfNull && !value.HasValue)
+				return;
 			SetCondition(parameterName, TranslateOperator(conditionOperator), new DateValue(value));
 		}
 
@@ -344,29 +375,43 @@ namespace SqlBinder
 		/// <summary>
 		/// Creates a <see cref="Condition" /> with <see cref="DateValue" /> for the query.
 		/// </summary>
-		public virtual void SetCondition(string parameterName, bool value)
+		public virtual void SetCondition(string parameterName, bool? value, bool ignoreIfNull = false)
 		{
+			if (ignoreIfNull && !value.HasValue)
+				return;
 			SetCondition(parameterName, Operator.Is, new BoolValue(value));
 		}
 
 		/// <summary>
 		/// Creates a <see cref="Condition" /> with <see cref="StringValue" /> for the query.
 		/// </summary>
-		public virtual void SetCondition(string parameterName, string value, StringOperator conditionOperator = StringOperator.Is)
+		public virtual void SetCondition(string parameterName, string value, StringOperator conditionOperator = StringOperator.Is, bool isNot = false, bool ignoreIfNull = false)
 		{
-			SetCondition(parameterName, TranslateStringOperator(conditionOperator), new StringValue(value));
+			if ((conditionOperator != StringOperator.Is || ignoreIfNull) && string.IsNullOrEmpty(value))
+				return;
+			var op = TranslateStringOperator(conditionOperator, ref value, isNot);
+			SetCondition(parameterName, op, new StringValue(value));
 		}
 
 		/// <summary>
 		/// Translates the string-specific StringOperator enum into a general purpose Operator enum.
 		/// </summary>
-		protected static Operator TranslateStringOperator(StringOperator conditionOperator)
+		protected static Operator TranslateStringOperator(StringOperator conditionOperator, ref string value, bool isNot)
 		{
 			switch (conditionOperator)
 			{
-				case StringOperator.IsLike: return Operator.Contains;
-				case StringOperator.IsNotLike: return Operator.DoesNotContain;
-				case StringOperator.IsNot: return Operator.IsNot;
+				case StringOperator.IsLike: return isNot ? Operator.DoesNotContain : Operator.Contains;
+				case StringOperator.Is: return isNot ? Operator.IsNot : Operator.Is;
+				case StringOperator.Contains:
+					value = $"%{value}%";
+					return isNot ? Operator.DoesNotContain : Operator.Contains;
+				case StringOperator.BeginsWith:
+					value = $"{value}%";
+					return isNot ? Operator.DoesNotContain : Operator.Contains;
+				case StringOperator.EndsWith:
+					value = $"%{value}";
+					return isNot ? Operator.DoesNotContain : Operator.Contains;
+
 				default: return Operator.Is;
 			}
 		}
