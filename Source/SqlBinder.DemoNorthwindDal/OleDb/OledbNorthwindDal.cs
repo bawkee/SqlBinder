@@ -23,92 +23,40 @@ namespace SqlBinder.DemoNorthwindDal.OleDb
 		public IEnumerable<Category> GetCategories()
 		{
 			using (var r = CreateTextCommand("SELECT * FROM Categories").ExecuteReader())
-			{
 				while (r?.Read() ?? false)
-					yield return new Category
-					{
-						CategoryId = (int) r["CategoryID"],
-						Name = (string) r["CategoryName"],
-						Description = (string) r["Description"]
-					};
-			}			
+					yield return OledbOrm.CreateCategory(r);
 		}
 
 		public IEnumerable<Supplier> GetSuppliers()
 		{
 			using (var r = CreateTextCommand("SELECT * FROM Suppliers").ExecuteReader())
-			{
 				while (r?.Read() ?? false)
-					yield return new Supplier
-					{
-						SupplierId = (int)r["SupplierID"],
-						CompanyName = (string)r["CompanyName"],
-						ContactName = r["ContactName"] as string,
-						ContactTitle = r["ContactTitle"] as string,
-						Address = r["Address"] as string,
-						City = r["City"] as string,
-						Region = r["Region"] as string,
-						PostalCode = r["PostalCode"] as string,
-						Country = r["Country"] as string,
-						Phone = r["Phone"] as string,
-						Fax = r["Fax"] as string,
-						HomePage = r["HomePage"] as string,
-					};
-			}
+					yield return OledbOrm.CreateSupplier(r);
 		}
 
 		public IEnumerable<Customer> GetCustomers()
 		{
 			using (var r = CreateTextCommand("SELECT * FROM Customers").ExecuteReader())
-			{
 				while (r?.Read() ?? false)
-					yield return new Customer
-					{
-						CustomerId = r["CustomerId"] as string,
-						CompanyName = r["CompanyName"] as string,
-						ContactTitle = r["ContactTitle"] as string,
-						ContactName = r["ContactName"] as string,
-						Address = r["Address"] as string,
-						City = r["City"] as string,
-						Region = r["Region"] as string,
-						PostalCode = r["PostalCode"] as string,
-						Country = r["Country"] as string						
-					};
-			}
+					yield return OledbOrm.CreateCustomer(r);
 		}
 
 		public IEnumerable<Shipper> GetShippers()
 		{
 			using (var r = CreateTextCommand("SELECT * FROM Shippers").ExecuteReader())
-			{
 				while (r?.Read() ?? false)
-					yield return new Shipper
-					{
-						ShipperId = (int)r["ShipperId"],
-						CompanyName = r["CompanyName"] as string,
-						Phone = r["Phone"] as string,
-					};
-			}
+					yield return OledbOrm.CreateShipper(r);
 		}
 
 		public IEnumerable<Employee> GetEmployees()
 		{
 			using (var r = CreateTextCommand("SELECT * FROM Employees").ExecuteReader())
-			{
 				while (r?.Read() ?? false)
-					yield return new Employee
-					{
-						EmployeeId = (int)r["EmployeeId"],
-						FirstName = r["FirstName"] as string,
-						LastName = r["LastName"] as string,
-						Title = r["Title"] as string,
-						HireDate = r["HireDate"] as DateTime?,
-					};
-			}
+					yield return OledbOrm.CreateEmployee(r);
 		}
 
 		/// <summary>
-		/// Get Category Sales by building a dynamic SQL via SqlBinder.
+		/// Get Category Sales by building a dynamic SQL via SqlBinder. The *real* meat of this method is in the .Sql file.
 		/// </summary>
 		public IEnumerable<CategorySale> GetCategorySales(int[] categoryIds = null, DateTime? fromDate = null, DateTime? toDate = null)
 		{
@@ -118,23 +66,14 @@ namespace SqlBinder.DemoNorthwindDal.OleDb
 			query.SetConditionRange("shippingDates", fromDate, toDate);
 
 			using (var r = query.CreateCommand().ExecuteReader())
-			{
 				while (r.Read())
-				{
-					yield return new CategorySale
-					{
-						CategoryId = (int)r["CategoryID"],
-						CategoryName = (string)r["CategoryName"],
-						TotalSales = r["TotalSales"] as decimal? ?? 0
-					};
-				}
-			}
+					yield return OledbOrm.CreateCategorySale(r);
 
 			TraceQuery("Category Sales", query);
 		}
 
 		/// <summary>
-		/// Get Products by building a dynamic SQL via SqlBinder.
+		/// Get Products by building a dynamic SQL via SqlBinder. The *real* meat of this method is in the .Sql file.
 		/// </summary>
 		public IEnumerable<Product> GetProducts(decimal? productId = null,
 			string productName = null,
@@ -161,25 +100,8 @@ namespace SqlBinder.DemoNorthwindDal.OleDb
 			}
 
 			using (var r = query.CreateCommand().ExecuteReader())
-			{
 				while (r.Read())
-				{
-					yield return new Product
-					{
-						ProductId = (int)r["ProductID"],
-						ProductName = (string)r["ProductName"],
-						CategoryName = (string)r["CategoryName"],
-						SupplierCompany = (string)r["SupplierCompany"],
-						SupplierId = (int)r["SupplierID"],
-						CategoryId = (int)r["CategoryID"],
-						QuantityPerUnit = (string)r["QuantityPerUnit"],
-						UnitPrice = (decimal)r["UnitPrice"],
-						UnitsInStock = Convert.ToInt32(r["UnitsInStock"] as Int16?),
-						UnitsOnOrder = Convert.ToInt32(r["UnitsOnOrder"] as Int16?),
-						Discontinued = (bool)r["Discontinued"],
-					};
-				}
-			}
+					yield return OledbOrm.CreateProduct(r);
 
 			TraceQuery("Products", query);
 		}
@@ -187,10 +109,8 @@ namespace SqlBinder.DemoNorthwindDal.OleDb
 		public IEnumerable<string> GetShippingCountries()
 		{
 			using (var r = CreateTextCommand("SELECT ShipCountry FROM Orders GROUP BY ShipCountry").ExecuteReader())
-			{
 				while (r?.Read() ?? false)
 					yield return r[0] as string;
-			}
 		}
 
 		public IEnumerable<string> GetShippingCities(string shippingCountry = null)
@@ -201,14 +121,12 @@ namespace SqlBinder.DemoNorthwindDal.OleDb
 				query.SetCondition("shippingCountry", shippingCountry);
 
 			using (var r = query.CreateCommand().ExecuteReader())
-			{
 				while (r.Read())
 					yield return r[0] as string;					
-			}
 		}
 
 		/// <summary>
-		/// Get Orders by building a dynamic SQL via SqlBinder.
+		/// Get Orders by building a dynamic SQL via SqlBinder. The *real* meat of this method is in the .Sql file.
 		/// </summary>
 		public IEnumerable<Order> GetOrders(int? orderId = null,
 			int[] productIds = null,
@@ -241,31 +159,8 @@ namespace SqlBinder.DemoNorthwindDal.OleDb
 			}
 
 			using (var r = query.CreateCommand().ExecuteReader())
-			{
 				while (r.Read())
-				{
-					yield return new Order
-					{
-						OrderId = (int)r["OrderId"],
-						CustomerId = (string)r["CustomerId"],
-						EmployeeId = (int)r["EmployeeId"],
-						OrderDate = r["OrderDate"] as DateTime?,
-						RequiredDate = r["RequiredDate"] as DateTime?,
-						ShippedDate = r["ShippedDate"] as DateTime?,
-						ShipperId = (int)r["ShipVia"],
-						Freight = (decimal)r["Freight"],
-						CustomerName = (string)r["CustomerName"],
-						EmployeeName = (string)r["EmployeeName"],
-						ShippedVia = r["ShippedVia"] as string,
-						ShipName = r["ShipName"] as string,
-						ShipAddress = r["ShipAddress"] as string,
-						ShipCity = r["ShipCity"] as string,
-						ShipRegion = r["ShipRegion"] as string,
-						ShipCountry = r["ShipCountry"] as string,
-						ShipPostalCode = r["ShipPostalCode"] as string,
-					};
-				}
-			}
+					yield return OledbOrm.CreateOrder(r);
 
 			TraceQuery("Orders", query);
 		}
@@ -307,9 +202,6 @@ namespace SqlBinder.DemoNorthwindDal.OleDb
 			Trace();
 		}
 
-		public void Dispose()
-		{
-			_connection?.Dispose();
-		}
+		public void Dispose() => _connection?.Dispose();
 	}
 }

@@ -39,10 +39,23 @@
 		<StackPanel Margin="10,5,10,5">
 			<TextBlock Style="{StaticResource h1}">SqlBinder Demo</TextBlock>
 			<TextBlock>
-			Welcome! This is a demo application for SqlBinder, a C# SQL templating/formatting library. It is intended to demonstrate basic functionalities of SqlBinder. 
-			You can find this demo and the library on <Hyperlink IsEnabled="False">CodeProject</Hyperlink>
+			Welcome! This is a demo application for SqlBinder, an SQL templating/formatting library. It is intended to demonstrate basic functionalities of SqlBinder. 
+			You can find this demo and the library on <Hyperlink NavigateUri="https://www.codeproject.com/Articles/1246990/SqlBinder-Library" 
+			                                                     RequestNavigate="Hyperlink_OnRequestNavigate">CodeProject</Hyperlink>
 			or <Hyperlink NavigateUri="https://github.com/bawkee/SqlBinder" RequestNavigate="Hyperlink_OnRequestNavigate">GitHub</Hyperlink>. <LineBreak />
-			This demo is a WPF application purely due to convenience of presenting. SqlBinder is by no means limited to desktop applications.
+			SqlBinder is by no means limited to desktop applications. Demo app is a WPF application purely due to convenience of presenting.
+			</TextBlock>
+
+			<TextBlock>
+				This app also serves as an example of a real world usage pattern. It stores its SqlBinder queries in .sql files which are in fact 
+				embedded resources compiled into the binary. Each screen in the app is backed by its own .sql script.
+			</TextBlock>
+			
+			<TextBlock>
+				By looking at these files, even somebody who hasn't had contact with SqlBinder would grasp what kind of data it is supposed to be 
+				querying - it only requires an understanding of SQL syntax. The queries are concise, readable, easy to extend or modify. Each of the 
+				complex search screens in the app is defined by a single corresponding SqlBinder template - there's no string concatenation or complex 
+				Linq/Lambda C# code generating the SQL in the background. 
 			</TextBlock>
 
 			<TextBlock>
@@ -57,13 +70,13 @@
 						Data is reloaded every time a demo tab page is opened or a filter field changed.</TextBlock>
 				</ContentControl>
 				<ContentControl Template="{StaticResource bullet}">
-					<TextBlock>The example SqlBinder queries are located in the .\Source\SqlBinder.DemoNorthwindDal\OleDb folder as *.sql text files and are compiled into the 
+					<TextBlock>The actual queries are located in the .\Source\SqlBinder.DemoNorthwindDal\OleDb folder as *.sql text files and are compiled into the 
 						SqlBinder.DemoNorthwindDal assembly itself as embedded resources.</TextBlock>
 				</ContentControl>
 			</StackPanel>
 		</TextBlock>
 
-			<TextBlock>I hope that you find this library and this example useful. Have fun,<LineBreak/>
+			<TextBlock>I hope that you find this library and its example useful. Have fun,<LineBreak/>
 			Bojan Sala
 			</TextBlock>
 

@@ -54,6 +54,7 @@
     <Compile Include="Entities\Supplier.cs" />
     <Compile Include="OleDb\OledbNorthwindDal.cs" />
     <Compile Include="INorthwindDal.cs" />
+    <Compile Include="OleDb\OledbOrm.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
