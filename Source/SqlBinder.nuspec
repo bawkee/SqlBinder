@@ -3,7 +3,7 @@
   <metadata>
     <id>SqlBinder</id>
 	<title>SqlBinder</title>
-    <version>0.1.0</version>
+    <version>0.2.0</version>
     <authors>Bojan Sala</authors>
     <owners>Bojan Sala</owners>
 	<licenseUrl>https://raw.githubusercontent.com/bawkee/SqlBinder/master/LICENSE</licenseUrl>
