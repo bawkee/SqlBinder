@@ -53,7 +53,7 @@ namespace SqlBinder.Parsing
 
 				if (nestedToken is Scope scopeToken)
 				{
-					var parsedScope = newToken = new ProcessedScope(scopeToken);
+					var parsedScope = (ProcessedScope) (newToken = new ProcessedScope(scopeToken));
 					parentToken?.Children.Add(parsedScope);
 					foreach (var childToken in scopeToken.Children)
 						prevTokenBuf = ProcessToken(childToken, parsedScope, prevTokenBuf);
@@ -61,8 +61,23 @@ namespace SqlBinder.Parsing
 					parsedScope.IsValid = parsedScope.Children.OfType<ProcessedScope>().Any(s => s.IsValid) ||
 										  parsedScope.Children.OfType<ProcessedParameter>().Any();
 					// Validate scope separator that came before it
-					if (previousSibling?.ParserToken is ScopeSeparator)
-						previousSibling.IsValid = parsedScope.IsValid && (parentToken?.Children.OfType<ProcessedScope>().Any(s => s.IsValid && s != parsedScope) ?? false);
+					if (previousSibling is ProcessedScopeSeparator thisScopeSeparator)
+					{
+						if (!(thisScopeSeparator.IsValid =
+							parsedScope.IsValid && (parentToken?.Children.OfType<ProcessedScope>().Any(s => s.IsValid && s != parsedScope) ?? false)))
+							return newToken;
+
+						if (parentToken is ProcessedScope parentTokenScope)
+						{
+							if (parentTokenScope.ParserToken.Flags.Contains('@'))
+								thisScopeSeparator.Suffix = "OR ";
+						}
+
+						if (parsedScope.ParserToken.Flags.Contains('+'))
+							thisScopeSeparator.Suffix = ""; // The + sign means NO suffix
+						else if (thisScopeSeparator.Suffix == null)
+							thisScopeSeparator.Suffix = "AND ";
+					}
 				}
 				else
 				{
@@ -72,6 +87,8 @@ namespace SqlBinder.Parsing
 						prevTokenBuf = ProcessToken(childToken, parsedChild, prevTokenBuf);
 				}
 			}
+			else if (token is ScopeSeparator separatorToken)
+				parentToken?.Children.Add(newToken = new ProcessedScopeSeparator(separatorToken));
 			else if (token is SqlBinderComment)
 				return previousSibling;
 			else if (token is Parameter parameterToken)
@@ -107,36 +124,39 @@ namespace SqlBinder.Parsing
 			if (!token.IsValid)
 				return buffer;
 			
-			if (token is ProcessedParameter parsedParameter)
-				buffer.Append(parsedParameter.ConditionSql);
-			else switch (token.ParserToken)
+			switch (token)
 			{
-				case Sql sql:
-					buffer.Append(sql.Text);
+				case ProcessedParameter parsedParameter:
+					buffer.Append(parsedParameter.ConditionSql);
 					break;
-				case ScopeSeparator separator:
-					var sep = "AND";
-					if (separator.Parent is Scope parentScope && parentScope.Flags.Contains('@'))
-						sep = "OR";
-					buffer.Append(separator.Text);
-					buffer.Append(sep);
-					buffer.Append(' ');
-					break;
-				case ContentToken contentToken:
-					buffer.Append(contentToken.OpeningTag);
-					if (contentToken.Content != null)
-						ConstructSql(token.Children.First(), buffer);
-					buffer.Append(contentToken.ClosingTag);
-					break;
-				case TextToken textToken:
-					buffer.Append(textToken.Text);
-					break;
-				case NestedToken _:
-					foreach (var childToken in token.Children)
-						ConstructSql(childToken, buffer);
+				case ProcessedScopeSeparator scopeSeparator:
+					buffer.Append(scopeSeparator.ParserToken.Text);
+					buffer.Append(scopeSeparator.Suffix);
 					break;
 				default:
-					throw new NotSupportedException();
+					switch (token.ParserToken)
+					{
+						case Sql sql:
+							buffer.Append(sql.Text);
+							break;
+						case ContentToken contentToken:
+							buffer.Append(contentToken.OpeningTag);
+							if (contentToken.Content != null)
+								ConstructSql(token.Children.First(), buffer);
+							buffer.Append(contentToken.ClosingTag);
+							break;
+						case TextToken textToken:
+							buffer.Append(textToken.Text);
+							break;
+						case NestedToken _:
+							foreach (var childToken in token.Children)
+								ConstructSql(childToken, buffer);
+							break;
+						default:
+							throw new NotSupportedException();
+					}
+
+					break;
 			}
 
 			return buffer;
@@ -148,12 +168,28 @@ namespace SqlBinder.Parsing
 		public List<ProcessedToken> Children { get; } = new List<ProcessedToken>();
 		public Token ParserToken { get; }
 		internal ProcessedToken(Token token) => ParserToken = token;
-		public bool IsValid { get; set; } = true;
+		public bool IsValid { get; internal set; } = true;
 	}
 
 	internal class ProcessedScope : ProcessedToken
 	{
-		internal ProcessedScope(Scope scope) : base(scope) { }
+		internal ProcessedScope(Scope scope) : base(scope)
+		{
+			ParserToken = scope;
+		}
+
+		public new Scope ParserToken { get; }
+	}
+
+	internal class ProcessedScopeSeparator : ProcessedToken
+	{
+		internal ProcessedScopeSeparator(ScopeSeparator scopeSeparator) : base(scopeSeparator)
+		{
+			ParserToken = scopeSeparator;
+		}
+
+		public new ScopeSeparator ParserToken { get; }
+		public string Suffix { get; internal set; }
 	}
 
 	internal class ProcessedParameter : ProcessedToken

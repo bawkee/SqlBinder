@@ -247,7 +247,8 @@ GROUP BY
 		}
 
 		/// <summary>
-		/// CategorySales query done by SqlBinder + Dapper
+		/// CategorySales query done by SqlBinder + Dapper. It uses a slightly different query to emphasis the possibility of 
+		/// optional subqueries. 
 		/// </summary>
 		private static IEnumerable<CategorySale> GetCategorySales_SqlBinder(
 			IDbConnection connection, 

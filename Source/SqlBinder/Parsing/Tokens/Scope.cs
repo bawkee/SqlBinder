@@ -12,7 +12,7 @@ namespace SqlBinder.Parsing.Tokens
 	{
 		public const string OPENING_TAG = "{";
 		public const string CLOSING_TAG = "}";
-		public const string VALID_FLAGS = "@";
+		public const string VALID_FLAGS = "@+";
 
 		public override string OpeningTag { get; }
 		public override string ClosingTag => CLOSING_TAG;

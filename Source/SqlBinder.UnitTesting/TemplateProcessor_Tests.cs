@@ -231,6 +231,250 @@ namespace SqlBinder.UnitTesting
 				TestContext.WriteLine($"Warm parsing, 6 conditions: {sw.Elapsed.TotalMilliseconds}");
 			}
 
+			[TestMethod]
+			public void Separators_Handling()
+			{
+				var query = new Query("SELECT * FROM TABLE1 {WHERE {COLUMN1 :Criteria1} {COLUMN2 :Criteria2} {COLUMN3 :Criteria3}}");
+
+				query.ParserHints = Parsing.ParserHints.None;
+
+				Assert.AreEqual("SELECT * FROM TABLE1", query.GetSql());
+
+				query.SetCondition("Criteria1", true);
+				Assert.AreEqual("SELECT * FROM TABLE1 WHERE COLUMN1 = :pCriteria1_1", query.GetSql());
+
+				query.Conditions.Clear();
+				query.SetCondition("Criteria2", true);
+				Assert.AreEqual("SELECT * FROM TABLE1 WHERE COLUMN2 = :pCriteria2_1", query.GetSql());
+
+				query.Conditions.Clear();
+				query.SetCondition("Criteria3", true);
+				Assert.AreEqual("SELECT * FROM TABLE1 WHERE COLUMN3 = :pCriteria3_1", query.GetSql());
+
+				query.Conditions.Clear();
+				query.SetCondition("Criteria1", true);
+				query.SetCondition("Criteria2", true);
+				Assert.AreEqual("SELECT * FROM TABLE1 WHERE COLUMN1 = :pCriteria1_1 AND COLUMN2 = :pCriteria2_1", query.GetSql());
+
+				query.Conditions.Clear();
+				query.SetCondition("Criteria2", true);
+				query.SetCondition("Criteria3", true);
+				Assert.AreEqual("SELECT * FROM TABLE1 WHERE COLUMN2 = :pCriteria2_1 AND COLUMN3 = :pCriteria3_1", query.GetSql());
+
+				query.Conditions.Clear();
+				query.SetCondition("Criteria1", true);
+				query.SetCondition("Criteria2", true);
+				query.SetCondition("Criteria3", true);
+				Assert.AreEqual("SELECT * FROM TABLE1 WHERE COLUMN1 = :pCriteria1_1 AND COLUMN2 = :pCriteria2_1 AND COLUMN3 = :pCriteria3_1", query.GetSql());
+
+				query.Conditions.Clear();
+				query.SetCondition("Criteria1", true);
+				query.SetCondition("Criteria3", true);
+				Assert.AreEqual("SELECT * FROM TABLE1 WHERE COLUMN1 = :pCriteria1_1 AND COLUMN3 = :pCriteria3_1", query.GetSql());
+			}
+
+			[TestMethod]
+			public void Separators_Blanks()
+			{
+				var query = new Query("SELECT * FROM TABLE1 {WHERE {COLUMN1 :Criteria1} +{COLUMN2 :Criteria2} {COLUMN3 :Criteria3}}");
+
+				query.ParserHints = Parsing.ParserHints.None;
+
+				Assert.AreEqual("SELECT * FROM TABLE1", query.GetSql());
+
+				query.SetCondition("Criteria1", true);
+				Assert.AreEqual("SELECT * FROM TABLE1 WHERE COLUMN1 = :pCriteria1_1", query.GetSql());
+
+				query.Conditions.Clear();
+				query.SetCondition("Criteria2", true);
+				Assert.AreEqual("SELECT * FROM TABLE1 WHERE COLUMN2 = :pCriteria2_1", query.GetSql());
+
+				query.Conditions.Clear();
+				query.SetCondition("Criteria3", true);
+				Assert.AreEqual("SELECT * FROM TABLE1 WHERE COLUMN3 = :pCriteria3_1", query.GetSql());
+
+				query.Conditions.Clear();
+				query.SetCondition("Criteria1", true);
+				query.SetCondition("Criteria2", true);
+				Assert.AreEqual("SELECT * FROM TABLE1 WHERE COLUMN1 = :pCriteria1_1 COLUMN2 = :pCriteria2_1", query.GetSql());
+
+				query.Conditions.Clear();
+				query.SetCondition("Criteria2", true);
+				query.SetCondition("Criteria3", true);
+				Assert.AreEqual("SELECT * FROM TABLE1 WHERE COLUMN2 = :pCriteria2_1 AND COLUMN3 = :pCriteria3_1", query.GetSql());
+
+				query.Conditions.Clear();
+				query.SetCondition("Criteria1", true);
+				query.SetCondition("Criteria2", true);
+				query.SetCondition("Criteria3", true);
+				Assert.AreEqual("SELECT * FROM TABLE1 WHERE COLUMN1 = :pCriteria1_1 COLUMN2 = :pCriteria2_1 AND COLUMN3 = :pCriteria3_1", query.GetSql());
+
+				query.Conditions.Clear();
+				query.SetCondition("Criteria1", true);
+				query.SetCondition("Criteria3", true);
+				Assert.AreEqual("SELECT * FROM TABLE1 WHERE COLUMN1 = :pCriteria1_1 AND COLUMN3 = :pCriteria3_1", query.GetSql());
+			}
+
+			[TestMethod]
+			public void Separators_HandlingCustomFlags()
+			{
+				var query = new Query("SELECT * FROM TABLE1 {WHERE {COLUMN1 :Criteria1} @{{COLUMN2 :Criteria2} {COLUMN3 :Criteria3}} {COLUMN4 :Criteria4}}");
+
+				query.ParserHints = Parsing.ParserHints.None;
+
+				Assert.AreEqual("SELECT * FROM TABLE1", query.GetSql());
+
+				query.SetCondition("Criteria1", true);
+				Assert.AreEqual("SELECT * FROM TABLE1 WHERE COLUMN1 = :pCriteria1_1", query.GetSql());
+
+				query.Conditions.Clear();
+				query.SetCondition("Criteria2", true);
+				Assert.AreEqual("SELECT * FROM TABLE1 WHERE COLUMN2 = :pCriteria2_1", query.GetSql());
+
+				query.Conditions.Clear();
+				query.SetCondition("Criteria3", true);
+				Assert.AreEqual("SELECT * FROM TABLE1 WHERE COLUMN3 = :pCriteria3_1", query.GetSql());
+
+				query.Conditions.Clear();
+				query.SetCondition("Criteria4", true);
+				Assert.AreEqual("SELECT * FROM TABLE1 WHERE COLUMN4 = :pCriteria4_1", query.GetSql());
+
+				query.Conditions.Clear();
+				query.SetCondition("Criteria1", true);
+				query.SetCondition("Criteria2", true);
+				Assert.AreEqual("SELECT * FROM TABLE1 WHERE COLUMN1 = :pCriteria1_1 AND COLUMN2 = :pCriteria2_1", query.GetSql());
+
+				query.Conditions.Clear();
+				query.SetCondition("Criteria1", true);
+				query.SetCondition("Criteria3", true);
+				Assert.AreEqual("SELECT * FROM TABLE1 WHERE COLUMN1 = :pCriteria1_1 AND COLUMN3 = :pCriteria3_1", query.GetSql());
+
+				query.Conditions.Clear();
+				query.SetCondition("Criteria1", true);
+				query.SetCondition("Criteria4", true);
+				Assert.AreEqual("SELECT * FROM TABLE1 WHERE COLUMN1 = :pCriteria1_1 AND COLUMN4 = :pCriteria4_1", query.GetSql());
+
+				query.Conditions.Clear();
+				query.SetCondition("Criteria2", true);
+				query.SetCondition("Criteria3", true);
+				Assert.AreEqual("SELECT * FROM TABLE1 WHERE COLUMN2 = :pCriteria2_1 OR COLUMN3 = :pCriteria3_1", query.GetSql());
+
+				query.Conditions.Clear();
+				query.SetCondition("Criteria2", true);
+				query.SetCondition("Criteria4", true);
+				Assert.AreEqual("SELECT * FROM TABLE1 WHERE COLUMN2 = :pCriteria2_1 AND COLUMN4 = :pCriteria4_1", query.GetSql());
+
+				query.Conditions.Clear();
+				query.SetCondition("Criteria3", true);
+				query.SetCondition("Criteria4", true);
+				Assert.AreEqual("SELECT * FROM TABLE1 WHERE COLUMN3 = :pCriteria3_1 AND COLUMN4 = :pCriteria4_1", query.GetSql());
+
+				query.Conditions.Clear();
+				query.SetCondition("Criteria1", true);
+				query.SetCondition("Criteria2", true);
+				query.SetCondition("Criteria3", true);
+				Assert.AreEqual("SELECT * FROM TABLE1 WHERE COLUMN1 = :pCriteria1_1 AND COLUMN2 = :pCriteria2_1 OR COLUMN3 = :pCriteria3_1", query.GetSql());
+
+				query.Conditions.Clear();
+				query.SetCondition("Criteria2", true);
+				query.SetCondition("Criteria3", true);
+				query.SetCondition("Criteria4", true);
+				Assert.AreEqual("SELECT * FROM TABLE1 WHERE COLUMN2 = :pCriteria2_1 OR COLUMN3 = :pCriteria3_1 AND COLUMN4 = :pCriteria4_1", query.GetSql());
+
+				query.Conditions.Clear();
+				query.SetCondition("Criteria1", true);
+				query.SetCondition("Criteria2", true);
+				query.SetCondition("Criteria3", true);
+				query.SetCondition("Criteria4", true);
+				Assert.AreEqual("SELECT * FROM TABLE1 WHERE COLUMN1 = :pCriteria1_1 AND COLUMN2 = :pCriteria2_1 OR COLUMN3 = :pCriteria3_1 AND COLUMN4 = :pCriteria4_1", query.GetSql());
+			}
+
+			[TestMethod]
+			public void Separators_BlankAndVariables()
+			{
+				var query = new Query("SELECT * FROM TABLE1 {WHERE {COLUMN1 :Variable1} +{COLUMN2 :Variable2} +{COLUMN3 :Variable3} {COLUMN4 :Criteria4}}");
+
+				query.ParserHints = Parsing.ParserHints.None;
+
+				Assert.AreEqual("SELECT * FROM TABLE1", query.GetSql());
+
+				query.DefineVariable("Variable1", "= test1");
+				Assert.AreEqual("SELECT * FROM TABLE1 WHERE COLUMN1 = test1", query.GetSql());
+
+				query.Variables.Clear();
+				query.DefineVariable("Variable2", "= test2");
+				Assert.AreEqual("SELECT * FROM TABLE1 WHERE COLUMN2 = test2", query.GetSql());
+
+				query.Variables.Clear();
+				query.DefineVariable("Variable3", "= test3");
+				Assert.AreEqual("SELECT * FROM TABLE1 WHERE COLUMN3 = test3", query.GetSql());
+
+				query.Variables.Clear();
+				query.DefineVariable("Variable1", "= test1");
+				query.DefineVariable("Variable2", "= test2");
+				Assert.AreEqual("SELECT * FROM TABLE1 WHERE COLUMN1 = test1 COLUMN2 = test2", query.GetSql());
+
+				query.Variables.Clear();
+				query.DefineVariable("Variable1", "= test1");
+				query.DefineVariable("Variable3", "= test3");
+				Assert.AreEqual("SELECT * FROM TABLE1 WHERE COLUMN1 = test1 COLUMN3 = test3", query.GetSql());
+
+				query.Variables.Clear();
+				query.DefineVariable("Variable1", "= test1");
+				query.DefineVariable("Variable2", "= test2");
+				query.DefineVariable("Variable3", "= test3");
+				Assert.AreEqual("SELECT * FROM TABLE1 WHERE COLUMN1 = test1 COLUMN2 = test2 COLUMN3 = test3", query.GetSql());
+
+				query.Variables.Clear();
+				query.Conditions.Clear();
+				query.DefineVariable("Variable1", "= test1");
+				query.SetCondition("Criteria4", true);
+				Assert.AreEqual("SELECT * FROM TABLE1 WHERE COLUMN1 = test1 AND COLUMN4 = :pCriteria4_1", query.GetSql());
+
+				query.Variables.Clear();
+				query.Conditions.Clear();
+				query.DefineVariable("Variable2", "= test2");
+				query.SetCondition("Criteria4", true);
+				Assert.AreEqual("SELECT * FROM TABLE1 WHERE COLUMN2 = test2 AND COLUMN4 = :pCriteria4_1", query.GetSql());
+
+				// Test a typical ORDER BY scenario
+
+				query = new Query("SELECT * FROM TABLE1 {WHERE {COLUMN1 :Criteria1} {COLUMN2 :Criteria2}} +{ORDER BY :ordering}");
+
+				query.ParserHints = Parsing.ParserHints.None;
+
+				Assert.AreEqual("SELECT * FROM TABLE1", query.GetSql());
+				
+				query.DefineVariable("ordering", "COLUMN1 DESC");
+				Assert.AreEqual("SELECT * FROM TABLE1 ORDER BY COLUMN1 DESC", query.GetSql());
+
+				query.Variables.Clear();
+				query.Conditions.Clear();
+				query.SetCondition("Criteria1", true);
+				Assert.AreEqual("SELECT * FROM TABLE1 WHERE COLUMN1 = :pCriteria1_1", query.GetSql());
+
+				query.Conditions.Clear();
+				query.SetCondition("Criteria1", true);
+				query.SetCondition("Criteria2", true);
+				Assert.AreEqual("SELECT * FROM TABLE1 WHERE COLUMN1 = :pCriteria1_1 AND COLUMN2 = :pCriteria2_1", query.GetSql());
+
+				query.Conditions.Clear();
+				query.SetCondition("Criteria2", true);
+				Assert.AreEqual("SELECT * FROM TABLE1 WHERE COLUMN2 = :pCriteria2_1", query.GetSql());
+
+				query.Conditions.Clear();
+				query.SetCondition("Criteria2", true);
+				query.DefineVariable("ordering", "COLUMN1 DESC");
+				Assert.AreEqual("SELECT * FROM TABLE1 WHERE COLUMN2 = :pCriteria2_1 ORDER BY COLUMN1 DESC", query.GetSql());
+
+				query.Variables.Clear();
+				query.Conditions.Clear();
+				query.SetCondition("Criteria1", true);
+				query.SetCondition("Criteria2", true);
+				query.DefineVariable("ordering", "COLUMN2 DESC");
+				Assert.AreEqual("SELECT * FROM TABLE1 WHERE COLUMN1 = :pCriteria1_1 AND COLUMN2 = :pCriteria2_1 ORDER BY COLUMN2 DESC", query.GetSql());
+			}
+
 			private void AssertCommand(IDbCommand cmd)
 			{
 				Assert.IsNotNull(cmd);
