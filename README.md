@@ -141,61 +141,6 @@ A very useful Demo App comes with SqlBinder source code which may introduce you 
 
 Don't forget to rate the article if you like what you see!
 
-## The Syntax
-Consists of two basic types of elements: scopes and parameter placeholders. Scopes are defined by curly braces `{ ... }` and parameter placeholders can be defined by the typical SQL syntax (i.e. `:parameter` or `@parameter`) or by custom SqlBinder syntax (if configured so, i.e. `[parameter]`). 
-
-Explained with regex:
-```SQL
-... [@\+]{ ... [:?@]paramPlaceholder  ... } ...
-```
-
-Or, consider the following set of valid examples where `...` can be any SQL:
-```SQL
-... { ... :paramPlaceholder  ... } ...
-
-... { ... @paramPlaceholder  ... } ...
-
-... { ... { ... :paramPlaceholder  ... } ... } ...
-
-... @{ ... { ... :paramPlaceholder1  ... } ... { ... :paramPlaceholder2 ... } ... } ...
-
-... +{ ... { ... :paramPlaceholder1  ... } ... { ... :paramPlaceholder2 ... } ... } ...
-
-... { ... { ... [place holder 1]  ... } ... { ... [place holder 2] ... } ... } ...
-```
-
-Further explanation of above examples:
-* Curly braces `{ ... }` define a scope. Scope can either contain child scopes or a single parameter placeholder. Scope that does not contain either of those will always be removed as that's considered pointless. Otherwise, the scope is removed only if all its child scopes are removed or its parameter placeholder is removed, *which* in turn is removed if no matching *condition* was found for it (conditions are explained further on). 
-* `:paramPlaceholder` can be any alphanumeric name that will be matched against `Query.Conditions` collection. This is referred to as *parameter* in the SqlBinder objects. If a parameter doesn't match any condition it will be removed along with its entire parent scope. The output SQL bind variable will be formatted with the same prefix as the parameter (acceptable prefixes are `:` or `@` or `?`). These parameters are not bind-variables and you must respect the aforementioned syntax, i.e. the Oracle variable `:"MyVariable"` won't be recognized as a parameter - if you need custom formatting in your output variables which you can't accomplish with the SqlBinder syntax names there ways to do so via events and delegates (see the Query class). Note that there can only be one placeholder in a given scope. When you need multiple placeholders put each one in its own separate scope.
-* `[place holder xy]` works the same way as above except any character is allowed and you must provide the parameter prefix manually (in C#) by overriding the `Query` class, `DbQuery` class or setting the appropriate property. Also, this syntax doesn't work by default, you have to enable a special hint via `Query.ParserHints` property since `[]` characters are used by some SQL flavors. With that said, you can still escape these tags into the output SQL `[[like this]]`.
-* The `@` character before the scope (i.e. `@{`) tells the SqlBinder to connect scopes with an `OR` rather than default `AND` operator. 
-* The `+` character before the scope (i.e. `+{`) instructs the SqlBinder to not automatically connect this specific scope with its previous sibling by an `AND` (or any  operator), to instead just leave the white space as it already is. 
-* The `...` can be any SQL from any DBMS or just about any text. The string literals won't be processed by the SqlBinder which means they can safely contain SqlBinder syntax. The special flavors of literals such as PostgreSQL dollar literals or Oracle AQM literals are recognized as well and can safely contain any special character used by the SqlBinder. The same goes for SQL comments.
-
-**The comment syntax** looks like this:
-```SQL
-/*{ ...sql binder comment... }*/
-
-/*{
-	...sql binder comment...
-}*/
-```
-SqlBinder comments will be removed entirely from the output SQL while the SQL comments will remain intact.
-
-**The SQL literals** are respected and may contain SqlBinder syntax which won't be processed:
-```SQL
-'Anything can be here: [] {} ...' 
-
-"Or here {} [] ..."
-
-'Or in ''escaped literal {} [] ...'''
-
-q'{Or in this Oracle literal {} [] which can get very creative ...}'
-
-$myTag$Or in this PostgreSQL literal {} [] ...$myTag$
-```
-None of these are processed against SqlBinder syntax. You may safely put parameter placeholder or scope syntax in here and it won't be altered in any way. SqlBinder does not do simple find-replace, it parses the script and re-builds the SQL based on it.
-
 ## The Performance
 SqlBinder is *very* fast but I have nothing to compare it with. Instead, you can combine it with micro ORM solutions like Dapper and measure the potential overhead. I took Dapper for reference as it's the fastest micro-ORM that I currently know of.
 
@@ -255,6 +200,61 @@ Where the latter was used in Dapper+SqlBinder combination.
 It is important to note that SqlBinder has the ability to re-use compiled templates as it completely separates the parsing and templating concerns. You may create a SqlBinder query template once and then build all the subsequent SQL queries from the same pre-parsed template. One of the key functionalities of SqlBinder is that it doesn't parse or generate the whole SQL *every time*. Also, it relies on hand coded parser which is well optimized. 
 
 Simple performance tests are available in the Source folder where you can benchmark SqlBinder on your own.
+
+## The Syntax
+Consists of two basic types of elements: scopes and parameter placeholders. Scopes are defined by curly braces `{ ... }` and parameter placeholders can be defined by the typical SQL syntax (i.e. `:parameter` or `@parameter`) or by custom SqlBinder syntax (if configured so, i.e. `[parameter]`). 
+
+Explained with regex:
+```SQL
+... [@\+]{ ... [:?@]paramPlaceholder  ... } ...
+```
+
+Or, consider the following set of valid examples where `...` can be any SQL:
+```SQL
+... { ... :paramPlaceholder  ... } ...
+
+... { ... @paramPlaceholder  ... } ...
+
+... { ... { ... :paramPlaceholder  ... } ... } ...
+
+... @{ ... { ... :paramPlaceholder1  ... } ... { ... :paramPlaceholder2 ... } ... } ...
+
+... +{ ... { ... :paramPlaceholder1  ... } ... { ... :paramPlaceholder2 ... } ... } ...
+
+... { ... { ... [place holder 1]  ... } ... { ... [place holder 2] ... } ... } ...
+```
+
+Further explanation of above examples:
+* Curly braces `{ ... }` define a scope. Scope can either contain child scopes or a single parameter placeholder. Scope that does not contain either of those will always be removed as that's considered pointless. Otherwise, the scope is removed only if all its child scopes are removed or its parameter placeholder is removed, *which* in turn is removed if no matching *condition* was found for it (conditions are explained further on). 
+* `:paramPlaceholder` can be any alphanumeric name that will be matched against `Query.Conditions` collection. This is referred to as *parameter* in the SqlBinder objects. If a parameter doesn't match any condition it will be removed along with its entire parent scope. The output SQL bind variable will be formatted with the same prefix as the parameter (acceptable prefixes are `:` or `@` or `?`). These parameters are not bind-variables and you must respect the aforementioned syntax, i.e. the Oracle variable `:"MyVariable"` won't be recognized as a parameter - if you need custom formatting in your output variables which you can't accomplish with the SqlBinder syntax names there ways to do so via events and delegates (see the Query class). Note that there can only be one placeholder in a given scope. When you need multiple placeholders put each one in its own separate scope.
+* `[place holder xy]` works the same way as above except any character is allowed and you must provide the parameter prefix manually (in C#) by overriding the `Query` class, `DbQuery` class or setting the appropriate property. Also, this syntax doesn't work by default, you have to enable a special hint via `Query.ParserHints` property since `[]` characters are used by some SQL flavors. With that said, you can still escape these tags into the output SQL `[[like this]]`.
+* The `@` character before the scope (i.e. `@{`) tells the SqlBinder to connect scopes with an `OR` rather than default `AND` operator. 
+* The `+` character before the scope (i.e. `+{`) instructs the SqlBinder to not automatically connect this specific scope with its previous sibling by an `AND` (or any  operator), to instead just leave the white space as it already is. 
+* The `...` can be any SQL from any DBMS or just about any text. The string literals won't be processed by the SqlBinder which means they can safely contain SqlBinder syntax. The special flavors of literals such as PostgreSQL dollar literals or Oracle AQM literals are recognized as well and can safely contain any special character used by the SqlBinder. The same goes for SQL comments.
+
+**The comment syntax** looks like this:
+```SQL
+/*{ ...sql binder comment... }*/
+
+/*{
+	...sql binder comment...
+}*/
+```
+SqlBinder comments will be removed entirely from the output SQL while the SQL comments will remain intact.
+
+**The SQL literals** are respected and may contain SqlBinder syntax which won't be processed:
+```SQL
+'Anything can be here: [] {} ...' 
+
+"Or here {} [] ..."
+
+'Or in ''escaped literal {} [] ...'''
+
+q'{Or in this Oracle literal {} [] which can get very creative ...}'
+
+$myTag$Or in this PostgreSQL literal {} [] ...$myTag$
+```
+None of these are processed against SqlBinder syntax. You may safely put parameter placeholder or scope syntax in here and it won't be altered in any way. SqlBinder does not do simple find-replace, it parses the script and re-builds the SQL based on it.
 
 ## The Purpose
 I originally wrote the first version of this library back in 2009 to make my life easier. The projects I had worked on relied on large and very complex Oracle databases with all the business logic in them so I used SQL to access anything I needed which worked out great. I was in charge of developing the front-end which involved great many filters and buttons which helped the user customize the data to be visualized. Fetching thousands of records and then filtering them on client side was out of the question, we had both our own and business client DBAs keeping a close eye on performance and bandwidth. Therefore, with some help of DBAs, PLSQL devs etc. we were able to muster up some very performant, complex and crafty SQLs. 
