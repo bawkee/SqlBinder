@@ -4,7 +4,7 @@ Is a free, open-source library that helps you transform a given SQL template and
 
 **It isn't an ORM solution** - instead, it is DBMS-independent, SQL-centric **templating engine**. All it does is it removes the hassle of writing code that generates SQLs and bind variables . It does *not* generate the entire SQL itself, it transforms an existing SQL template instead. 
 
-**It is more than just an 'SQL builder'** as it has a high degree of composability and is aimed at writing more complex queries. It isn't a swiss army knife either, it can be elegantly used alongside other popular tools such as Dapper, Dapper.Contrib, PetaPoco and others.
+**It isn't 'SQL builder'** due to its high degree of composability, it is aimed at writing more complex queries. It isn't a swiss army knife either, it can be elegantly used alongside other popular tools such as Dapper, Dapper.Contrib, PetaPoco and others.
 
 [![NuGet](https://img.shields.io/nuget/v/SqlBinder.svg)](https://www.nuget.org/packages/SqlBinder/)
 
