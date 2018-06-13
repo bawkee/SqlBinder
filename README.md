@@ -130,7 +130,9 @@ SELECT
 FROM Categories {WHERE {Categories.CategoryID :categoryIds}}
 ```
 
-Any one of aforementioned scripts may be put in the `CategorySales.sql` file and used without modifying the C# code. With SqlBinder your SQL scripts can be *truly* separate from everything else. What SqlBinder does is it binds `SqlBinder.Condition` objects to its template scripts returning a valid SQL which you can then pass to your ORM.
+Any one of aforementioned scripts may be put in the `CategorySales.sql` file and used without modifying the C# code. With SqlBinder your SQL scripts can be *truly* separate from everything else. 
+
+What SqlBinder does is it binds `SqlBinder.Condition` objects to its template scripts returning a valid SQL which you can then pass to your ORM.
 
 ## Tutorials, Examples and Demo App
 On [SqlBinder's Code Project article](https://www.codeproject.com/Articles/1246990/SqlBinder-Library) you may explore more in-depth examples offering some deeper insight and easy to follow tutorials.
