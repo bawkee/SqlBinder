@@ -33,7 +33,7 @@ IEnumerable<CategorySale> GetCategorySales(
 	DateTime? fromOrderDate = null, DateTime? toOrderDate = null,
 	IEnumerable<string> shippingCountries = null)
 {
-	var query = new Query(GetEmbeddedResource("CategorySales.sql"));
+	var query = new Query(GetEmbeddedResource("CategorySales.sql")); // SqlBinder!
 
 	query.SetCondition("categoryIds", categoryIds);
 	query.SetConditionRange("shippingDates", fromShippingDate, toShippingDate);
