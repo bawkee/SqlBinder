@@ -23,7 +23,7 @@ IEnumerable<CategorySale> GetCategorySales(
 
 Implementation of this method should return a summary of sales grouped by categories and filtered by any combination of the following criteria: categories, shipping dates, order dates and shipping countries. 
 
-Usually, you'd implement this method by building an SQL via some Fluent API (e.g. PetaPoco's `Sql.Builder`), Dapper.Contrib's nice `SqlBuilder`  or just `StringBuilder`. Instead, I'm going to show you how you could implement this method via SqlBinder and regular Dapper. It would look like this:
+Usually, you'd implement this method by building an SQL via some Fluent API (e.g. PetaPoco's `Sql.Builder`), `Dapper.Contrib`'s nice `SqlBuilder`  or just `StringBuilder`. Instead, I'm going to show you how you could implement this method via `SqlBinder` and regular `Dapper`. It would look like this:
 
 ```C#
 IEnumerable<CategorySale> GetCategorySales(
@@ -44,9 +44,9 @@ IEnumerable<CategorySale> GetCategorySales(
 }
 ```
 
-But where's the SQL, what's in this `CategorySales.sql`? Now here's the nice part, you can safely store the SQL somewhere else and it may have multiple `WHERE` clauses, multiple `ORDER BY`'s and any number of sub-queries - all of this is natively supported by SqlBinders templates, being so composable there's almost never a reason to store templates in your method unless they're one-liners and very small. 
+But where's the SQL, what's in this `CategorySales.sql`? Now here's the nice part, you can safely store the SQL somewhere else and it may have multiple `WHERE` clauses, multiple `ORDER BY`'s and any number of sub-queries - all of this is natively supported by `SqlBinder`'s templates, being so composable there's almost never a reason to store templates inside your method unless they're one-liners and very small. 
 
-There are multiple possible SQL scripts which will all work with the above method. 
+There are multiple possible SQL scripts which will all work with the above method if we put them in `CategorySales.sql`. 
 
 For example this script with shortcut aliases and an optional sub-query:
 
