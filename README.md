@@ -8,195 +8,158 @@ Is a free, open-source library that helps you transform a given SQL template and
 
 [![NuGet](https://img.shields.io/nuget/v/SqlBinder.svg)](https://www.nuget.org/packages/SqlBinder/)
 
-## Example 1: Query employees 
+## A Quick Demonstration
 
-Let's connect to Northwind demo database: 
-
-```C#
-var connection = new OleDbConnection("Provider=Microsoft.Jet.OLEDB.4.0;Data Source=Northwind Traders.mdb");
-```
-
-And then write a simple OleDB SQL query which will retreive the list of employees.
+Consider the following method signature:
 
 ```C#
-var query = new DbQuery(connection, @"SELECT * FROM Employees {WHERE EmployeeID :employeeId}");
+IEnumerable<CategorySale> GetCategorySales(
+	IDbConnection connection,
+	IEnumerable<int> categoryIds = null,
+	DateTime? fromShippingDate = null, DateTime? toShippingDate = null,
+	DateTime? fromOrderDate = null, DateTime? toOrderDate = null,
+	IEnumerable<string> shippingCountries = null);
 ```
 
-As you can see this is not typical SQL, there is some *formatting* syntax in it which is later processed by the SqlBinder. It's an *SQL template* which will be used to create the actual SQL.
+Implementation of this method should return a summary of sales grouped by categories and filtered by any combination of the following criteria: categories, shipping dates, order dates and shipping countries. 
 
-We can in fact create a command out of this template right now:
+Usually, you'd implement this method by building an SQL via some Fluent API (e.g. PetaPoco's `Sql.Builder`), Dapper.Contrib's nice `SqlBuilder`  or just `StringBuilder`. Instead, I'm going to show you how you could implement this method via SqlBinder and regular Dapper. It would look like this:
 
 ```C#
-IDbCommand cmd = query.CreateCommand();
+IEnumerable<CategorySale> GetCategorySales(
+	IDbConnection connection,
+	IEnumerable<int> categoryIds = null,
+	DateTime? fromShippingDate = null, DateTime? toShippingDate = null,
+	DateTime? fromOrderDate = null, DateTime? toOrderDate = null,
+	IEnumerable<string> shippingCountries = null)
+{
+	var query = new Query(GetEmbeddedResource("CategorySales.sql"));
 
-Console.WriteLine(cmd.CommandText); // Output the passed SQL
+	query.SetCondition("categoryIds", categoryIds);
+	query.SetConditionRange("shippingDates", fromShippingDate, toShippingDate);
+	query.SetConditionRange("orderDates", fromOrderDate, toOrderDate);
+	query.SetCondition("shippingCountries", shippingCountries);
+
+	return connection.Query<CategorySale>(query.GetSql(), query.SqlParameters);
+}
 ```
 
-Output:
-```SQL
-SELECT * FROM Employees
-```
+But where's the SQL, what's in this `CategorySales.sql`? Now here's the nice part, you can safely store the SQL somewhere else and it may have multiple `WHERE` clauses, multiple `ORDER BY`'s and any number of sub-queries - all of this is natively supported by SqlBinders templates, being so composable there's almost never a reason to store templates in your method unless they're one-liners and very small. 
 
-Notice how the initial SQL enclosed in the `{...}` tags is not present in the output SQL. Now let's single out an **employee by his ID**:
+There are multiple possible SQL scripts which will all work with the above method. 
 
-```C#
-query.SetCondition("employeeId", 1);
-
-cmd = query.CreateCommand();
-
-Console.WriteLine(cmd.CommandText); // Output the passed SQL
-```
-
-This is the output:
-
-```SQL
-SELECT * FROM Employees WHERE EmployeeID = :pemployeeId_1
-```
-
-We're using the same query to create two entirely different commands. This time, the `{WHERE EmployeeID :employeeId}` part wasn't eliminated.
-
-Let's go further and retrieve **employees by IDs 1 and 2**. Again, we use the same query but different parameters are supplied to the crucial `SetCondition` method.
-
-```C#
-query.SetCondition("employeeId", new[] { 1, 2 });
-
-cmd = query.CreateCommand();
-
-Console.WriteLine(cmd.CommandText); // Output the passed SQL
-```
-
-Output:
+For example this script with shortcut aliases and an optional sub-query:
 
 ```SQL
-SELECT * FROM Employees WHERE EmployeeID IN (:pemployeeId_1, :pemployeeId_2)
+SELECT
+	CAT.CategoryID, 
+	CAT.CategoryName, 
+	SUM(CCUR(OD.UnitPrice * OD.Quantity * (1 - OD.Discount) / 100) * 100) AS TotalSales
+FROM ((Categories AS CAT		
+	INNER JOIN Products AS PRD ON PRD.CategoryID = CAT.CategoryID)
+	INNER JOIN OrderDetails AS OD ON OD.ProductID = PRD.ProductID)
+{WHERE 	
+	{OD.OrderID IN (SELECT OrderID FROM Orders AS ORD WHERE 
+			{ORD.ShippedDate :shippingDates} 
+			{ORD.OrderDate :orderDates}
+			{ORD.ShipCountry :shippingCountries})} 
+	{CAT.CategoryID :categoryIds}}
+GROUP BY 
+	CAT.CategoryID, CAT.CategoryName
 ```
 
-**So what happened?** Let's first go back to our SQL *template*:
+What's this *optional* sub-query? Well, since our `OD.OrderID IN` condition is enclosed within `{ }` braces it means that it won't be used if it's *not needed* - in other words, if it's not needed then output SQL won't contain it along with its sub-query `SELECT OrderID FROM Orders ...`. Again, the whole part enclosed in `{ }` would be removed if its conditions aren't used, specifically if none of the `:shippingDates`, `:orderDates` or `:shippingCountries` are used. The `:categoryIds` condition is separate from this and belongs to the parent query, SqlBinder will connect it with the above condition automatically (*if* it's used) with an `AND` operand.
+
+The next script  uses different aliases and would work just the same:
 
 ```SQL
-SELECT * FROM Employees {WHERE EmployeeID :employeeId}
+SELECT
+	Categories.CategoryID, 
+	Categories.CategoryName, 
+	SUM(CCUR(OrderDetails.UnitPrice * OrderDetails.Quantity * 
+		(1 - OrderDetails.Discount) / 100) * 100) AS TotalSales
+FROM ((Categories		
+	INNER JOIN Products ON Products.CategoryID = Categories.CategoryID)
+	INNER JOIN OrderDetails ON OrderDetails.ProductID = Products.ProductID)
+{WHERE 	
+	{OrderDetails.OrderID IN (SELECT OrderID FROM Orders WHERE 
+			{Orders.ShippedDate :shippingDates} 
+			{Orders.OrderDate :orderDates}
+			{Orders.ShipCountry :shippingCountries})} 
+	{Categories.CategoryID :categoryIds}}
+GROUP BY 
+	Categories.CategoryID, Categories.CategoryName
 ```
 
-**In the first test**, the `query` object was not provided any conditions, so, it removed all the magical syntax that begins with `{` and ends with `}` as it served no purpose. 
+It's the same thing except it uses different aliases - please note that you don't need to modify your `GetCategorySales` method for this template to work, it'll work as long as the parameter names are the same.
 
-**In the second test**, we called `SetCondition("employeeId", 1);` so now the magical syntax comes into play.
-
-So, this template:
+Next template uses a completely different join and has no sub-queries, it may be a little less optimal but it'll work just the same:
 
 ```SQL
-... {WHERE EmployeeID :employeeId} ...
-```
-Plus this method:
-```C#
-SetCondition("employeeId", 1);
-```
-Produced this SQL:
-```SQL
-... WHERE EmployeeID = :pemployeeId_1 ...
-```
-
-The `:employeeId` placeholder was simply replaced by `= :pemployeeId_1`. SqlBinder also automatically takes care of the command parameters (bind variables) that will be passed to `IDbCommand`.
-
-**In the third test**, we called `SetCondition("employeeId", new[] { 1, 2 });` which means we would like two employees this time. 
-
-This caused the SqlBinder query template:
-```SQL
-... {WHERE EmployeeID :employeeId} ...
-```
-To be transformed into this SQL:
-```SQL
-... WHERE EmployeeID IN (:pemployeeId_1, :pemployeeId_2) ...
+SELECT
+	Categories.CategoryID, 
+	Categories.CategoryName, 
+	SUM(CCUR(OrderDetails.UnitPrice * OrderDetails.Quantity * 
+		(1 - OrderDetails.Discount) / 100) * 100) AS TotalSales
+FROM (((Categories		
+	INNER JOIN Products ON Products.CategoryID = Categories.CategoryID)
+	INNER JOIN OrderDetails ON OrderDetails.ProductID = Products.ProductID)
+	INNER JOIN Orders ON Orders.OrderID = OrderDetails.OrderID)
+{WHERE
+	{Orders.ShippedDate :shippingDates} 
+	{Orders.OrderDate :orderDates}
+	{Orders.ShipCountry :shippingCountries} 
+	{Categories.CategoryID :categoryIds}}
+GROUP BY 
+	Categories.CategoryID, Categories.CategoryName
 ```
 
-There are great many things into which `:employeeId` can be transformed but for now we'll just cover the basic concepts. 
-
-[Try this example on DotNetFiddle!](https://dotnetfiddle.net/pa0h1H "Try it on DotNetFiddle")
-
-## Example 2: Query yet some more employees
-Let's do a different query this time:
-```SQL
-SELECT * FROM Employees {WHERE {City :city} {HireDate :hireDate} {YEAR(HireDate) :hireDateYear}}
-```
-This time we have nested *scopes* `{...{...}...}`. First and foremost, note that this syntax can be put anywhere in the SQL and that the `WHERE` clause means nothing to SqlBinder, it's just plain text that will be removed if its parent *scope* is removed.
-
-**Remember:** the scope is removed only if all its child scopes are removed or its child placeholder (i.e. `:param`, `@param` or `?param`) is removed which in turn is removed if no matching *condition* was found for it.
-
-For example, if we don't pass any *conditions* at all, all the magical stuff is removed and you end up with:
+Or if you want something totally different, here's another template which has two `WHERE` clauses, is using a different syntax to join and has no `GROUP BY` - again, it works out of the box and would produce the same data:
 
 ```SQL
-SELECT * FROM Employees
+SELECT 
+	Categories.CategoryID, 
+	Categories.CategoryName, 
+	(SELECT SUM(CCUR(UnitPrice * Quantity * (1 - Discount) / 100) * 100) 
+	FROM OrderDetails WHERE ProductID IN 
+		(SELECT ProductID FROM Products WHERE Products.CategoryID = Categories.CategoryID)
+		{AND OrderID IN (SELECT OrderID FROM Orders WHERE 
+			{Orders.ShippedDate :shippingDates} 
+			{Orders.OrderDate :orderDates}
+			{Orders.ShipCountry :shippingCountries})}) AS TotalSales
+FROM Categories {WHERE {Categories.CategoryID :categoryIds}}
 ```
 
-But if we do pass some condition, for example, **let’s try and get employees hired in 1993**:
+Any one of aforementioned scripts may be put in the `CategorySales.sql` file and used without modifying the C# code. With SqlBinder your SQL scripts can be *truly* separate from everything else. What SqlBinder does is it binds `SqlBinder.Condition` objects to its template scripts returning a valid SQL which you can then pass to your ORM.
 
-```C#
-query.SetCondition("hireDateYear", 1993);
-```
+## Tutorials, Examples and Demo App
+On [SqlBinder's Code Project article](https://www.codeproject.com/Articles/1246990/SqlBinder-Library) you may explore more in-depth examples offering some deeper insight and easy to follow tutorials.
 
-This will produce the following SQL:
+A very useful Demo App comes with SqlBinder source code which may introduce you better to SqlBinder than examples or anything else. It is described in more detail on the [Code Project article](https://www.codeproject.com/Articles/1246990/SqlBinder-Library).
 
-```SQL
-SELECT * FROM Employees WHERE YEAR(HireDate) = :phireDateYear_1
-```
-
-By the way, don't worry about command parameter values, they are already passed to the command.
-
-As you can see, the scopes `{City :city}` and `{HireDate :hireDate}` were eliminated as SqlBinder did not find any matching conditions for them.
-
-**Now let's try and get employees hired after July 1993** 
-
-```C#
-query.Conditions.Clear(); // Remove any previous conditions
-query.SetCondition("hireDate", from: new DateTime(1993, 6, 1));
-```
-
-This time we're clearing the conditions collection as we don't want `hireDateYear`, we just want `hireDate` right now - if you take a look at the SQL template again you'll see that they are different placeholders.
-
-The resulting SQL will be:
-
-```SQL
-SELECT * FROM Employees WHERE HireDate >= :phireDate_1
-```
-
-**How about employees from London that were hired between 1993 and 1994?**
-
-```C#
-query.Conditions.Clear();
-query.SetCondition("hireDateYear", 1993, 1994);
-query.SetCondition("city", "London");
-```
-
-Now we have two conditions that will be automatically connected with an `AND` operator in the output SQL. All *consecutive* (i.e. separated by white-space) scopes will automatically be connected with an operator (e.g. AND, OR). 
-
-The resulting SQL:
-```SQL
-SELECT * FROM Employees WHERE City = :pcity_1 AND YEAR(HireDate) BETWEEN :phireDateYear_1 AND :phireDateYear_2
-```
-
-Neat!
-
-For complete source code of these examples refer to the `Source/SqlBinder.ConsoleTutorial` folder where you can experiment on your own.
-
-## The Demo App
-
-This library comes with a very nice, interactive Demo App developed in WPF which serves as a more complex example of the SqlBinder capabilities. It's still actually quite basic (it's just a MDB after all) but offers a deeper insight into the core features. 
-
-![screenshot1](https://raw.githubusercontent.com/bawkee/SqlBinder/master/Source/SqlBinder.DemoApp/screenshot1.png "Demo Screenshot")
-
-You can browse the Northwind database using example queries which come as *.sql files which you can alter any way you like and watch SqlBinder work its magic in the Debug Log.
+Don't forget to rate the article if you like what you see!
 
 ## The Syntax
-Consists of two basic types of elements: scopes and parameter placeholders. Scopes are defined by curly braces `{ ... }` and parameter placeholders can be defined by the typical SQL syntax (i.e. `:parameter`) or by custom SqlBinder syntax (if configured so, i.e. `[parameter]`). Observe the following set of valid examples where `...` can be any SQL:
+Consists of two basic types of elements: scopes and parameter placeholders. Scopes are defined by curly braces `{ ... }` and parameter placeholders can be defined by the typical SQL syntax (i.e. `:parameter` or `@parameter`) or by custom SqlBinder syntax (if configured so, i.e. `[parameter]`). 
+
+Explained with regex:
+```SQL
+... [@\+]{ ... [:?@]paramPlaceholder  ... } ...
+```
+
+Or, consider the following set of valid examples where `...` can be any SQL:
 ```SQL
 ... { ... :paramPlaceholder  ... } ...
 
-... { ... { ... @paramPlaceholder  ... } ... } ...
+... { ... @paramPlaceholder  ... } ...
 
-... { ... { ... :paramPlaceholder1  ... } ... { ... :paramPlaceholder2 ... } ... } ...
+... { ... { ... :paramPlaceholder  ... } ... } ...
 
 ... @{ ... { ... :paramPlaceholder1  ... } ... { ... :paramPlaceholder2 ... } ... } ...
 
-... @{ ... { ... [place holder 1]  ... } ... { ... [place holder 2] ... } ... } ...
+... +{ ... { ... :paramPlaceholder1  ... } ... { ... :paramPlaceholder2 ... } ... } ...
+
+... { ... { ... [place holder 1]  ... } ... { ... [place holder 2] ... } ... } ...
 ```
 
 Further explanation of above examples:
@@ -204,6 +167,7 @@ Further explanation of above examples:
 * `:paramPlaceholder` can be any alphanumeric name that will be matched against `Query.Conditions` collection. This is referred to as *parameter* in the SqlBinder objects. If a parameter doesn't match any condition it will be removed along with its entire parent scope. The output SQL bind variable will be formatted with the same prefix as the parameter (acceptable prefixes are `:` or `@` or `?`). These parameters are not bind-variables and you must respect the aforementioned syntax, i.e. the Oracle variable `:"MyVariable"` won't be recognized as a parameter - if you need custom formatting in your output variables which you can't accomplish with the SqlBinder syntax names there ways to do so via events and delegates (see the Query class). Note that there can only be one placeholder in a given scope. When you need multiple placeholders put each one in its own separate scope.
 * `[place holder xy]` works the same way as above except any character is allowed and you must provide the parameter prefix manually (in C#) by overriding the `Query` class, `DbQuery` class or setting the appropriate property. Also, this syntax doesn't work by default, you have to enable a special hint via `Query.ParserHints` property since `[]` characters are used by some SQL flavors. With that said, you can still escape these tags into the output SQL `[[like this]]`.
 * The `@` character before the scope (i.e. `@{`) tells the SqlBinder to connect scopes with an `OR` rather than default `AND` operator. 
+* The `+` character before the scope (i.e. `+{`) instructs the SqlBinder to not automatically connect this specific scope with its previous sibling by an `AND` (or any  operator), to instead just leave the white space as it already is. 
 * The `...` can be any SQL from any DBMS or just about any text. The string literals won't be processed by the SqlBinder which means they can safely contain SqlBinder syntax. The special flavors of literals such as PostgreSQL dollar literals or Oracle AQM literals are recognized as well and can safely contain any special character used by the SqlBinder. The same goes for SQL comments.
 
 **The comment syntax** looks like this:
@@ -231,9 +195,9 @@ $myTag$Or in this PostgreSQL literal {} [] ...$myTag$
 None of these are processed against SqlBinder syntax. You may safely put parameter placeholder or scope syntax in here and it won't be altered in any way. SqlBinder does not do simple find-replace, it parses the script and re-builds the SQL based on it.
 
 ## The Performance
-SqlBinder is *very* fast but it's pointless to compare it with other tools as they do different things. However, you can combine it with micro ORM solutions like Dapper - it wouldn't make sense to compare the performance differences of SqlBinder and Dapper separately but one can measure the overhead added by utilizing both at the same time. I took Dapper for reference as it's the fastest micro-ORM that I currently know of.
+SqlBinder is *very* fast but I have nothing to compare it with. Instead, you can combine it with micro ORM solutions like Dapper and measure the potential overhead. I took Dapper for reference as it's the fastest micro-ORM that I currently know of.
 
-Consider the following tables. On the left column you will see performance of Dapper alone and on the right column you will see Dapper doing the exact same thing but with added overhead of SqlBinder providing the SQL and command parameter values based on a given template.
+Consider the following tables. On the left column you will see performance of Dapper alone and on the right column you will see Dapper doing the exact same thing but with added overhead of SqlBinder doing its magic.
 
 **LocalDB (Sql Sever Express):**
 ```
@@ -291,6 +255,6 @@ It is important to note that SqlBinder has the ability to re-use compiled templa
 Simple performance tests are available in the Source folder where you can benchmark SqlBinder on your own.
 
 ## The Purpose
-I originally wrote the first version of this library back in 2009 to make my life easier. The projects I had worked on relied on large and very complex Oracle databases with all the business logic in them so I used SQL to access anything I needed which worked out great. I was in charge of developing the front-end which involved great many filters and buttons which helped the user customize the data to be visualized. Fetching thousands of records and then filtering them on client side was out of the question, we had both our own and business client DBAs keeping a close eye on performance and bandwidth. Therefore, with some help of DBAs, PLSQL devs etc. we were able to muster up some very performant, complex and crafty SQLs which for reasons out of scope here would not be optimal as DB views. 
+I originally wrote the first version of this library back in 2009 to make my life easier. The projects I had worked on relied on large and very complex Oracle databases with all the business logic in them so I used SQL to access anything I needed which worked out great. I was in charge of developing the front-end which involved great many filters and buttons which helped the user customize the data to be visualized. Fetching thousands of records and then filtering them on client side was out of the question, we had both our own and business client DBAs keeping a close eye on performance and bandwidth. Therefore, with some help of DBAs, PLSQL devs etc. we were able to muster up some very performant, complex and crafty SQLs. 
 
-This however, resulted in some pretty awkward SQL-generating and variable-binding code that was hard to maintain, optimize and alter. Tools like NHibernate solved a lot of problems we didn't have but didn't entirely solve the one we had. I wasn't aware of Dapper back then but it still wouldn't solve most of the problems. This is where my SqlBinder-like metalanguage came to rescue, all that mess was converted into a `string.Format`-like code where I could write the whole script and then pass the variables (or don't pass them). From a proof of concept and experiment it eventually grew up to be SqlBinder as I used my free time to tweak and improve it. It helped me greatly and I'm releasing it here so it may help someone else too.
+This however, resulted in some pretty awkward SQL-generating and variable-binding code that was hard to maintain, optimize and alter. Tools like NHibernate solved a lot of problems we didn't have but didn't entirely solve the one we had. I wasn't aware of Dapper back then but while it would lessen the problems it still couldn't solve them (otherwise I wouldn't be posting any of this and would just switch to Dapper as it's a really great library). This is where my SqlBinder-like metalanguage came to rescue, all that mess was converted into a `string.Format`-like code where I could write the whole script and then pass the variables (or don't pass them). From a proof of concept and experiment it eventually grew up to be SqlBinder as I used my free time to tweak and improve it. It helped me greatly and I'm releasing it here so it may help someone else too. I tend to use it in combination with Dapper but any other (existing or your own) ORM may be used just as well.
