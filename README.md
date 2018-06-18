@@ -1,10 +1,14 @@
 # SqlBinder
 
-Is a free, open-source library that helps you transform a given SQL template and a set of conditions into any number of valid SQL statements along with their associated parameters.
+Is a free, open-source library that helps you transform a given SQL template and a given set of conditions into any number of valid SQL statements.
 
-**It isn't an ORM solution** - instead, it is DBMS-independent, SQL-centric **templating engine**. All it does is it removes the hassle of writing code that generates SQLs and bind variables . It does *not* generate the entire SQL itself, it transforms an existing SQL template instead. 
+**It isn't an ORM solution** - instead, it is DBMS-independent, SQL-centric **templating engine**. All it does is it removes the hassle of writing code that generates SQLs and bind variables .
 
-**It isn't 'SQL builder'** due to its high degree of composability, it is aimed at writing more complex queries. It isn't a swiss army knife either, it can be elegantly used alongside other popular tools such as Dapper, Dapper.Contrib, PetaPoco and others.
+**It isn't exactly 'SQL builder'** due to its high degree of composability, it is aimed at writing more complex queries where simply replacing `'/* where_clause_here */'` string simply doesn't suffice. You provide it with a template containing placeholder syntax and reuse it.
+
+**It can be used alongside other tools** such as Dapper, PetaPoco, EntityFramework and others. 
+
+**The possibility of SQL injection** is eliminated by automatically taking care of your bind variables.
 
 [![NuGet](https://img.shields.io/nuget/v/SqlBinder.svg)](https://www.nuget.org/packages/SqlBinder/)
 
