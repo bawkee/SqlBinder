@@ -4,7 +4,7 @@ Is a free, open-source library that helps you transform a given SQL template and
 
 **It isn't an ORM solution** - instead, it is DBMS-independent, SQL-centric **templating engine**. All it does is it removes the hassle of writing code that generates SQLs and bind variables .
 
-**It isn't exactly 'SQL builder'** due to its high degree of composability, it is aimed at writing more complex queries where simply replacing `'/* where_clause_here */'` string doesn't suffice. You provide it with a template containing placeholder syntax and reuse it.
+**It isn't exactly 'SQL builder'** due to its high degree of composability, it is aimed at writing more complex queries where simply replacing `/* where_clause_here */'` string doesn't suffice. You provide it with a template containing placeholder syntax and reuse it.
 
 **It can be used alongside other tools** such as Dapper, PetaPoco, EntityFramework and others. 
 
