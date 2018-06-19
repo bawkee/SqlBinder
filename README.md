@@ -1,4 +1,4 @@
-# SqlBinder
+# :paperclip: SqlBinder
 
 Is a free, open-source library that helps you transform a given SQL template and a given set of conditions into any number of valid SQL statements.
 
