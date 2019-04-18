@@ -12,7 +12,7 @@
     <Description>Free, open-source library that helps you transform a given SQL template and a set of conditions into any number of valid SQL statements along with their associated parameters.</Description>
     <Copyright>Copyright © Bojan Sala</Copyright>
     <PackageTags>sql,templating,c#,database</PackageTags>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <Version>0.3.0</Version>	
   </PropertyGroup>
   
