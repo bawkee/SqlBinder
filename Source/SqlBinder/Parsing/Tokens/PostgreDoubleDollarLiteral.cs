@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-namespace SqlBinder.Parsing.Tokens
+﻿namespace SqlBinder.Parsing.Tokens
 {
 	/// <summary>
 	/// PostgreSQL literal, i.e. $$ ... $$ or $anyTag$ ... $anyTag$. It can contain any other characters inside. Note that dollar symbol

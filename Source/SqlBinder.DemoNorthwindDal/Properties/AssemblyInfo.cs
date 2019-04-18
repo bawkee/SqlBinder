@@ -8,9 +8,9 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("SqlBinder.DemoNorthwindDal")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Microsoft")]
+[assembly: AssemblyCompany("Bojan Sala")]
 [assembly: AssemblyProduct("SqlBinder.DemoNorthwindDal")]
-[assembly: AssemblyCopyright("Copyright © Microsoft 2018")]
+[assembly: AssemblyCopyright("Copyright © Bojan Sala")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

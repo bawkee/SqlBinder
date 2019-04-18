@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace SqlBinder
+﻿namespace SqlBinder
 {
 	/// <summary>
 	/// Basic sql operators that can be used with conditions. Please note that if you want to use custom operators on custom conditions, you should start

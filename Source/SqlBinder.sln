@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27130.2003
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SqlBinder", "SqlBinder\SqlBinder.csproj", "{476DC782-61D2-4429-B4EE-B36762ABF154}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SqlBinder.UnitTesting", "SqlBinder.UnitTesting\SqlBinder.UnitTesting.csproj", "{5CCA235C-671C-4025-A7E4-757EFB8786FC}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SqlBinder", "SqlBinder\SqlBinder.csproj", "{544EE179-50F0-4EDA-92BA-9CBCA3C46B95}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -13,31 +13,19 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{476DC782-61D2-4429-B4EE-B36762ABF154}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{476DC782-61D2-4429-B4EE-B36762ABF154}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{476DC782-61D2-4429-B4EE-B36762ABF154}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{476DC782-61D2-4429-B4EE-B36762ABF154}.Release|Any CPU.Build.0 = Release|Any CPU
 		{5CCA235C-671C-4025-A7E4-757EFB8786FC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{5CCA235C-671C-4025-A7E4-757EFB8786FC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5CCA235C-671C-4025-A7E4-757EFB8786FC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5CCA235C-671C-4025-A7E4-757EFB8786FC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{544EE179-50F0-4EDA-92BA-9CBCA3C46B95}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{544EE179-50F0-4EDA-92BA-9CBCA3C46B95}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{544EE179-50F0-4EDA-92BA-9CBCA3C46B95}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{544EE179-50F0-4EDA-92BA-9CBCA3C46B95}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {44B6FDD1-5E01-400F-8AD8-1BAC29AFA634}
-	EndGlobalSection
-	GlobalSection(TeamFoundationVersionControl) = preSolution
-		SccNumberOfProjects = 3
-		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
-		SccTeamFoundationServer = http://tfs.beg.finsoft.com:8080/tfs/maincollection
-		SccLocalPath0 = .
-		SccProjectUniqueName1 = SqlBinder\\SqlBinder.csproj
-		SccProjectName1 = SqlBinder
-		SccLocalPath1 = SqlBinder
-		SccProjectUniqueName2 = SqlBinder.UnitTesting\\SqlBinder.UnitTesting.csproj
-		SccProjectName2 = SqlBinder.UnitTesting
-		SccLocalPath2 = SqlBinder.UnitTesting
 	EndGlobalSection
 EndGlobal

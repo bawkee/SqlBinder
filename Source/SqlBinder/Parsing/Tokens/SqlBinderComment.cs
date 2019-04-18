@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-namespace SqlBinder.Parsing.Tokens
+﻿namespace SqlBinder.Parsing.Tokens
 {
 	/// <summary>
 	/// SqlBinder comment, i.e. /*{ ... }*/. Note that these comments will be eliminated by the template processor.

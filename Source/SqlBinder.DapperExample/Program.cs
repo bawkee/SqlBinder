@@ -20,7 +20,7 @@ namespace SqlBinder.DapperExample
 	{
 		static void Main()
 		{
-			var whichExample = 4.2;
+			var whichExample = 0.0;
 
 			// Set the example you want to play with. You can browse contents of the database from within Visual Studio 
 			// (double click on the Northwind Traders.mdb item in the project) and experiment.						
@@ -30,9 +30,9 @@ namespace SqlBinder.DapperExample
 				case 0.0: PerfTestSqlServer(); break;
 				case 0.1: PerfTestAccess(); break;
 				case 0.2: PerfCompareAccess(); break;
-				case 1: Example1(); break;
-				case 2: Example2(); break;
-				case 3: Example3(); break;
+				case 1.0: Example1(); break;
+				case 2.0: Example2(); break;
+				case 3.0: Example3(); break;
 				case 4.0: Example4_SlqBuilder(); break;
 				case 4.1: Example4_SqlBinder(); break;
 				case 4.2:
@@ -191,7 +191,7 @@ namespace SqlBinder.DapperExample
 
 		static void Example4_SqlBinderNice()
 		{
-			Console.WriteLine("### Example 4.2, SqlBinder + Dapper");
+			Console.WriteLine("### Example 4.2, SqlBinder + Dapper (the nice overloads)");
 			using (var connection = OpenOleDbConnection())
 			{
 				Console.WriteLine("Case 1");
@@ -335,7 +335,7 @@ GROUP BY
 			DateTime? fromOrderDate = null, DateTime? toOrderDate = null,
 			IEnumerable<string> shippingCountries = null)
 		{
-			var query = new Query(GetEmbeddedSql("CategorySales.sql"));
+			var query = new Query(GetEmbeddedSql("CategorySalesJoin.sql"));
 
 			query.SetCondition("categoryIds", categoryIds);
 			query.SetConditionRange("shippingDates", fromShippingDate, toShippingDate);

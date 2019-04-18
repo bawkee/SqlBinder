@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace SqlBinder.Parsing.Tokens
+﻿namespace SqlBinder.Parsing.Tokens
 {
 	/// <summary>
 	/// Sql string literal, i.e. ' ... '. It can contain other literals inside. It is also escapable, i.e. '' and \' are acceptable.

@@ -10,9 +10,9 @@ using System.Windows;
 [assembly: AssemblyTitle("SqlBinder.DemoApp")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Microsoft")]
+[assembly: AssemblyCompany("Bojan Sala")]
 [assembly: AssemblyProduct("SqlBinder.DemoApp")]
-[assembly: AssemblyCopyright("Copyright © Microsoft 2018")]
+[assembly: AssemblyCopyright("Copyright © Bojan Sala")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

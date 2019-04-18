@@ -144,7 +144,7 @@ namespace SqlBinder.ConsoleTutorial
 
 			// ---- * Example 3 * ---- //
 			query.Conditions.Clear();
-			query.SetCondition("hireDate", from: new DateTime(1993, 6, 1));
+			query.SetConditionRange("hireDate", from: new DateTime(1993, 6, 1));
 			query.CreateCommand();
 
 			Console.WriteLine("-- Example 3 --");
@@ -163,8 +163,9 @@ namespace SqlBinder.ConsoleTutorial
 
 			// ---- * Example 4 * ---- //
 			query.Conditions.Clear();
-			query.SetCondition("hireDateYear", 1993, 1994);
+			query.SetConditionRange("hireDateYear", 1993, 1994);
 			query.SetCondition("city", "London");
+			query.CreateCommand();
 
 			Console.WriteLine("-- Example 4 --");
 			Console.WriteLine("Employees from London that were hired between 1993 and 1994.");
