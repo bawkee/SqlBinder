@@ -5,11 +5,11 @@
 FROM ((Categories		
 	INNER JOIN Products ON Products.CategoryID = Categories.CategoryID)
 	INNER JOIN OrderDetails ON OrderDetails.ProductID = Products.ProductID)
-{WHERE 	
+{WHERE 
 	{OrderDetails.OrderID IN (SELECT OrderID FROM Orders WHERE 
-			{Orders.ShippedDate :shippingDates} 
+			{Orders.ShippedDate :shippingDates}
 			{Orders.OrderDate :orderDates}
-			{Orders.ShipCountry :shipCountry})} 
+			{Orders.ShipCountry :shipCountry})}
 	{Categories.CategoryID :categoryIds}}
 GROUP BY 
 	Categories.CategoryID, Categories.CategoryName
