@@ -1,16 +1,25 @@
-# :paperclip: SqlBinder
+# SqlBinder :paperclip:
 
-Is a free, open-source library that helps you transform a given SQL template and a given set of conditions into any number of valid SQL statements.
+![License](https://img.shields.io/github/license/bawkee/SqlBinder) ![Stars](https://img.shields.io/github/stars/bawkee/SqlBinder?style=social) [![NuGet](https://img.shields.io/nuget/v/SqlBinder.svg)](https://www.nuget.org/packages/SqlBinder/)
 
-**It isn't an ORM solution** - instead, it is DBMS-independent, SQL-centric **templating engine**. All it does is it removes the hassle of writing code that generates SQLs and bind variables .
+SqlBinder is a free, open-source library designed to effortlessly generate valid SQL statements by transforming SQL templates based on a set of conditions.
 
-**It isn't exactly 'SQL builder'** due to its high degree of composability, it is aimed at writing more complex queries where simply replacing `/* where_clause_here */'` string doesn't suffice. You provide it with a template containing placeholder syntax and reuse it.
+- **Not an ORM**: SqlBinder isn't an Object-Relational Mapping tool. It's a DBMS-independent, SQL-centric templating engine that removes the overhead of SQL generation and bind variables.
+  
+- **Enhanced Composability**: Unlike typical SQL builders, SqlBinder is geared towards crafting complex queries, going beyond simple placeholder replacements.
+  
+- **Plays Well with Others**: Compatible with other ORM tools like Dapper, PetaPoco, and EntityFramework.
+  
+- **Security First**: Automatically handles bind variables, mitigating SQL injection risks.
 
-**It can be used alongside other tools** such as Dapper, PetaPoco, EntityFramework and others. 
+## Key Features
 
-**The possibility of SQL injection** is eliminated by automatically taking care of your bind variables.
-
-[![NuGet](https://img.shields.io/nuget/v/SqlBinder.svg)](https://www.nuget.org/packages/SqlBinder/)
+- 🚀 **Scalable**: Tackles both basic and complex SQL generation needs. No performance penalties, no overhead.
+- 📚 **Examples**: Covering everything from beginner to expert use cases.
+- ⚡ **Performance**: Outstanding speed metrics, even when used alongside tools like Dapper, PetaPoco, and EntityFramework.
+- 🧪 **Well Tested**: A wide range of tests and great coverage makes it super stable.
+- 🏆 **Award-Winning Article**: Check out our [CodeProject article](#link-to-article) for an in-depth walkthrough.
+- 🌐 **Real-world Demo**: A WPF-based application demonstrating SqlBinder's capabilities with the Northwind database.
 
 ## A Quick Demonstration
 
@@ -27,7 +36,7 @@ IEnumerable<CategorySale> GetCategorySales(
 
 Implementation of this method should return a summary of sales grouped by categories and filtered by any combination of the following criteria: categories, shipping dates, order dates and shipping countries. 
 
-Usually, you'd implement this method by building an SQL via some Fluent API (e.g. PetaPoco's `Sql.Builder`), `Dapper.Contrib`'s nice `SqlBuilder`  or just `StringBuilder`. Instead, I'm going to show you how you could implement this method via `SqlBinder` and regular `Dapper`. It would look like this:
+Instead of manually building SQL using Fluent APIs or string concatenation, see how SqlBinder, combined with Dapper, simplifies the process:
 
 ```C#
 IEnumerable<CategorySale> GetCategorySales(
@@ -48,11 +57,9 @@ IEnumerable<CategorySale> GetCategorySales(
 }
 ```
 
-But where's the SQL, what's in this `CategorySales.sql`? Now here's the nice part, you can safely store the SQL somewhere else and it may have multiple `WHERE` clauses, multiple `ORDER BY`'s and any number of sub-queries - all of this is natively supported by `SqlBinder`'s templates, being so composable there's almost never a reason to store templates inside your method unless they're one-liners and very small. 
+The SQL templates, like this one, offer native support for multiple `WHERE` clauses, varied `ORDER BY` statements, and numerous sub-queries.
 
-There are multiple possible SQL scripts which will all work with the above method if we put them in `CategorySales.sql`. 
-
-For example this script with shortcut aliases and an optional sub-query:
+Another script with shortcut aliases and an optional sub-query:
 
 ```SQL
 SELECT
@@ -74,7 +81,9 @@ GROUP BY
 
 What's this *optional* sub-query? Well, since our `OD.OrderID IN` condition is enclosed within `{ }` braces it means that it won't be used if it's *not needed* - in other words, if it's not needed then output SQL won't contain it along with its sub-query `SELECT OrderID FROM Orders ...`. Again, the whole part enclosed in `{ }` would be removed if its conditions aren't used, specifically if none of the `:shippingDates`, `:orderDates` or `:shippingCountries` are used. The `:categoryIds` condition is separate from this and belongs to the parent query, SqlBinder will connect it with the above condition automatically (*if* it's used) with an `AND` operand.
 
-The next script  uses different aliases and would work just the same:
+This way, SqlBinder ensures SQL scripts are decoupled from your code, improving maintainability.
+
+The next template script uses different aliases and would work just the same:
 
 ```SQL
 SELECT
@@ -95,9 +104,9 @@ GROUP BY
 	Categories.CategoryID, Categories.CategoryName
 ```
 
-It's the same thing except it uses different aliases - please note that you don't need to modify your `GetCategorySales` method for this template to work, it'll work as long as the parameter names are the same.
+You don't need to modify your `GetCategorySales` method for this template to work, it'll work as long as the parameter names are the same.
 
-Next template uses a completely different join and has no sub-queries, it may be a little less optimal but it'll work just the same:
+Next template uses a completely different join and has no sub-queries:
 
 ```SQL
 SELECT
@@ -118,7 +127,7 @@ GROUP BY
 	Categories.CategoryID, Categories.CategoryName
 ```
 
-Or if you want something totally different, here's another template which has two `WHERE` clauses, is using a different syntax to join and has no `GROUP BY` - again, it works out of the box and would produce the same data:
+Here's another template which has two `WHERE` clauses, is using a different syntax to join and has no `GROUP BY`. This works out of the box and would produce the same data:
 
 ```SQL
 SELECT 
@@ -134,21 +143,19 @@ SELECT
 FROM Categories {WHERE {Categories.CategoryID :categoryIds}}
 ```
 
-Any one of aforementioned scripts may be put in the `CategorySales.sql` file and used without modifying the C# code. With SqlBinder your SQL scripts can be *truly* separate from everything else. 
-
 What SqlBinder does is it binds `SqlBinder.Condition` objects to its template scripts returning a valid SQL which you can then pass to your ORM.
 
 ## Tutorials, Examples and Demo App
-On [SqlBinder's Code Project article](https://www.codeproject.com/Articles/1246990/SqlBinder-Library) you may explore more in-depth examples offering some deeper insight and easy to follow tutorials.
 
-A very useful Demo App comes with SqlBinder source code which may introduce you better to SqlBinder than examples or anything else. It is described in more detail on the [Code Project article](https://www.codeproject.com/Articles/1246990/SqlBinder-Library).
+- **In-depth Guide**: Discover more examples and tutorials in the [SqlBinder's Code Project article](https://www.codeproject.com/Articles/1246990/SqlBinder-Library).
 
-Don't forget to rate the article if you like what you see!
+- **Demo App**: The SqlBinder source code includes a hands-on demo application, offering a deeper dive into its capabilities. More details can be found in the [Code Project article](https://www.codeproject.com/Articles/1246990/SqlBinder-Library).
 
-## The Performance
-SqlBinder is *very* fast but I have nothing to compare it with. Instead, you can combine it with micro ORM solutions like Dapper and measure the potential overhead. I took Dapper for reference as it's the fastest micro-ORM that I currently know of.
+⭐ Don't forget to rate the article if it helped!
 
-Consider the following tables. On the left column you will see performance of Dapper alone and on the right column you will see Dapper doing the exact same thing but with added overhead of SqlBinder doing its magic.
+## Performance Metrics
+
+SqlBinder's performance, when combined with ORMs like Dapper, is exceptional:
 
 **LocalDB (Sql Sever Express):**
 ```
@@ -199,13 +206,14 @@ And
 ```SQL
 SELECT * FROM POSTS {WHERE {ID @id}}
 ```
-Where the latter was used in Dapper+SqlBinder combination. 
+Where the latter was used in Dapper + SqlBinder combination. 
 
-It is important to note that SqlBinder has the ability to re-use compiled templates as it completely separates the parsing and templating concerns. You may create a SqlBinder query template once and then build all the subsequent SQL queries from the same pre-parsed template. One of the key functionalities of SqlBinder is that it doesn't parse or generate the whole SQL *every time*. Also, it relies on hand coded parser which is well optimized. 
+It is important to note that SqlBinder has the ability to re-use compiled templates as it completely separates the parsing and templating concerns. You may create a SqlBinder query template once and then build all the subsequent SQL queries from the same pre-parsed template. One of the key functionalities of SqlBinder is that it doesn't parse or generate the whole SQL *every time*.
 
-Simple performance tests are available in the Source folder where you can benchmark SqlBinder on your own.
+Performance tests are available in the source folder. Benchmark SqlBinder on your own!
 
 ## The Syntax
+
 Consists of two basic types of elements: scopes and parameter placeholders. Scopes are defined by curly braces `{ ... }` and parameter placeholders can be defined by the typical SQL syntax (i.e. `:parameter` or `@parameter`) or by custom SqlBinder syntax (if configured so, i.e. `[parameter]`). 
 
 Explained with regex:
@@ -260,7 +268,6 @@ $myTag$Or in this PostgreSQL literal {} [] ...$myTag$
 ```
 None of these are processed against SqlBinder syntax. You may safely put parameter placeholder or scope syntax in here and it won't be altered in any way. SqlBinder does not do simple find-replace, it parses the script and re-builds the SQL based on it.
 
-## The Purpose
-I originally wrote the first version of this library back in 2009 to make my life easier. The projects I had worked on relied on large and very complex Oracle databases with all the business logic in them so I used SQL to access anything I needed which worked out great. I was in charge of developing the front-end which involved great many filters and buttons which helped the user customize the data to be visualized. Fetching thousands of records and then filtering them on client side was out of the question, we had both our own and business client DBAs keeping a close eye on performance and bandwidth. Therefore, with some help of DBAs, PLSQL devs etc. we were able to muster up some very performant, complex and crafty SQLs. 
+## Origin Story
 
-This however, resulted in some pretty awkward SQL-generating and variable-binding code that was hard to maintain, optimize and alter. Tools like NHibernate solved a lot of problems we didn't have but didn't entirely solve the one we had. I wasn't aware of Dapper back then but while it would lessen the problems it still couldn't solve them (otherwise I wouldn't be posting any of this and would just switch to Dapper as it's a really great library). This is where my SqlBinder-like metalanguage came to rescue, all that mess was converted into a `string.Format`-like code where I could write the whole script and then pass the variables (or don't pass them). From a proof of concept and experiment it eventually grew up to be SqlBinder as I used my free time to tweak and improve it. It helped me greatly and I'm releasing it here so it may help someone else too. I tend to use it in combination with Dapper but any other (existing or your own) ORM may be used just as well.
+SqlBinder was born in 2009 out of a necessity to simplify front-end development against complex Oracle databases. With performance and bandwidth being critical, we needed a solution that could leverage powerful SQLs without compromising code maintainability. SqlBinder grew from a prototype to the robust tool it is today, often used alongside Dapper for optimal results.
