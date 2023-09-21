@@ -21,6 +21,10 @@ SqlBinder is a free, open-source library designed to effortlessly generate valid
 - 🏆 **Award-Winning Article**: Check out our [CodeProject article](#link-to-article) for an in-depth walkthrough.
 - 🌐 **Real-world Demo**: A WPF-based application demonstrating SqlBinder's capabilities with the Northwind database.
 
+## Current Status
+
+SqlBinder has been stable for several years. Even though it hasn't seen recent updates, the code base was used in real-world production environments. I believe a boost in its user base could rekindle community involvement, new features and contributions. I will upgrade the current beta to a stable 1.0.0 release, no code changes will be made for this.
+
 ## A Quick Demonstration
 
 Consider the following method signature:
