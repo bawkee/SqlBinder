@@ -18,7 +18,7 @@ SqlBinder is a free, open-source library designed to effortlessly generate valid
 - 📚 **Examples**: Covering everything from beginner to expert use cases.
 - ⚡ **Performance**: Outstanding speed metrics, even when used alongside tools like Dapper, PetaPoco, and EntityFramework.
 - 🧪 **Well Tested**: A wide range of tests and great coverage makes it super stable.
-- 🏆 **Award-Winning Article**: Check out our [CodeProject article](#link-to-article) for an in-depth walkthrough.
+- 🏆 **Award-Winning Article**: Check out our [CodeProject article]([#link-to-article](https://www.codeproject.com/Articles/1246990/SqlBinder-Library)) for an in-depth walkthrough.
 - 🌐 **Real-world Demo**: A WPF-based application demonstrating SqlBinder's capabilities with the Northwind database.
 
 ## Current Status
