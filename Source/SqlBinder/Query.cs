@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using SqlBinder.ConditionValues;
@@ -72,9 +73,8 @@ namespace SqlBinder
     {
         private RootToken _parserResult;
         private ParserHints _parserHints;
-        private string _sqlBinderScript;
-        private static Dictionary<string, RootToken> _parserCache;
-        private static int _parserCacheCapacity = 100;
+        private string _sqlBinderScript;        
+        private static readonly ConcurrentDictionary<string, RootToken> ParserCache = new();
 
         public Query()
         {
@@ -163,19 +163,10 @@ namespace SqlBinder
 
         /// <summary>
         /// Gets or sets the capacity of the static parser cache, if enabled. Once the number of cached template scripts goes beyond this capacity
-        /// the entire static cache will be purged and the process starts from the beginning. Default value is 100. Changing this value will cause
-        /// any existing cache to be re-created and thus purged.
+        /// the entire static cache will be purged and the process starts from the beginning. Default value is 256. Changing this value will cause
+        /// any existing cache to be purged.
         /// </summary>
-        public static int ParserCacheCapacity
-        {
-            get => _parserCacheCapacity;
-            set
-            {
-                if (_parserCacheCapacity != value)
-                    _parserCache = new Dictionary<string, RootToken>(value);
-                _parserCacheCapacity = value;
-            }
-        }
+        public static int ParserCacheCapacity { get; set; } = 256;
 
         /// <summary>
         /// Gets or sets a value which which determines a minimum total number of characters within a SqlBinder template script required for the script's
@@ -518,23 +509,20 @@ namespace SqlBinder
 
         private RootToken GetRecycledParseResults()
         {
-            if (DisableParserCache)
+            if (DisableParserCache || SqlBinderScript.Length < ParserCacheLengthThreshold)
             {
                 if (_parserResult != null)
                     return _parserResult;
-                return _parserResult ?? (_parserResult = new SqlBinderParser(ParserHints).Parse(SqlBinderScript));
+                return _parserResult ??= new SqlBinderParser(ParserHints).Parse(SqlBinderScript);
             }
 
-            if (_parserCache == null)
-                _parserCache = new Dictionary<string, RootToken>(ParserCacheCapacity);
-
-            if (_parserCache.TryGetValue(SqlBinderScript, out var cachedResult))
+            if (ParserCache.TryGetValue(SqlBinderScript, out var cachedResult))
                 return cachedResult;
 
-            if (_parserCache.Count == ParserCacheCapacity)
-                _parserCache.Clear();
+            if (ParserCache.Count == ParserCacheCapacity)
+                ParserCache.Clear();
 
-            return _parserCache[SqlBinderScript] = new SqlBinderParser(ParserHints).Parse(SqlBinderScript);
+            return ParserCache[SqlBinderScript] = new SqlBinderParser(ParserHints).Parse(SqlBinderScript);
         }
 
         /// <summary>

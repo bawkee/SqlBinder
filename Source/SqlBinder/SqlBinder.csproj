@@ -13,7 +13,8 @@
     <Copyright>Copyright © Bojan Sala</Copyright>
     <PackageTags>sql,templating,c#,database</PackageTags>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-    <Version>0.3.0</Version>	
+    <Version>0.3.0</Version>
+    <LangVersion>latest</LangVersion>	
   </PropertyGroup>
   
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">

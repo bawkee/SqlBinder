@@ -17,7 +17,7 @@ namespace SqlBinder.UnitTesting
             [TestInitialize]
             public void InitializeTest()
             {
-                //
+                Query.ParserCacheCapacity = 2;
             }
 
             [TestMethod]
