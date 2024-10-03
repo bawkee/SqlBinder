@@ -23,7 +23,7 @@ SqlBinder is a free, open-source library designed to effortlessly generate valid
 
 ## Current Status
 
-SqlBinder has been stable for several years. Even though it hasn't seen recent updates, the code base was used in real-world production environments. I believe a boost in its user base could rekindle community involvement, new features and contributions. I will upgrade the current beta to a stable 1.0.0 release, no code changes will be made for this.
+SqlBinder has been stable for several years. Even though it hasn't seen recent updates, the code base was used in real-world production environments. I believe a boost in its user base could rekindle community involvement, new features and contributions.
 
 ## A Quick Demonstration
 
@@ -157,65 +157,6 @@ What SqlBinder does is it binds `SqlBinder.Condition` objects to its template sc
 
 ⭐ Don't forget to rate the article if it helped!
 
-## Performance Metrics
-
-SqlBinder's performance, when combined with ORMs like Dapper, is exceptional:
-
-**LocalDB (Sql Sever Express):**
-```
-    Dapper +SqlBinder
----------------------
-     52.88      53.46
-     57.31      59.55
-     56.22      68.07
-     55.97      56.16
-     66.52      55.59
-     54.82      52.96
-     50.98      61.97
-     59.06      57.53
-     50.38      53.97
-    AVG 56     AVG 58
-
- ^ Dapper = Just Dapper.
- ^ +SqlBinder = Dapper with SqlBinder.
-```
-
-**OleDb (Access):**
-```
-    Dapper +SqlBinder
----------------------
-    335.42     336.38
-    317.99     318.89
-    342.56     324.85
-    317.20     320.84
-    327.91     324.56
-    320.29     326.86
-    334.42     338.73
-    344.43     326.33
-    315.32     322.48
-   AVG 328    AVG 327
-
- ^ Dapper = Just Dapper.
- ^ +SqlBinder = Dapper with SqlBinder.
-```
-
-As you can observe, on SqlServer we've had an additional overhead of 2ms which is the time it took SqlBinder to formulate a query based on different criteria. On the OleDb Access test this difference was so insignificant it was lost entirely in deviations (most likely in interaction with the DB).
-
-Each row in the test results was a result of 500 executions of the following queries:
-
-```SQL
-SELECT * FROM POSTS WHERE ID IN @id
-```
-And
-```SQL
-SELECT * FROM POSTS {WHERE {ID @id}}
-```
-Where the latter was used in Dapper + SqlBinder combination. 
-
-It is important to note that SqlBinder has the ability to re-use compiled templates as it completely separates the parsing and templating concerns. You may create a SqlBinder query template once and then build all the subsequent SQL queries from the same pre-parsed template. One of the key functionalities of SqlBinder is that it doesn't parse or generate the whole SQL *every time*.
-
-Performance tests are available in the source folder. Benchmark SqlBinder on your own!
-
 ## The Syntax
 
 Consists of two basic types of elements: scopes and parameter placeholders. Scopes are defined by curly braces `{ ... }` and parameter placeholders can be defined by the typical SQL syntax (i.e. `:parameter` or `@parameter`) or by custom SqlBinder syntax (if configured so, i.e. `[parameter]`). 
@@ -271,6 +212,70 @@ q'{Or in this Oracle literal {} [] which can get very creative ...}'
 $myTag$Or in this PostgreSQL literal {} [] ...$myTag$
 ```
 None of these are processed against SqlBinder syntax. You may safely put parameter placeholder or scope syntax in here and it won't be altered in any way. SqlBinder does not do simple find-replace, it parses the script and re-builds the SQL based on it.
+
+## Performance Metrics
+
+SqlBinder's performance, when combined with ORMs like Dapper, is exceptional:
+
+**LocalDB (Sql Sever Express):**
+
+```
+    Dapper +SqlBinder
+---------------------
+     52.88      53.46
+     57.31      59.55
+     56.22      68.07
+     55.97      56.16
+     66.52      55.59
+     54.82      52.96
+     50.98      61.97
+     59.06      57.53
+     50.38      53.97
+    AVG 56     AVG 58
+
+ ^ Dapper = Just Dapper.
+ ^ +SqlBinder = Dapper with SqlBinder.
+```
+
+**OleDb (Access):**
+
+```
+    Dapper +SqlBinder
+---------------------
+    335.42     336.38
+    317.99     318.89
+    342.56     324.85
+    317.20     320.84
+    327.91     324.56
+    320.29     326.86
+    334.42     338.73
+    344.43     326.33
+    315.32     322.48
+   AVG 328    AVG 327
+
+ ^ Dapper = Just Dapper.
+ ^ +SqlBinder = Dapper with SqlBinder.
+```
+
+As you can observe, on SqlServer we've had an additional overhead of 2ms which is the time it took SqlBinder to formulate a query based on different criteria. On the OleDb Access test this difference was so insignificant it was lost entirely in deviations (most likely in interaction with the DB).
+
+Each row in the test results was a result of 500 executions of the following queries:
+
+```SQL
+SELECT * FROM POSTS WHERE ID IN @id
+```
+
+And
+
+```SQL
+SELECT * FROM POSTS {WHERE {ID @id}}
+```
+
+Where the latter was used in Dapper + SqlBinder combination. 
+
+It is important to note that SqlBinder has the ability to re-use compiled templates as it completely separates the parsing and templating concerns. You may create a SqlBinder query template once and then build all the subsequent SQL queries from the same pre-parsed template. One of the key functionalities of SqlBinder is that it doesn't parse or generate the whole SQL *every time*.
+
+Performance tests are available in the source folder. Benchmark SqlBinder on your own!
 
 ## Origin Story
 

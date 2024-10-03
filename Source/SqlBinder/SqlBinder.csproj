@@ -13,8 +13,11 @@
 		<Copyright>Copyright © Bojan Sala</Copyright>
 		<PackageTags>sql,templating,c#,database</PackageTags>
 		<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-		<Version>0.3.0</Version>
+		<Version>1.0.0</Version>
 		<LangVersion>latest</LangVersion>
+		<PackageIcon>Clippy.png</PackageIcon>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<PackageReleaseNotes>Fixed a bug where static parser cache wasn't thread safe</PackageReleaseNotes>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
@@ -75,6 +78,17 @@
 		<Compile Include="ConditionValues\DateValue.cs" />
 		<Compile Include="ConditionValues\NumberValue.cs" />
 		<Compile Include="ConditionValues\StringValue.cs" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <None Include="..\..\Clippy.png">
+	    <Pack>True</Pack>
+	    <PackagePath>\</PackagePath>
+	  </None>
+	  <None Include="..\..\README.md">
+	    <Pack>True</Pack>
+	    <PackagePath>\</PackagePath>
+	  </None>
 	</ItemGroup>
 
 </Project>
