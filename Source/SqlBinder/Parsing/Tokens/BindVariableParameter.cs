@@ -12,10 +12,7 @@ namespace SqlBinder.Parsing.Tokens
 
         public override string OpeningTag { get; }
 
-        public override string ClosingTag
-        {
-            get => string.Empty;
-        }
+        public override string ClosingTag => string.Empty;
 
         internal BindVariableParameter(Token parent, Reader reader)
             : base(parent) => OpeningTag = reader.Char.ToString();

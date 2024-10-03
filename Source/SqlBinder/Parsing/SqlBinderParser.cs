@@ -171,12 +171,9 @@ namespace SqlBinder.Parsing
                 if (ScopeSeparator.Evaluate(reader))
                     textToken = new ScopeSeparator(reader.Token);
                 else if (Sql.Evaluate(reader))
-                {
-                    if (!Hints.HasFlag(ParserHints.UseCustomSyntaxForParams))
-                        textToken = new Sql(reader.Token);
-                    else
-                        textToken = new Sql(reader.Token, "[]");
-                }
+                    textToken = !Hints.HasFlag(ParserHints.UseCustomSyntaxForParams)
+                        ? new Sql(reader.Token)
+                        : new Sql(reader.Token, "[]");
                 else
                     throw new NotSupportedException();
 

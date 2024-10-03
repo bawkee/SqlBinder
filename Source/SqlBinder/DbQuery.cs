@@ -68,7 +68,7 @@ namespace SqlBinder
         protected virtual DbType OnResolveDbType(Type clrType)
         {
             var clrTypeNN = Nullable.GetUnderlyingType(clrType) ?? clrType;
-            return _dbTypeMap.ContainsKey(clrTypeNN) ? _dbTypeMap[clrTypeNN] : DbType.Object;
+            return _dbTypeMap.TryGetValue(clrTypeNN, out var v) ? v : DbType.Object;
         }
 
         /// <summary>

@@ -54,19 +54,29 @@ namespace SqlBinder
         }
 
         /// <summary>
-        /// If enumerable has just one element then its purpose is pointess and help reduce it to optimize the whole process and potentially SQL.
+        /// If enumerable has just one element then its purpose is pointless and help reduce it to optimize the whole process and potentially SQL.
         /// </summary>
         protected object ReduceEnum(IEnumerable input)
         {
             if (input == null)
                 return null;
+
             var e = input.GetEnumerator();
-            if (!e.MoveNext())
-                return null;
-            var item = e.Current;
-            if (!e.MoveNext())
-                return item;
-            return null;
+
+            try
+            {
+                if (!e.MoveNext())
+                    return null;
+
+                var item = e.Current;
+
+                return !e.MoveNext() ? item : null;
+            }
+            finally
+            {
+                if (e is IDisposable d)
+                    d.Dispose();
+            }
         }
     }
 }

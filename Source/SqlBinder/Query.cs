@@ -86,7 +86,7 @@ namespace SqlBinder
         }
 
         /// <summary>
-        /// Occurs when parameter is to be formatted for the SQL ouput. You can use this to specify custom parameter tags.
+        /// Occurs when parameter is to be formatted for the SQL output. You can use this to specify custom parameter tags.
         /// </summary>
         public event FormatParameterEventHandler FormatParameterName;
 
@@ -249,11 +249,11 @@ namespace SqlBinder
             bool inclusive, bool isNot)
         {
             greaterThan = inclusive
-                ? (isNot ? Operator.IsLessThan : Operator.IsGreaterThanOrEqualTo)
-                : (isNot ? Operator.IsLessThanOrEqualTo : Operator.IsGreaterThan);
+                ? isNot ? Operator.IsLessThan : Operator.IsGreaterThanOrEqualTo
+                : isNot ? Operator.IsLessThanOrEqualTo : Operator.IsGreaterThan;
             lessThan = inclusive
-                ? (isNot ? Operator.IsGreaterThan : Operator.IsLessThanOrEqualTo)
-                : (isNot ? Operator.IsGreaterThanOrEqualTo : Operator.IsLessThan);
+                ? isNot ? Operator.IsGreaterThan : Operator.IsLessThanOrEqualTo
+                : isNot ? Operator.IsGreaterThanOrEqualTo : Operator.IsLessThan;
         }
 
         /// <summary>
@@ -495,7 +495,7 @@ namespace SqlBinder
         public string OutputSql { get; set; }
 
         /// <summary>
-        /// Parses the SqlBinder script, processes given conditons and returns the resulting SQL.
+        /// Parses the SqlBinder script, processes given conditions and returns the resulting SQL.
         /// </summary>
         /// <exception cref="ParserException">Thrown when the SqlBinder script is not valid. For example, when number of opening and closing []{} braces don't match.</exception>
         /// <exception cref="UnmatchedConditionsException">Thrown when there is a condition which wasn't found in the script. Mostly causes by mis-typed parameter 
@@ -558,8 +558,8 @@ namespace SqlBinder
             else
             {
                 var variableName = e.Parameter.Name;
-                if (Variables.ContainsKey(variableName))
-                    e.Value = Variables[variableName].ToString();
+                if (Variables.TryGetValue(variableName, out var v))
+                    e.Value = v.ToString();
             }
         }
 

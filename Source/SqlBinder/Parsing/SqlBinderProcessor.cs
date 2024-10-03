@@ -100,7 +100,7 @@ namespace SqlBinder.Parsing
             {
                 var parsedParam = (ProcessedParameter)(newToken = ParseParameter(parameterToken));
                 if (!string.IsNullOrEmpty(parsedParam.ConditionSql))
-                    parentToken.Children.Add(parsedParam);
+                    parentToken?.Children.Add(parsedParam);
             }
             else if (token is ContentToken contentToken)
             {

@@ -66,13 +66,9 @@ namespace SqlBinder.ConditionValues
                 case (int)Operator.IsBetween: return ValidateParams("BETWEEN {0} AND {1}", 2);
                 case (int)Operator.IsNotBetween: return ValidateParams("NOT BETWEEN {0} AND {1}", 2);
                 case (int)Operator.IsAnyOf:
-                    if (!IsValueList())
-                        return ValidateParams("= {0}", 1);
-                    return ValidateParams("IN ({0})", 1, true);
+                    return !IsValueList() ? ValidateParams("= {0}", 1) : ValidateParams("IN ({0})", 1, true);
                 case (int)Operator.IsNotAnyOf:
-                    if (!IsValueList())
-                        return ValidateParams("!= {0}", 1);
-                    return ValidateParams("NOT IN ({0})", 1, true);
+                    return !IsValueList() ? ValidateParams("!= {0}", 1) : ValidateParams("NOT IN ({0})", 1, true);
                 case (int)Operator.Contains: return ValidateParams("LIKE {0}", 1);
                 case (int)Operator.DoesNotContain: return ValidateParams("NOT LIKE {0}", 1);
                 default:

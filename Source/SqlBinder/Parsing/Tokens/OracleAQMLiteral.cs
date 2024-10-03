@@ -10,7 +10,7 @@ namespace SqlBinder.Parsing.Tokens
     /// https://docs.oracle.com/cd/B19306_01/server.102/b14200/sql_elements003.htm
     /// 
     /// I wasn't actually aware of the existence of this until I started reading up on all the types of literals I might 
-    /// encounter on my SQL parsing endavour.
+    /// encounter on my SQL parsing endeavour.
     /// </summary>
     public class OracleAQMLiteral : ContentToken
     {

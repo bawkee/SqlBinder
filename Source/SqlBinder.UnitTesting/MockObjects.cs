@@ -43,7 +43,7 @@ namespace SqlBinder.UnitTesting
 
     public class MockDbCommand : DbCommand
     {
-        private MockDbParameters _parameters = new MockDbParameters();
+        private readonly MockDbParameters _parameters = new MockDbParameters();
         public override void Prepare() => throw new NotImplementedException();
         public override string CommandText { get; set; }
         public override int CommandTimeout { get; set; }
@@ -65,7 +65,7 @@ namespace SqlBinder.UnitTesting
 
     public class MockDbParameters : DbParameterCollection
     {
-        private List<object> _list = new List<object>();
+        private readonly List<object> _list = new List<object>();
 
         public override int Add(object value)
         {

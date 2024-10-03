@@ -6,7 +6,7 @@ namespace SqlBinder.UnitTesting
 {
     public partial class SqlBinder_Tests
     {
-        private static MockDbConnection _connection = new MockDbConnection();
+        private static readonly MockDbConnection _connection = new MockDbConnection();
 
         /// <summary>
         /// Tests that should all produce an exact same, simple, parameterless command with a simplest possible sql. The aim of this test is to confirm
@@ -15,8 +15,8 @@ namespace SqlBinder.UnitTesting
         [TestClass]
         public class TemplateProcessor_Tests
         {
-            private static string _expectedSql = "SELECT * FROM TABLE1";
-            private static string _expectedSqlComment = "/* Test comment */";
+            private static readonly string _expectedSql = "SELECT * FROM TABLE1";
+            private static readonly string _expectedSqlComment = "/* Test comment */";
 
             public TestContext TestContext { get; set; }
 
