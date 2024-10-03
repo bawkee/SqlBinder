@@ -10,120 +10,121 @@ using SqlBinder.Parsing;
 
 namespace SqlBinder.UnitTesting
 {
-	public partial class SqlBinder_Tests
-	{
-		/// <summary>
-		/// Tests that cover some negative branches
-		/// </summary>
-		[TestClass]
-		public class Negative_Tests
-		{			
-			[TestInitialize]
-			public void InitializeTest()
-			{
-				//
-			}
+    public partial class SqlBinder_Tests
+    {
+        /// <summary>
+        /// Tests that cover some negative branches
+        /// </summary>
+        [TestClass]
+        public class Negative_Tests
+        {
+            [TestInitialize]
+            public void InitializeTest()
+            {
+                //
+            }
 
-			[TestMethod]			
-			public void Negative_Test_1()
-			{
-				var query = new MockQuery(_connection, "SELECT * FROM TABLE1 {WHERE {COLUMN1 [Criteria1]}}");
+            [TestMethod]
+            public void Negative_Test_1()
+            {
+                var query = new MockQuery(_connection, "SELECT * FROM TABLE1 {WHERE {COLUMN1 [Criteria1]}}");
 
-				// Set the condition
-				query.SetCondition("Criteria1", new StringValue(new [] { null, "A", "B" } ));
+                // Set the condition
+                query.SetCondition("Criteria1", new StringValue(new[] { null, "A", "B" }));
 
-				try
-				{
-					query.CreateCommand();
-					Assert.Fail();
-				}
-				catch (Exception ex)
-				{
-					Assert.IsInstanceOfType(ex, typeof(InvalidConditionException));
-				}
+                try
+                {
+                    query.CreateCommand();
+                    Assert.Fail();
+                }
+                catch (Exception ex)
+                {
+                    Assert.IsInstanceOfType(ex, typeof(InvalidConditionException));
+                }
 
-				// Set the condition
-				query.SetCondition("Criteria1", new NumberValue(new[] { 1, 2, 3 }));
+                // Set the condition
+                query.SetCondition("Criteria1", new NumberValue(new[] { 1, 2, 3 }));
 
-				try
-				{
-					query.CreateCommand();
-					Assert.Fail();
-				}
-				catch (Exception ex)
-				{
-					Assert.IsInstanceOfType(ex, typeof(InvalidConditionException));
-				}
-			}
+                try
+                {
+                    query.CreateCommand();
+                    Assert.Fail();
+                }
+                catch (Exception ex)
+                {
+                    Assert.IsInstanceOfType(ex, typeof(InvalidConditionException));
+                }
+            }
 
-			[TestMethod]
-			public void Negative_Test_2()
-			{
-				var query = new MockQuery(_connection, "SELECT * FROM TABLE1 {WHERE {COLUMN1 [Criteria1]}}");
+            [TestMethod]
+            public void Negative_Test_2()
+            {
+                var query = new MockQuery(_connection, "SELECT * FROM TABLE1 {WHERE {COLUMN1 [Criteria1]}}");
 
-				// Set the condition
-				try
-				{
-					query.SetCondition("Criteria1", new NumberValue((IEnumerable<decimal>)null));
-					query.CreateCommand();
-					Assert.Fail();
-				}
-				catch (Exception ex)
-				{
-					Assert.IsInstanceOfType(ex, typeof(ArgumentException));
-				}
+                // Set the condition
+                try
+                {
+                    query.SetCondition("Criteria1", new NumberValue((IEnumerable<decimal>)null));
+                    query.CreateCommand();
+                    Assert.Fail();
+                }
+                catch (Exception ex)
+                {
+                    Assert.IsInstanceOfType(ex, typeof(ArgumentException));
+                }
 
-				// Set the condition				
-				try
-				{
-					query.SetCondition("Criteria1", Operator.Contains, new NumberValue(1));
-					query.CreateCommand();
-					Assert.Fail();
-				}
-				catch (Exception ex)
-				{
-					Assert.IsInstanceOfType(ex, typeof(InvalidConditionException));
-				}
+                // Set the condition				
+                try
+                {
+                    query.SetCondition("Criteria1", Operator.Contains, new NumberValue(1));
+                    query.CreateCommand();
+                    Assert.Fail();
+                }
+                catch (Exception ex)
+                {
+                    Assert.IsInstanceOfType(ex, typeof(InvalidConditionException));
+                }
 
 
-				// Set the condition				
-				try
-				{
-					query.SetCondition("Criteria1", new StringValue(null));
-					query.CreateCommand();
-					Assert.Fail();
-				}
-				catch (Exception ex)
-				{
-					Assert.IsInstanceOfType(ex, typeof(ArgumentException));
-				}
-			}
+                // Set the condition				
+                try
+                {
+                    query.SetCondition("Criteria1", new StringValue(null));
+                    query.CreateCommand();
+                    Assert.Fail();
+                }
+                catch (Exception ex)
+                {
+                    Assert.IsInstanceOfType(ex, typeof(ArgumentException));
+                }
+            }
 
-			[TestMethod]
-			public void Negative_Test_3()
-			{
-				AssertParserException("SELECT * FROM TABLE1 {WHERE {COLUMN1 [Criteria1]}");			
-				AssertParserException("SELECT * FROM TABLE1 {WHERE {COLUMN1 [Criteria1}}");
-				AssertParserException("SELECT * FROM TABLE1 {WHERE {COLUMN1 [Criteria1");
-				AssertParserException("SELECT * FROM TABLE1 WHERE {COLUMN1 [Test [Criteria1}}");
-			}
+            [TestMethod]
+            public void Negative_Test_3()
+            {
+                AssertParserException("SELECT * FROM TABLE1 {WHERE {COLUMN1 [Criteria1]}");
+                AssertParserException("SELECT * FROM TABLE1 {WHERE {COLUMN1 [Criteria1}}");
+                AssertParserException("SELECT * FROM TABLE1 {WHERE {COLUMN1 [Criteria1");
+                AssertParserException("SELECT * FROM TABLE1 WHERE {COLUMN1 [Test [Criteria1}}");
+            }
 
-			private void AssertParserException(string script)
-			{
-				var query = new MockQuery(_connection, script);
+            private void AssertParserException(string script)
+            {
+                var query = new MockQuery(_connection, script);
 
-				// Set the condition
-				try
-				{
-					query.CreateCommand();					
-				}
-				catch (Exception ex)
-				{
-					Assert.IsInstanceOfType(ex, typeof(Parsing.ParserException));
-					return;
-				}
-				Assert.Fail();
-			}
-		}
-	}
+                // Set the condition
+                try
+                {
+                    query.CreateCommand();
+                }
+                catch (Exception ex)
+                {
+                    Assert.IsInstanceOfType(ex, typeof(Parsing.ParserException));
+                    return;
+                }
+
+                Assert.Fail();
+            }
+        }
+    }
 }

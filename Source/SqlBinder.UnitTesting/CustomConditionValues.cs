@@ -7,43 +7,46 @@ using SqlBinder.Properties;
 
 namespace SqlBinder.UnitTesting
 {
-	public class CustomParameterlessConditionValue : ConditionValue
-	{
-		private readonly string _value;
+    public class CustomParameterlessConditionValue : ConditionValue
+    {
+        private readonly string _value;
 
-		public override bool UseBindVariables => false;
+        public override bool UseBindVariables => false;
 
-		public CustomParameterlessConditionValue(string value)
-		{			
-			_value = value;
-		}
+        public CustomParameterlessConditionValue(string value)
+        {
+            _value = value;
+        }
 
-		protected override string OnGetSql(int sqlOperator)
-		{
-			switch ((Operator) sqlOperator)
-			{
-				case Operator.Is: return $"= '{_value}' /*hint*/";
-				case Operator.IsNot: return $"<> '{_value}'";
-			}
-			throw new InvalidConditionException(this, (Operator)sqlOperator, Exceptions.IllegalComboOfValueAndOperator);
-		}
-	}
+        protected override string OnGetSql(int sqlOperator)
+        {
+            switch ((Operator)sqlOperator)
+            {
+                case Operator.Is: return $"= '{_value}' /*hint*/";
+                case Operator.IsNot: return $"<> '{_value}'";
+            }
 
-	public class CustomConditionValue : ConditionValue
-	{
-		private readonly object[] _values;
+            throw new InvalidConditionException(this, (Operator)sqlOperator, Exceptions.IllegalComboOfValueAndOperator);
+        }
+    }
 
-		public CustomConditionValue(int value1, int value2, int value3) => _values = new object[] {value1, value2, value3};
+    public class CustomConditionValue : ConditionValue
+    {
+        private readonly object[] _values;
 
-		protected override object[] OnGetValues() => _values;
+        public CustomConditionValue(int value1, int value2, int value3) =>
+            _values = new object[] { value1, value2, value3 };
 
-		protected override string OnGetSql(int sqlOperator)
-		{
-			switch ((Operator)sqlOperator)
-			{
-				case Operator.Is: return "= sillyProcedure({0}, {1}, {2})";
-			}
-			throw new InvalidConditionException(this, (Operator)sqlOperator, Exceptions.IllegalComboOfValueAndOperator);
-		}
-	}
+        protected override object[] OnGetValues() => _values;
+
+        protected override string OnGetSql(int sqlOperator)
+        {
+            switch ((Operator)sqlOperator)
+            {
+                case Operator.Is: return "= sillyProcedure({0}, {1}, {2})";
+            }
+
+            throw new InvalidConditionException(this, (Operator)sqlOperator, Exceptions.IllegalComboOfValueAndOperator);
+        }
+    }
 }
