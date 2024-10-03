@@ -123,8 +123,7 @@ namespace SqlBinder.Parsing
 
         private static StringBuilder ConstructSql(ProcessedToken token, StringBuilder buffer = null)
         {
-            if (buffer == null)
-                buffer = new StringBuilder(BUFFER_CAPACITY);
+            buffer ??= new StringBuilder(BUFFER_CAPACITY);
 
             if (!token.IsValid)
                 return buffer;
@@ -153,7 +152,7 @@ namespace SqlBinder.Parsing
                         case TextToken textToken:
                             buffer.Append(textToken.Text);
                             break;
-                        case NestedToken _:
+                        case NestedToken:
                             foreach (var childToken in token.Children)
                                 ConstructSql(childToken, buffer);
                             break;
@@ -170,7 +169,7 @@ namespace SqlBinder.Parsing
 
     internal class ProcessedToken
     {
-        public List<ProcessedToken> Children { get; } = new List<ProcessedToken>();
+        public List<ProcessedToken> Children { get; } = [];
         public Token ParserToken { get; }
         internal ProcessedToken(Token token) => ParserToken = token;
         public bool IsValid { get; internal set; } = true;

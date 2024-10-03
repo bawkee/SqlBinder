@@ -15,11 +15,11 @@ namespace SqlBinder.Parsing.Tokens
 
         internal static bool Evaluate(Reader reader)
         {
-            if (!(reader.Token is NestedToken nestedParent))
+            if (reader.Token is not NestedToken nestedParent)
                 return false;
             if (!char.IsWhiteSpace(reader.Char))
                 return false;
-            if (!(nestedParent.Children.LastOrDefault() is Scope))
+            if (nestedParent.Children.LastOrDefault() is not Scope)
                 return false;
 
             reader.StartSnapshot();

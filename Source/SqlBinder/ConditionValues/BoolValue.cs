@@ -16,7 +16,7 @@ namespace SqlBinder.ConditionValues
 
         protected override object[] OnGetValues()
         {
-            return _value == null ? new object[] { } : new[] { _value };
+            return _value == null ? [] : [_value];
         }
 
         protected override string OnGetSql(int sqlOperator)

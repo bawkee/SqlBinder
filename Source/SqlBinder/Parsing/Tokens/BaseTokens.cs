@@ -30,10 +30,10 @@ namespace SqlBinder.Parsing.Tokens
 
         protected TextToken(Token parent) => Parent = parent;
 
-        protected StringBuilder Buffer { get; set; } = new StringBuilder(BUFFER_SIZE);
+        protected StringBuilder Buffer { get; set; } = new(BUFFER_SIZE);
 
         private string _text;
-        public string Text => _text ?? (_text = Buffer.ToString());
+        public string Text => _text ??= Buffer.ToString();
 
         internal virtual void Append(Reader reader)
         {
@@ -81,7 +81,7 @@ namespace SqlBinder.Parsing.Tokens
     /// </summary>
     public abstract class NestedToken : ScopedToken
     {
-        public List<Token> Children { get; protected set; } = new List<Token>();
+        public List<Token> Children { get; protected set; } = [];
 
         protected NestedToken(Token parent) : base(parent)
         {

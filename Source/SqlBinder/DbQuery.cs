@@ -38,7 +38,7 @@ namespace SqlBinder
         /// Basic, assumed, ADO.Net type mappings. This can be overriden on any level (Query, ConditionValue).
         /// </summary>
         private static Dictionary<Type, DbType> _dbTypeMap { get; } =
-            new Dictionary<Type, DbType>
+            new()
             {
                 [typeof(byte)] = DbType.Byte,
                 [typeof(sbyte)] = DbType.SByte,

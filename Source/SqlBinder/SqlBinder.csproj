@@ -1,80 +1,80 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-	<EnableDefaultCompileItems>false</EnableDefaultCompileItems>
-	<EnableDefaultEmbeddedResourceItems>false</EnableDefaultEmbeddedResourceItems>
-  </PropertyGroup>
+	<PropertyGroup>
+		<EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+		<EnableDefaultEmbeddedResourceItems>false</EnableDefaultEmbeddedResourceItems>
+	</PropertyGroup>
 
-  <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-    <Authors>Bojan Sala</Authors>
-    <PackageLicenseUrl>https://raw.githubusercontent.com/bawkee/SqlBinder/master/LICENSE</PackageLicenseUrl>
-    <PackageProjectUrl>https://github.com/bawkee/SqlBinder</PackageProjectUrl>
-    <Description>Free, open-source library that helps you transform a given SQL template and a set of conditions into any number of valid SQL statements along with their associated parameters.</Description>
-    <Copyright>Copyright © Bojan Sala</Copyright>
-    <PackageTags>sql,templating,c#,database</PackageTags>
-    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-    <Version>0.3.0</Version>
-    <LangVersion>latest</LangVersion>	
-  </PropertyGroup>
-  
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-  </PropertyGroup>
-  
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-  </PropertyGroup>
-  
-  <ItemGroup>
-    <None Remove="packages.config" />
-    <None Remove="SqlBinder.csproj.vspscc" />
-  </ItemGroup>
+	<PropertyGroup>
+		<TargetFramework>netstandard2.0</TargetFramework>
+		<Authors>Bojan Sala</Authors>
+		<PackageLicenseUrl>https://raw.githubusercontent.com/bawkee/SqlBinder/master/LICENSE</PackageLicenseUrl>
+		<PackageProjectUrl>https://github.com/bawkee/SqlBinder</PackageProjectUrl>
+		<Description>Free, open-source library that helps you transform a given SQL template and a set of conditions into any number of valid SQL statements along with their associated parameters.</Description>
+		<Copyright>Copyright © Bojan Sala</Copyright>
+		<PackageTags>sql,templating,c#,database</PackageTags>
+		<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+		<Version>0.3.0</Version>
+		<LangVersion>latest</LangVersion>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <EmbeddedResource Include="Properties\Exceptions.resx">
-      <Generator>PublicResXFileCodeGenerator</Generator>
-      <LastGenOutput>Exceptions.Designer.cs</LastGenOutput>
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Properties\Resources.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
-      <SubType>Designer</SubType>
-    </EmbeddedResource>  
-  
-    <Compile Include="Properties\Resources.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>Resources.resx</DependentUpon>
-    </Compile>
-    <Compile Include="Properties\Exceptions.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>Exceptions.resx</DependentUpon>
-    </Compile>
-    <Compile Include="Condition.cs" />
-    <Compile Include="ConditionValue.cs" />
-    <Compile Include="DbQuery.cs" />
-    <Compile Include="Query.cs" />
-    <Compile Include="Operators.cs" />    	
-    <Compile Include="Parsing\SqlBinderParser.cs" />
-    <Compile Include="Parsing\SqlBinderProcessor.cs" />
-    <Compile Include="Parsing\Tokens\BaseTokens.cs" />
-    <Compile Include="Parsing\Tokens\BindVariableParameter.cs" />
-    <Compile Include="Parsing\Tokens\DoubleQuoteLiteral.cs" />
-    <Compile Include="Parsing\Tokens\OracleAQMLiteral.cs" />
-    <Compile Include="Parsing\Tokens\PostgreDoubleDollarLiteral.cs" />
-    <Compile Include="Parsing\Tokens\Scope.cs" />
-    <Compile Include="Parsing\Tokens\ScopeSeparator.cs" />
-    <Compile Include="Parsing\Tokens\SingleQuoteLiteral.cs" />
-    <Compile Include="Parsing\Tokens\Sql.cs" />
-    <Compile Include="Parsing\Tokens\SqlBinderComment.cs" />
-    <Compile Include="Parsing\Tokens\SqlBinderParameter.cs" />
-    <Compile Include="Parsing\Tokens\SqlComment.cs" />
-    <Compile Include="ConditionValues\BoolValue.cs" />
-    <Compile Include="ConditionValues\DateValue.cs" />
-    <Compile Include="ConditionValues\NumberValue.cs" />
-    <Compile Include="ConditionValues\StringValue.cs" />
-  </ItemGroup>
-  
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<None Remove="packages.config" />
+		<None Remove="SqlBinder.csproj.vspscc" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<EmbeddedResource Include="Properties\Exceptions.resx">
+			<Generator>PublicResXFileCodeGenerator</Generator>
+			<LastGenOutput>Exceptions.Designer.cs</LastGenOutput>
+			<SubType>Designer</SubType>
+		</EmbeddedResource>
+		<EmbeddedResource Include="Properties\Resources.resx">
+			<Generator>ResXFileCodeGenerator</Generator>
+			<LastGenOutput>Resources.Designer.cs</LastGenOutput>
+			<SubType>Designer</SubType>
+		</EmbeddedResource>
+
+		<Compile Include="Properties\Resources.Designer.cs">
+			<AutoGen>True</AutoGen>
+			<DesignTime>True</DesignTime>
+			<DependentUpon>Resources.resx</DependentUpon>
+		</Compile>
+		<Compile Include="Properties\Exceptions.Designer.cs">
+			<AutoGen>True</AutoGen>
+			<DesignTime>True</DesignTime>
+			<DependentUpon>Exceptions.resx</DependentUpon>
+		</Compile>
+		<Compile Include="Condition.cs" />
+		<Compile Include="ConditionValue.cs" />
+		<Compile Include="DbQuery.cs" />
+		<Compile Include="Query.cs" />
+		<Compile Include="Operators.cs" />
+		<Compile Include="Parsing\SqlBinderParser.cs" />
+		<Compile Include="Parsing\SqlBinderProcessor.cs" />
+		<Compile Include="Parsing\Tokens\BaseTokens.cs" />
+		<Compile Include="Parsing\Tokens\BindVariableParameter.cs" />
+		<Compile Include="Parsing\Tokens\DoubleQuoteLiteral.cs" />
+		<Compile Include="Parsing\Tokens\OracleAQMLiteral.cs" />
+		<Compile Include="Parsing\Tokens\PostgreDoubleDollarLiteral.cs" />
+		<Compile Include="Parsing\Tokens\Scope.cs" />
+		<Compile Include="Parsing\Tokens\ScopeSeparator.cs" />
+		<Compile Include="Parsing\Tokens\SingleQuoteLiteral.cs" />
+		<Compile Include="Parsing\Tokens\Sql.cs" />
+		<Compile Include="Parsing\Tokens\SqlBinderComment.cs" />
+		<Compile Include="Parsing\Tokens\SqlBinderParameter.cs" />
+		<Compile Include="Parsing\Tokens\SqlComment.cs" />
+		<Compile Include="ConditionValues\BoolValue.cs" />
+		<Compile Include="ConditionValues\DateValue.cs" />
+		<Compile Include="ConditionValues\NumberValue.cs" />
+		<Compile Include="ConditionValues\StringValue.cs" />
+	</ItemGroup>
+
 </Project>

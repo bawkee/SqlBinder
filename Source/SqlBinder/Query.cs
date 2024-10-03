@@ -73,7 +73,7 @@ namespace SqlBinder
     {
         private RootToken _parserResult;
         private ParserHints _parserHints;
-        private string _sqlBinderScript;        
+        private string _sqlBinderScript;
         private static readonly ConcurrentDictionary<string, RootToken> ParserCache = new();
 
         public Query()
@@ -177,12 +177,12 @@ namespace SqlBinder
         /// <summary>
         /// Gets the conditions which are required in order to build a valid query. There must be a parameter placeholder in your script for each condition.
         /// </summary>
-        public List<Condition> Conditions { get; internal set; } = new List<Condition>();
+        public List<Condition> Conditions { get; internal set; } = [];
 
         /// <summary>
         /// Gets or sets a collection of variables that will be passed onto the parser engine.
         /// </summary>
-        public Dictionary<string, object> Variables { get; set; } = new Dictionary<string, object>();
+        public Dictionary<string, object> Variables { get; set; } = new();
 
         /// <summary>
         /// Creates a condition for the query.
@@ -214,18 +214,16 @@ namespace SqlBinder
         /// <summary>
         /// Translates a number-specific NumericOperator enum into a general purpose Operator enum.
         /// </summary>
-        protected static Operator TranslateOperator(NumericOperator conditionOperator)
-        {
-            switch (conditionOperator)
+        protected static Operator TranslateOperator(NumericOperator conditionOperator) =>
+            conditionOperator switch
             {
-                case NumericOperator.IsNot: return Operator.IsNot;
-                case NumericOperator.IsGreaterThan: return Operator.IsGreaterThan;
-                case NumericOperator.IsGreaterThanOrEqualTo: return Operator.IsGreaterThanOrEqualTo;
-                case NumericOperator.IsLessThan: return Operator.IsLessThan;
-                case NumericOperator.IsLessThanOrEqualTo: return Operator.IsLessThanOrEqualTo;
-                default: return Operator.Is;
-            }
-        }
+                NumericOperator.IsNot => Operator.IsNot,
+                NumericOperator.IsGreaterThan => Operator.IsGreaterThan,
+                NumericOperator.IsGreaterThanOrEqualTo => Operator.IsGreaterThanOrEqualTo,
+                NumericOperator.IsLessThan => Operator.IsLessThan,
+                NumericOperator.IsLessThanOrEqualTo => Operator.IsLessThanOrEqualTo,
+                _ => Operator.Is
+            };
 
         protected bool MaterializeValues<T>(IEnumerable<T> values, out T[] array)
         {
@@ -241,10 +239,14 @@ namespace SqlBinder
         {
             greaterThan = inclusive
                 ? isNot ? Operator.IsLessThan : Operator.IsGreaterThanOrEqualTo
-                : isNot ? Operator.IsLessThanOrEqualTo : Operator.IsGreaterThan;
+                : isNot
+                    ? Operator.IsLessThanOrEqualTo
+                    : Operator.IsGreaterThan;
             lessThan = inclusive
                 ? isNot ? Operator.IsGreaterThan : Operator.IsLessThanOrEqualTo
-                : isNot ? Operator.IsGreaterThanOrEqualTo : Operator.IsLessThan;
+                : isNot
+                    ? Operator.IsGreaterThanOrEqualTo
+                    : Operator.IsLessThan;
         }
 
         /// <summary>
@@ -473,12 +475,12 @@ namespace SqlBinder
         /// <param name="value">The value.</param>
         public virtual void DefineVariable(string name, object value) => Variables[name] = value;
 
-        private readonly HashSet<string> _processedConditions = new HashSet<string>();
+        private readonly HashSet<string> _processedConditions = [];
 
         /// <summary>
         /// A collection of SQL parameters that were produced after processing conditions.
         /// </summary>
-        public Dictionary<string, object> SqlParameters { get; set; } = new Dictionary<string, object>();
+        public Dictionary<string, object> SqlParameters { get; set; } = new();
 
         /// <summary>
         /// A resulting SQL produced by the last call to the method <see cref="GetSql"/>.
@@ -568,7 +570,7 @@ namespace SqlBinder
 
                 var values = conditionValue.GetValues();
 
-                if (values == null || values.Length <= 0)
+                if (values is not { Length: > 0 })
                     return sql;
 
                 var paramsSql = new object[values.Length];
@@ -579,7 +581,7 @@ namespace SqlBinder
                 {
                     var value = values[i];
 
-                    if (!(value is string) && value is IEnumerable valueEnumerable)
+                    if (value is not string && value is IEnumerable valueEnumerable)
                     {
                         if (conditionValue.UseBindVariables)
                         {

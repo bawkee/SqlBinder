@@ -15,14 +15,14 @@ namespace SqlBinder.Parsing.Tokens
         public override string OpeningTag { get; }
         public override string ClosingTag => CLOSING_TAG;
 
-        public HashSet<char> Flags { get; } = new HashSet<char>();
+        public HashSet<char> Flags { get; } = [];
 
         internal Scope(Token parent, Reader reader) : base(parent)
         {
             var c = reader.Peek();
             if (VALID_FLAGS.Contains(c))
             {
-                OpeningTag = new string(new[] { c, OPENING_TAG[0] });
+                OpeningTag = new string([c, OPENING_TAG[0]]);
                 Flags.Add(c);
             }
             else

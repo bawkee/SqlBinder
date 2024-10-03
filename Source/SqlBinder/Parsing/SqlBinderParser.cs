@@ -148,7 +148,7 @@ namespace SqlBinder.Parsing
                 newElem = new Scope(nestedToken, reader);
             else if (_customParams ? SqlBinderParameter.Evaluate(reader) : BindVariableParameter.Evaluate(reader))
                 newElem = _customParams
-                    ? new SqlBinderParameter(nestedToken) as Parameter
+                    ? new SqlBinderParameter(nestedToken)
                     : new BindVariableParameter(nestedToken, reader);
             else
                 return false;

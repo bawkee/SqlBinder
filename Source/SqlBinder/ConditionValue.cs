@@ -41,7 +41,7 @@ namespace SqlBinder
         /// </summary>
         protected abstract string OnGetSql(int sqlOperator);
 
-        protected bool IsList(object var) => !(var is string) && var is IEnumerable;
+        protected bool IsList(object var) => var is not string && var is IEnumerable;
 
         /// <summary>
         /// Use this to validate sql string format against value count.
